@@ -5,9 +5,10 @@ Author: EvickaStudio
 Data: 07.10.2023
 Github: @EvickaStudio
 """
-import requests
-import random
 import datetime
+import random
+
+import requests
 
 
 class Discord:

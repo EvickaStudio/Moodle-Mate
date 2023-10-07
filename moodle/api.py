@@ -8,8 +8,9 @@ Github: @EvickaStudio
 
 
 import configparser
-import requests
 import logging
+
+import requests
 
 
 class MoodleAPI:

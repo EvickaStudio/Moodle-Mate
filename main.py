@@ -1,12 +1,12 @@
-# Helper Wrapper
-from moodle.api import MoodleAPI
-from ai.chat import GPT
-from notification.pushbullet import Pushbullet
-from notification.discord import Discord
-
 import logging
 import time
+
 import bs4
+
+from ai.chat import GPT
+from moodle.api import MoodleAPI
+from notification.discord import Discord
+from notification.pushbullet import Pushbullet
 
 # Set logging level and print logging messages to console
 logging.basicConfig(level=logging.INFO)

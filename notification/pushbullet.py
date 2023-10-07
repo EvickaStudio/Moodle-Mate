@@ -6,8 +6,9 @@ Data: 07.10.2023
 Github: @EvickaStudio
 """
 
-import requests
 import json
+
+import requests
 
 
 class Pushbullet:
