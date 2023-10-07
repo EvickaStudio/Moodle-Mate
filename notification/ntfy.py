@@ -14,7 +14,7 @@ class Ntfy:
     >>> from notification.ntfy import Ntfy
 
     >>> server_ip = "http://11.11.11.11/"
-    >>> topic = "TOPIC"
+    # >>> topic = "TOPIC"
     >>> notification = Ntfy()
     >>> notification.server_url = server_ip
     >>> notification.sendNTFY(topic, title="New Notification", message="HELLO WORLD", priority="urgent")
@@ -43,4 +43,8 @@ class Ntfy:
             "Priority": priority,
             "Tags": "email",
         }
-        requests.post(url, data=message, headers=headers)
+        try:
+            response = requests.post(url, data=message, headers=headers)
+            response.raise_for_status()  # Raise an exception if the request was not successful
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred while sending the notification: {e}")

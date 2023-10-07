@@ -28,7 +28,7 @@ class Pushbullet:
             'Content-Type': 'application/json'
         }
 
-    def push(self, title, body):
+    def push(self, title, body) -> bool:
         """
         Sends a push notification with the provided title and body.
 

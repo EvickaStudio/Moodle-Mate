@@ -50,6 +50,7 @@ class Discord:
         )
 
     def send(self, subject, text, summary, fullname, picture_url):
+        # Get current time for the timestamp in the footer
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             embed = {
@@ -58,17 +59,17 @@ class Discord:
                 "color": int(self.random_color()[1:], 16),
                 "fields": [
                     {
-                        "name": "TL;DR",
-                        "value": summary,
+                        "name": "TL;DR", # Too long; didn't read
+                        "value": summary, # GPT-3 generated summary
                     }
                 ],
                 "author": {
-                    "name": fullname,
-                    "icon_url": picture_url,
+                    "name": fullname, # Full name of the sender
+                    "icon_url": picture_url, # Profile picture of the sender
                 },
                 "footer": {
-                    "text": f"{current_time} - MoodleStalker",
-                    "icon_url": "https://avatars.githubusercontent.com/u/68477970?v=4",
+                    "text": f"{current_time} - MoodleStalker", # Current time and the name of the project
+                    "icon_url": "https://avatars.githubusercontent.com/u/68477970?v=4", # My profile picture <3
                 },
             }
             data = {"embeds": [embed]}
