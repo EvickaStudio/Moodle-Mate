@@ -42,10 +42,13 @@ class MoodleNotificationHandler:
     def __init__(self, config_file):
         try:
             self.api = MoodleAPI(config_file)
+            # Login to Moodle using the credentials from the config file
             self.username = self.api.config["moodle"]["username"]
             self.password = self.api.config["moodle"]["password"]
             self.api.login(username=self.username, password=self.password)
+            # Get the current user ID from Moodle
             self.moodle_user_id = self.api.get_user_id()
+            # Initialize the stalk count and last notification ID
             self.stalk_count = 0
             self.last_notification_id = 0
         except Exception as e:
@@ -67,8 +70,10 @@ class MoodleNotificationHandler:
             ```
         """
         try:
+            # Count the number of times this method has been called
             self.stalk_count += 1
             logging.info(f"[{self.stalk_count}] Fetching notification from Moodle")
+            # Parse the last notification from the Moodle API response and return it
             return self.api.get_popup_notifications(self.moodle_user_id)[
                 "notifications"
             ][0]
@@ -91,13 +96,16 @@ class MoodleNotificationHandler:
             ```
         """
         try:
+            # Check if there is a newer notification than the last one
             if notification := self.fetch_latest_notification():
                 notification_id = notification["id"]
 
                 if notification_id <= self.last_notification_id:
+                    # If there isn't, return None
                     return None
 
                 logging.info("Getting newest notification from Moodle")
+                # If there is, return the notification and update the last notification ID
                 self.last_notification_id = notification_id
                 return notification
         except Exception as e:
@@ -122,6 +130,7 @@ class MoodleNotificationHandler:
             ```
         """
         try:
+            # Fetches user information from Moodle using given user ID
             return self.api.core_user_get_users_by_field(useridfrom)
         except Exception as e:
             logging.exception("Failed to fetch user id from Moodle")
@@ -141,11 +150,13 @@ class NotificationSummarizer:
     """
 
     def __init__(self, api_config):
+        # Load the API key and system message from the config file
         self.api_key = api_config["moodle"]["openaikey"]
         self.system_message = api_config["moodle"]["systemmessage"]
 
     def summarize(self, text):
         try:
+            # Summarize the text using GPT-3 and return the result
             gpt = GPT()
             gpt.apiKey = self.api_key
             return gpt.chatCompletion("gpt-3.5-turbo", self.system_message, text)
@@ -167,6 +178,7 @@ class NotificationSender:
     """
 
     def __init__(self, api_config):
+        # Load the Pushbullet API key and Discord webhook URL from the config file
         self.pushbullet_key = api_config["moodle"]["pushbulletkey"]
         self.webhook_url = api_config["moodle"]["webhookUrl"]
 
