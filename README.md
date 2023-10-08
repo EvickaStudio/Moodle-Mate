@@ -1,8 +1,8 @@
-# Moodle Stalker
+# Moodle Mate
 
 ## Overview
 
-`Moodle-Stalker` is a Python program designed to fetch Moodle notifications at regular intervals (60 seconds), summarize their content using GPT-3, and send the summarized notifications via Pushbullet to your smartphone and via a webhook to Discord.
+`Moodle-Mate` is a Python program designed to fetch Moodle notifications at regular intervals (60 seconds), summarize their content using GPT-3, and send the summarized notifications via Pushbullet to your smartphone and via a webhook to Discord.
 
 ## Dependencies
 
@@ -18,7 +18,7 @@
 Clone the repository and install the required Python packages:
 
 ```
-git clone https://github.com/EvickaStudio/Moodle-Stalker.git
+git clone https://github.com/EvickaStudio/Moodle-Mate.git
 cd moodleStalker
 pip install -r requirements.txt
 ```
