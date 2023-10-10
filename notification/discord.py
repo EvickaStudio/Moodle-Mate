@@ -69,7 +69,7 @@ class Discord:
                     "icon_url": picture_url, # Profile picture of the sender
                 },
                 "footer": {
-                    "text": f"{current_time} - MoodleStalker", # Current time and the name of the project
+                    "text": f"{current_time} - Moodle-Mate", # Current time and the name of the project
                     "icon_url": "https://avatars.githubusercontent.com/u/68477970?v=4", # My profile picture <3
                 },
             }
