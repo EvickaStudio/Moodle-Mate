@@ -1,80 +1,115 @@
-# Moodle Mate
+<h1 align="center">Moodle Mate</h1>
+<p align="center">
+    <strong>Automated Moodle Notification Management</strong>
+</p>
 
-## Overview
+---
 
-`Moodle-Mate` is a Python program designed to fetch Moodle notifications at regular intervals (60 seconds), summarize their content using GPT-3, and send the summarized notifications via Pushbullet to your smartphone and via a webhook to Discord.
+## Table of Contents
+1. [Overview](#overview)
+2. [Dependencies](#dependencies)
+3. [Installation](#installation)
+4. [Configuration](#configuration)
+5. [Usage](#usage)
+6. [Classes](#classes)
+7. [Screenshots](#screenshots)
+8. [Author](#author)
 
-## Dependencies
+---
 
-- Custom wrappers for the following APIs:
-    - MoodleAPI
-    - OpenAI
-    - Pushbullet
-    - Discord
-- Beautiful Soup 4
+## <div id="overview">Overview</div>
 
-## Installation
+Moodle Mate is a robust Python application crafted to automate the process of fetching Moodle notifications at regular intervals. Utilizing the GPT-3 API, it summarizes these notifications and forwards them via Pushbullet to your smartphone and Discord through a webhook.
 
-Clone the repository and install the required Python packages:
+---
 
-```
+## <div id="dependencies">Dependencies</div>
+
+The software relies on the following custom API wrappers and libraries:
+
+- **MoodleAPI**: For Moodle integration
+- **OpenAI**: For text summarization
+- **Pushbullet**: For mobile notifications
+- **Discord**: For Discord webhook support
+- **Beautiful Soup 4**: For HTML parsing
+
+---
+
+## <div id="installation">Installation</div>
+
+Clone the repository and install the Python packages:
+
+```bash
 git clone https://github.com/EvickaStudio/Moodle-Mate.git
-cd moodleStalker
+cd Moodle-Mate
 pip install -r requirements.txt
 ```
 
-## Configuration
+---
 
-A configuration file, `config.ini`, is required and should contain the following keys:
+## <div id="configuration">Configuration</div>
 
-- Moodle URL (e.g. https://moodle.example.com)
-- Moodle credentials (username, password)
-- OpenAi API key
-- Pushbullet API key
-- Discord webhook URL
-- systemMessage for GPT-3 (default in german)
+A configuration file, `config.ini`, is necessary for the application's operation. It should contain:
 
-## Usage
+- Moodle URL
+- Moodle Username & Password
+- OpenAI API Key
+- Pushbullet API Key
+- Pushbullet State (1: Activated, 0: Deactivated)
+- Webhook State (1: Activated, 0: Deactivated)
+- Discord Webhook URL
+- System Message for GPT-3 (Default in German)
 
-Run the script as follows:
+---
 
-```
+## <div id="usage">Usage</div>
+
+Execute the script as follows:
+
+```bash
 python main.py
 ```
 
-## Classes
+---
+
+## <div id="classes">Classes</div>
 
 ### `MoodleNotificationHandler`
 
-Manages the fetching of Moodle notifications for a specific user.
+**Responsibility**: Manages Moodle notifications for specific users.
 
 #### Methods
 
-- `fetch_latest_notification()`: Fetches the latest notification.
-- `fetch_newest_notification()`: Fetches the newest unread notification.
-- `user_id_from(useridfrom)`: Retrieves information about a user from their ID. (naming is bad, i know)
+- `fetch_latest_notification()`: Retrieves latest notification.
+- `fetch_newest_notification()`: Retrieves newest unread notification.
+- `user_id_from()`: Fetches user data based on ID.
 
 ### `NotificationSummarizer`
 
-Summarizes text using the OpenAI API.
+**Responsibility**: Text summarization via OpenAI API.
 
 #### Methods
 
-- `summarize(text)`: Summarizes the provided text.
+- `summarize()`: Summarizes input text.
 
 ### `NotificationSender`
 
-Responsible for sending notifications to various platforms.
+**Responsibility**: Dispatches notifications to designated platforms.
 
 #### Methods
 
-- `send(subject, text, summary, useridfrom)`: Sends a notification to Pushbullet and Discord.
+- `send()`: Forwards notifications to Pushbullet and Discord.
 
-## Screenshots
+---
 
-![Discord](images/discord.jpg)
+## <div id="screenshots">Screenshots</div>
 
-## Author
+<img src="images/discord.jpg" alt="Discord Screenshot" width="600"/>
 
-EvickaStudio
+---
 
+## <div id="author">Author</div>
+
+Developed with 💻 and ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
+
+---
