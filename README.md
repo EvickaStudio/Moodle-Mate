@@ -31,7 +31,6 @@ The software relies on the following custom API wrappers and libraries:
 - **OpenAI**: For text summarization
 - **Pushbullet**: For mobile notifications
 - **Discord**: For Discord webhook support
-- **Beautiful Soup 4**: For HTML parsing
 
 ---
 
