@@ -9,7 +9,11 @@ from notification.discord import Discord
 from notification.pushbullet import Pushbullet
 
 # Set logging level and print logging messages to console
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 class MoodleNotificationHandler:
@@ -35,7 +39,6 @@ class MoodleNotificationHandler:
         username (str): The username of the Moodle user.
         password (str): The password of the Moodle user.
         moodle_user_id (int): The ID of the Moodle user.
-        stalk_count (int): The number of times the fetch_latest_notification method has been called.
         last_notification_id (int): The ID of the last notification fetched.
     """
 
@@ -71,8 +74,7 @@ class MoodleNotificationHandler:
         """
         try:
             # Count the number of times this method has been called
-            self.stalk_count += 1
-            logging.info(f"[{self.stalk_count}] Fetching notification from Moodle")
+            logging.info("Fetching notification from Moodle")
             # Parse the last notification from the Moodle API response and return it
             return self.api.get_popup_notifications(self.moodle_user_id)[
                 "notifications"
@@ -175,12 +177,21 @@ class NotificationSender:
     Attributes:
         pushbullet_key (str): The Pushbullet API key.
         webhook_url (str): The Discord webhook URL.
+        pushbullet_state (int): The state of Pushbullet notifications.
+        webhook_state (int): The state of Discord notifications.
     """
 
     def __init__(self, api_config):
-        # Load the Pushbullet API key and Discord webhook URL from the config file
+        """
+        Initializes a NotificationSender instance.
+
+        Args:
+            api_config (dict): The API configuration containing the Pushbullet API key and Discord webhook URL.
+        """
         self.pushbullet_key = api_config["moodle"]["pushbulletkey"]
         self.webhook_url = api_config["moodle"]["webhookUrl"]
+        self.pushbullet_state = int(api_config["moodle"].get("pushbulletState", 1))
+        self.webhook_state = int(api_config["moodle"].get("webhookState", 1))
 
     def send(self, subject, text, summary, useridfrom):
         """
@@ -196,20 +207,20 @@ class NotificationSender:
             Exception: If the notification fails to send.
         """
         try:
-            logging.info("Sending notification to Pushbullet")
-            pb = Pushbullet(self.pushbullet_key)
-            pb.push(subject, summary)
+            # If State is set to 1, send notifications
+            if self.pushbullet_state == 1:
+                logging.info("Sending notification to Pushbullet")
+                pb = Pushbullet(self.pushbullet_key)
+                pb.push(subject, summary)
 
-            logging.info("Sending notification to Discord")
-            dc = Discord(self.webhook_url)
+            if self.webhook_state == 1:
+                logging.info("Sending notification to Discord")
+                dc = Discord(self.webhook_url)
+                useridfrom_info = moodle_handler.user_id_from(useridfrom)
+                fullname = useridfrom_info[0]["fullname"]
+                profile_url = useridfrom_info[0]["profileimageurl"]
+                dc.send(subject, text, summary, fullname, profile_url)
 
-            # This will log in every time, -> Logging: Login successful
-            #   It's on my TODO list to fix this, but it's not a priority right now
-            moodle_handler = MoodleNotificationHandler("config.ini")
-            useridfrom_info = moodle_handler.user_id_from(useridfrom)
-            fullname = useridfrom_info[0]["fullname"]
-            profile_url = useridfrom_info[0]["profileimageurl"]
-            dc.send(subject, text, summary, fullname, profile_url)
         except Exception as e:
             logging.exception("Failed to send notification")
 
