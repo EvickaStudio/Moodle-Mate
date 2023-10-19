@@ -43,14 +43,19 @@ class MoodleNotificationHandler:
     """
 
     def __init__(self, config_file):
+        """
+        Loads the configuration file and initializes the MoodleNotificationHandler.
+        """
         try:
+            # Initialize the MoodleAPI with the config file
             self.api = MoodleAPI(config_file)
-            # Login to Moodle using the credentials from the config file
-            self.username = self.api.config["moodle"]["username"]
-            self.password = self.api.config["moodle"]["password"]
+
+            # Login to Moodle using the username and password
             self.api.login(username=self.username, password=self.password)
+
             # Get the current user ID from Moodle
             self.moodle_user_id = self.api.get_user_id()
+
             # Initialize the stalk count and last notification ID
             self.stalk_count = 0
             self.last_notification_id = 0
@@ -58,19 +63,31 @@ class MoodleNotificationHandler:
             logging.exception("Initialization failed")
             exit(1)
 
+    def login(self):
+        """
+        Logs in to Moodle using the username and password.
+
+        Raises:
+            Exception: If the login fails.
+        """
+        try:
+            # Login to Moodle using the username and password
+            self.username = self.api.config["moodle"]["username"]
+            self.password = self.api.config["moodle"]["password"]
+            self.api.login(username=self.username, password=self.password)
+        except Exception as e:
+            logging.exception("Failed to login to Moodle")
+
     def fetch_latest_notification(self):
         """
         Fetches the latest notification from Moodle.
+        Latest notification is defined as the first notification in the list of notifications.
+        This notification must not be newer than the last notification fetched, it can be the same
+        => fetch_newest checks for this.
 
         Returns:
             dict: A dictionary containing the latest notification.
 
-        Example:
-            ```python
-            notification = handler.fetch_latest_notification()
-            if notification:
-                print(notification)
-            ```
         """
         try:
             # Count the number of times this method has been called
@@ -85,17 +102,11 @@ class MoodleNotificationHandler:
 
     def fetch_newest_notification(self):
         """
-        Fetches the newest notification from Moodle.
+        Fetches the newest notification from Moodle by comparing the ID of the last notification fetched.
 
         Returns:
             dict: A dictionary containing the newest notification.
 
-        Example:
-            ```python
-            notification = handler.fetch_newest_notification()
-            if notification:
-                print(notification)
-            ```
         """
         try:
             # Check if there is a newer notification than the last one

@@ -49,8 +49,12 @@ class MoodleAPI:
 
     Example:
         ```python
+        from moodle.api import MoodleAPI
+
         api = MoodleAPI()
-        api.login("username", "password")
+        username = api.config["moodle"]["username"] # load username from config file
+        password = api.config["moodle"]["password"] # load password from config file
+        api.login(username, password)
         site_info = api.get_site_info()
         print(site_info)
         ```
