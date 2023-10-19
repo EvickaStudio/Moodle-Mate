@@ -5,7 +5,7 @@
 
 ---
 
-## Table of Contents
+## Contents
 1. [Overview](#overview)
 2. [Dependencies](#dependencies)
 3. [Installation](#installation)
@@ -58,6 +58,27 @@ A configuration file, `config.ini`, is necessary for the application's operation
 - Webhook State (1: Activated, 0: Deactivated)
 - Discord Webhook URL
 - System Message for GPT-3 (Default in German)
+
+Example:
+
+```ini
+[moodle]
+; Moodle URL for API access
+moodleUrl = https://subdomain.example.com/
+; Username and password for Moodle login
+username = 123456
+password = password
+; API key for OpenAI and Pushbullet
+openaikey = sk-xxxxx
+pushbulletkey = o.xxxxx
+; Activate or deactivate Pushbullet and Discord
+pushbulletState = 0 ; 1: Activated, 0: Deactivated
+webhookState = 1
+; Discord webhook URL
+webhookUrl = https://discord.com/api/webhooks/xxxxx/xxxxx
+; System message for GPT-3 summarization
+systemMessage = "YOUR SYSTEM PROMPT HERE, EXAMPLE IN config_example.ini"
+```
 
 ---
 
