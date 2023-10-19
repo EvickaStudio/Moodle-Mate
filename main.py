@@ -51,7 +51,7 @@ class MoodleNotificationHandler:
             self.api = MoodleAPI(config_file)
 
             # Login to Moodle using the username and password
-            self.api.login(username=self.username, password=self.password)
+            self.login()
 
             # Get the current user ID from Moodle
             self.moodle_user_id = self.api.get_user_id()
