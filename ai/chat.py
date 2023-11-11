@@ -47,14 +47,17 @@ class GPT:
             print(response)
             ```
         """
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model=model,
             messages=[
                 {
                     "role": "system",
                     "content": systemMessage,
                 },
-                {"role": "user", "content": userMessage},
+                {
+                    "role": "user", 
+                    "content": userMessage
+                },
             ],
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content

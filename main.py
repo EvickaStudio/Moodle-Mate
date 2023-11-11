@@ -167,12 +167,12 @@ class NotificationSummarizer:
         self.api_key = api_config["moodle"]["openaikey"]
         self.system_message = api_config["moodle"]["systemmessage"]
 
-    def summarize(self, text):
+    def summarize(self, text, configModel):
         try:
             # Summarize the text using GPT-3 and return the result
             gpt = GPT()
             gpt.apiKey = self.api_key
-            return gpt.chatCompletion("gpt-3.5-turbo", self.system_message, text)
+            return gpt.chatCompletion(configModel, self.system_message, text)
         except Exception as e:
             logging.exception("Failed to summarize with GPT-3")
             return None
@@ -203,6 +203,7 @@ class NotificationSender:
         self.webhook_url = api_config["moodle"]["webhookUrl"]
         self.pushbullet_state = int(api_config["moodle"].get("pushbulletState", 1))
         self.webhook_state = int(api_config["moodle"].get("webhookState", 1))
+        self.model = api_config["moodle"]["model"]
 
     def send(self, subject, text, summary, useridfrom):
         """
@@ -271,7 +272,8 @@ if __name__ == "__main__":
                     [ll.rstrip() for ll in text.splitlines() if ll.strip()]
                 )
                 # Summarize the cleaned text
-                summary = summarizer.summarize(cleaned_text)
+                logging.info(f"Using model: {sender.model}")
+                summary = summarizer.summarize(cleaned_text, configModel=sender.model)
                 # Send the notification using the sender
                 sender.send(
                     notification["subject"],
@@ -282,6 +284,5 @@ if __name__ == "__main__":
 
             # Sleep for a minute
             time.sleep(60)
-        # If something breaks, log it
         except Exception as e:
             logging.exception("An error occurred in the main loop 🤦‍♂️")
