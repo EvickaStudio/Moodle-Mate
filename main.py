@@ -1,6 +1,5 @@
 import logging
 import time
-
 import bs4
 
 from ai.chat import GPT
@@ -8,12 +7,35 @@ from moodle.api import MoodleAPI
 from notification.discord import Discord
 from notification.pushbullet import Pushbullet
 
-# Set logging level and print logging messages to console
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+
+def setup_logging():
+    """
+    Set up basic configuration for logging.
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+
+
+def handle_exceptions(func):
+    """
+    Decorator to handle exceptions in a standardized way across methods.
+    Logs the exception and returns None in case of an error.
+
+    :param func: The function to decorate.
+    :return: Wrapped function with exception handling.
+    """
+
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.exception(f"Exception occurred in {func.__name__}")
+            return None
+
+    return wrapper
 
 
 class MoodleNotificationHandler:
@@ -42,6 +64,7 @@ class MoodleNotificationHandler:
         last_notification_id (int): The ID of the last notification fetched.
     """
 
+    @handle_exceptions
     def __init__(self, config_file):
         """
         Loads the configuration file and initializes the MoodleNotificationHandler.
@@ -63,6 +86,7 @@ class MoodleNotificationHandler:
             logging.exception("Initialization failed")
             exit(1)
 
+    @handle_exceptions
     def login(self):
         """
         Logs in to Moodle using the username and password.
@@ -78,6 +102,7 @@ class MoodleNotificationHandler:
         except Exception as e:
             logging.exception("Failed to login to Moodle")
 
+    @handle_exceptions
     def fetch_latest_notification(self):
         """
         Fetches the latest notification from Moodle.
@@ -100,6 +125,7 @@ class MoodleNotificationHandler:
             logging.exception("Failed to fetch Moodle notification")
             return None
 
+    @handle_exceptions
     def fetch_newest_notification(self):
         """
         Fetches the newest notification from Moodle by comparing the ID of the last notification fetched.
@@ -125,6 +151,7 @@ class MoodleNotificationHandler:
             logging.exception("Failed to fetch newest Moodle notification")
             return None
 
+    @handle_exceptions
     def user_id_from(self, useridfrom):
         """
         Fetches the user ID from Moodle.
@@ -162,11 +189,13 @@ class NotificationSummarizer:
     summarize(text): Summarizes the given text using GPT-3 API.
     """
 
+    @handle_exceptions
     def __init__(self, api_config):
         # Load the API key and system message from the config file
         self.api_key = api_config["moodle"]["openaikey"]
         self.system_message = api_config["moodle"]["systemmessage"]
 
+    @handle_exceptions
     def summarize(self, text, configModel):
         try:
             # Summarize the text using GPT-3 and return the result
@@ -192,6 +221,7 @@ class NotificationSender:
         webhook_state (int): The state of Discord notifications.
     """
 
+    @handle_exceptions
     def __init__(self, api_config):
         """
         Initializes a NotificationSender instance.
@@ -205,6 +235,7 @@ class NotificationSender:
         self.webhook_state = int(api_config["moodle"].get("webhookState", 1))
         self.model = api_config["moodle"]["model"]
 
+    @handle_exceptions
     def send(self, subject, text, summary, useridfrom):
         """
         Sends a notification to Pushbullet and Discord.
@@ -237,6 +268,52 @@ class NotificationSender:
             logging.exception("Failed to send notification")
 
 
+def parse_html_to_text(html):
+    """
+    Parses the given HTML content to plain text.
+
+    :param html: HTML content as a string.
+    :return: Plain text after removing HTML tags.
+    """
+    try:
+        soup = bs4.BeautifulSoup(html, "html.parser")
+        return "\n".join(
+            [line.rstrip() for line in soup.get_text().splitlines() if line.strip()]
+        )
+    except Exception as e:
+        logging.exception("Failed to parse HTML")
+        return None
+
+
+def main_loop(handler, summarizer, sender, sleep_duration=60):
+    """
+    Main loop of the program. Fetches and processes notifications at regular intervals.
+
+    :param handler: Instance of MoodleNotificationHandler for fetching notifications.
+    :param summarizer: Instance of NotificationSummarizer for summarizing notifications.
+    :param sender: Instance of NotificationSender for sending notifications.
+    :param sleep_duration: Time to sleep between each iteration of the loop.
+    """
+    while True:
+        try:
+            if notification := handler.fetch_newest_notification():
+                if text := parse_html_to_text(notification["fullmessagehtml"]):
+                    summary = summarizer.summarize(text, configModel=sender.model)
+                    sender.send(
+                        notification["subject"],
+                        text,
+                        summary,
+                        notification["useridfrom"],
+                    )
+
+            time.sleep(sleep_duration)
+        except KeyboardInterrupt:
+            logging.info("Exiting main loop")
+            break
+        except Exception as e:
+            logging.exception("An error occurred in the main loop")
+
+
 logo = """
    __  ___             ____    __  ___     __        ,-------,
   /  |/  /__  ___  ___/ / /__ /  |/  /__ _/ /____   /       / | 
@@ -249,40 +326,12 @@ logo = """
 # This is the main loop of the program. We'll keep looping until something breaks
 if __name__ == "__main__":
     print(logo)
-    logging.info("Starting main loop")
-    # Initialize the MoodleNotificationHandler with a config file
+    setup_logging()
+
+    # Initialize classes with necessary configurations
     moodle_handler = MoodleNotificationHandler("config.ini")
-    # Initialize the summarizer with the config from the handler
     summarizer = NotificationSummarizer(moodle_handler.api.config)
-    # Initialize the sender with the same config
     sender = NotificationSender(moodle_handler.api.config)
 
-    while True:
-        try:
-            # Get the newest notification
-            if notification := moodle_handler.fetch_newest_notification():
-                # Get the html from the notification
-                html = notification["fullmessagehtml"]
-                # Parse the html using Beautiful Soup
-                soup = bs4.BeautifulSoup(html, "html.parser")
-                # Get the text from the parsed html
-                text = soup.get_text()
-                # Clean the text, removing blank lines and trailing whitespace
-                cleaned_text = "\n".join(
-                    [ll.rstrip() for ll in text.splitlines() if ll.strip()]
-                )
-                # Summarize the cleaned text
-                logging.info(f"Using model: {sender.model}")
-                summary = summarizer.summarize(cleaned_text, configModel=sender.model)
-                # Send the notification using the sender
-                sender.send(
-                    notification["subject"],
-                    cleaned_text,
-                    summary,
-                    notification["useridfrom"],
-                )
-
-            # Sleep for a minute
-            time.sleep(60)
-        except Exception as e:
-            logging.exception("An error occurred in the main loop 🤦‍♂️")
+    # Start the main loop
+    main_loop(moodle_handler, summarizer, sender, 60)
