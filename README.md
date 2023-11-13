@@ -78,6 +78,8 @@ webhookState = 1
 webhookUrl = https://discord.com/api/webhooks/xxxxx/xxxxx
 ; System message for GPT-3 summarization
 systemMessage = "YOUR SYSTEM PROMPT HERE, EXAMPLE IN config_example.ini"
+; Set GPT model, standard gpt-3.5-turbo
+model = gpt-3.5-turbo
 ```
 
 ---
