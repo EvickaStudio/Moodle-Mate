@@ -19,11 +19,13 @@
 
 ## <div id="overview">Overview</div>
 
-Moodle Mate is a robust Python application crafted to automate the process of fetching Moodle notifications at regular intervals. Utilizing the GPT-3 API, it summarizes these notifications and forwards them via Pushbullet to your smartphone and Discord through a webhook.
+Moodle Mate is a robust Python application crafted to automate the process of fetching Moodle notifications at regular intervals. Utilizing the GPT-3 API, it summarizes these notifications and forwards them via Pushbullet to your smartphone and Discord through a webhook. 
 
+
+Currently it costs me less then 20 cents per month with gpt-3.5-turbo, not including server costs.
 ---
 
-## <div id="dependencies">Dependencies</div>
+## <div id="dDerzeit kostet es mich mit gpt-3.5-turbo weniger als 20 Cent pro Monat, Serverkosten nicht inbegriffen.ependencies">Dependencies</div>
 
 The software relies on the following custom API wrappers and libraries:
 
@@ -58,6 +60,7 @@ A configuration file, `config.ini`, is necessary for the application's operation
 - Webhook State (1: Activated, 0: Deactivated)
 - Discord Webhook URL
 - System Message for GPT-3 (Default in German)
+- Set GPT model, standard gpt-3.5-turbo (recommend: gpt-4-1106-preview)
 
 Example:
 
