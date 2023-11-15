@@ -6,6 +6,7 @@
 ---
 
 ## Contents
+
 1. [Overview](#overview)
 2. [Dependencies](#dependencies)
 3. [Installation](#installation)
@@ -19,9 +20,9 @@
 
 ## <div id="overview">Overview</div>
 
-Moodle Mate is a robust Python application crafted to automate the process of fetching Moodle notifications at regular intervals. Utilizing the GPT-3 API, it summarizes these notifications and forwards them via Pushbullet to your smartphone and Discord through a webhook. 
+Moodle Mate is an advanced Python application designed to streamline the process of receiving Moodle notifications. It fetches notifications from Moodle, summarizes them using GPT-3 or GPT-4 and sends them to the user via Pushbullet and Discord. The application is designed to run on a server and can be configured to run at specific intervals.
 
-Currently it costs me less then 15 cents per month with gpt-3.5-turbo, not including server costs.
+Utilizes GPT-3.5-turbo for cost-effective operations (under 15 cents/month, excluding server costs).
 
 ---
 
@@ -29,10 +30,10 @@ Currently it costs me less then 15 cents per month with gpt-3.5-turbo, not inclu
 
 The software relies on the following custom API wrappers and libraries:
 
-- **MoodleAPI**: For Moodle integration
-- **OpenAI**: For text summarization
-- **Pushbullet**: For mobile notifications
-- **Discord**: For Discord webhook support
+- **MoodleAPI**: Interface for the Moodle API
+- **OpenAI**: Interface for the OpenAI API
+- **Pushbullet**: Interface for the Pushbullet API
+- **Discord**: Utilizes webhooks for Discord integration.
 
 ---
 
@@ -94,36 +95,6 @@ Execute the script as follows:
 ```bash
 python main.py
 ```
-
----
-
-## <div id="classes">Classes</div>
-
-### `MoodleNotificationHandler`
-
-**Responsibility**: Manages Moodle notifications for specific users.
-
-#### Methods
-
-- `fetch_latest_notification()`: Retrieves latest notification.
-- `fetch_newest_notification()`: Retrieves newest unread notification.
-- `user_id_from()`: Fetches user data based on ID.
-
-### `NotificationSummarizer`
-
-**Responsibility**: Text summarization via OpenAI API.
-
-#### Methods
-
-- `summarize()`: Summarizes input text.
-
-### `NotificationSender`
-
-**Responsibility**: Dispatches notifications to designated platforms.
-
-#### Methods
-
-- `send()`: Forwards notifications to Pushbullet and Discord.
 
 ---
 
