@@ -21,11 +21,11 @@
 
 Moodle Mate is a robust Python application crafted to automate the process of fetching Moodle notifications at regular intervals. Utilizing the GPT-3 API, it summarizes these notifications and forwards them via Pushbullet to your smartphone and Discord through a webhook. 
 
-Currently it costs me less then 20 cents per month with gpt-3.5-turbo, not including server costs.
+Currently it costs me less then 15 cents per month with gpt-3.5-turbo, not including server costs.
 
 ---
 
-## <div id="dDerzeit kostet es mich mit gpt-3.5-turbo weniger als 20 Cent pro Monat, Serverkosten nicht inbegriffen.ependencies">Dependencies</div>
+## <div id="dependencies">Dependencies</div>
 
 The software relies on the following custom API wrappers and libraries:
 
