@@ -93,7 +93,7 @@ model = gpt-3.5-turbo
 Execute the script as follows:
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 ---
