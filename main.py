@@ -1,5 +1,7 @@
 import logging
 import time
+import traceback
+
 import bs4
 
 from ai.chat import GPT
@@ -267,6 +269,17 @@ class NotificationSender:
         except Exception as e:
             logging.exception("Failed to send notification")
 
+    @handle_exceptions
+    def send_simple(self, subject, text):
+        try:
+            logging.info("Sending notification to Discord")
+            dc = Discord(self.webhook_url)
+            dc.send_simple(subject, text)
+        except Exception as e:
+            logging.exception("Failed to send notification")
+
+
+
 
 def parse_html_to_text(html):
     """
@@ -285,7 +298,7 @@ def parse_html_to_text(html):
         return None
 
 
-def main_loop(handler, summarizer, sender, sleep_duration=60):
+def main_loop(handler, summarizer, sender, sleep_duration=60, max_retries=3):
     """
     Main loop of the program. Fetches and processes notifications at regular intervals.
 
@@ -293,7 +306,9 @@ def main_loop(handler, summarizer, sender, sleep_duration=60):
     :param summarizer: Instance of NotificationSummarizer for summarizing notifications.
     :param sender: Instance of NotificationSender for sending notifications.
     :param sleep_duration: Time to sleep between each iteration of the loop.
+    :param max_retries: Maximum number of retries for fetching and processing notifications.
     """
+    retry_count = 0
     while True:
         try:
             if notification := handler.fetch_newest_notification():
@@ -306,12 +321,25 @@ def main_loop(handler, summarizer, sender, sleep_duration=60):
                         notification["useridfrom"],
                     )
 
+            retry_count = 0  # Reset retry count if successful
             time.sleep(sleep_duration)
         except KeyboardInterrupt:
             logging.info("Exiting main loop")
             break
         except Exception as e:
             logging.exception("An error occurred in the main loop")
+            retry_count += 1
+            if retry_count > max_retries:
+                # Send error message via Discord
+                error_message = (
+                    f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
+                )
+                sender.send_simple("Error", error_message)
+                logging.error("Max retries reached. Exiting main loop.")
+                break
+            else:
+                logging.warning(f"Retrying ({retry_count}/{max_retries})...")
+                time.sleep(sleep_duration)
 
 
 logo = """
@@ -334,4 +362,4 @@ if __name__ == "__main__":
     sender = NotificationSender(moodle_handler.api.config)
 
     # Start the main loop
-    main_loop(moodle_handler, summarizer, sender, 60)
+    main_loop(moodle_handler, summarizer, sender)

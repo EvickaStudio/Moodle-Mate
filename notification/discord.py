@@ -80,3 +80,16 @@ class Discord:
         except requests.exceptions.RequestException as e:
             print(f"An error occurred while sending the message: {e}")
             return False
+        
+    # Simple text message sending
+    def send_simple(self, subject, text):
+        try:
+            data = {
+                "content": f"**{subject}**\n{text}"
+            }
+            r = requests.post(self.webhook_url, json=data)
+            r.raise_for_status()  # Raise an exception if the request was not successful
+            return True
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred while sending the message: {e}")
+            return False

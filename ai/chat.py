@@ -2,7 +2,7 @@
 Chat module for OpenAI API
 
 Author: EvickaStudio
-Data: 07.10.2023
+Data: 18.11.2023
 Github: @EvickaStudio
 """
 
@@ -47,17 +47,21 @@ class GPT:
             print(response)
             ```
         """
-        response = openai.chat.completions.create(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": systemMessage,
-                },
-                {
-                    "role": "user", 
-                    "content": userMessage
-                },
-            ],
-        )
-        return response.choices[0].message.content
+        try:
+            response = openai.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": systemMessage, # System message set in config
+                    },
+                    {
+                        "role": "user", 
+                        "content": userMessage # Moodle message input
+                    },
+                ],
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+            return None
