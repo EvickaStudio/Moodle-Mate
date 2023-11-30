@@ -17,7 +17,7 @@ To use the Moodle API module:
 Example:
 ```python
 from api import MoodleAPI
-from config import Config
+from load_config import Config
 
 config = Config("config.ini")
 moodle_api = MoodleAPI(config)
