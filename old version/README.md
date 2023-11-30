@@ -1,8 +1,7 @@
-<div align="center">
-  <img src="assets/logo.png" alt="Logo" width="200"/>
-  <h1>Moodle Mate</h1>
-  <p><strong>Automated Moodle Notification Summarization</strong></p>
-</div>
+<h1 align="center">Moodle Mate</h1>
+<p align="center">
+    <strong>Automated Moodle Notification Management</strong>
+</p>
 
 ---
 
@@ -13,10 +12,9 @@
 3. [Installation](#installation)
 4. [Configuration](#configuration)
 5. [Usage](#usage)
-6. [Documentation](#documentation)
+6. [Classes](#classes)
 7. [Screenshots](#screenshots)
-8. [Contributing](#contributing)
-9. [Author](#author)
+8. [Author](#author)
 
 ---
 
@@ -88,8 +86,6 @@ systemMessage = "YOUR SYSTEM PROMPT HERE, EXAMPLE IN config_example.ini"
 model = gpt-3.5-turbo
 ```
 
-A example can be found in examples/example_config.ini
-
 ---
 
 ## <div id="usage">Usage</div>
@@ -102,34 +98,14 @@ python3 main.py
 
 ---
 
-## <div id="Documentation">Documentation</div>
-
-A documentation of the modules can be found in its respective folder.
-
----
-
 ## <div id="screenshots">Screenshots</div>
 
-<img src="assets/discord.jpg" alt="Discord Screenshot" width="600"/>
-
----
-
-## <div id="Contributing">Contributing</div>
-
-Contributions are always welcome! For bug reports, feature requests and questions, please submit an issue/PR.
+<img src="images/discord.jpg" alt="Discord Screenshot" width="600"/>
 
 ---
 
 ## <div id="author">Author</div>
 
-Made with ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
+Developed with 💻 and ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
 
 ---
-
-## Notes
-
-I'm currently in the process of rewriting the codebase to make it more modular and easier to maintain. The current codebase is a mess and I'm sorry for that. Thus, the code might be a bit messy and not up to my 
-standards in the main file...
-Also the CUI version is currently not updates and thus
-removed, but will be added again in the future.
-Old code can be found in old version folder.

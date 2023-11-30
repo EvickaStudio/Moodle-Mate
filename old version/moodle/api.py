@@ -6,7 +6,10 @@ Data: 07.10.2023
 Github: @EvickaStudio
 """
 
+
+import configparser
 import logging
+
 import requests
 
 
@@ -16,16 +19,60 @@ class MoodleAPI:
 
     A class that provides methods for interacting with the Moodle API.
 
+    Attributes:
+        config (ConfigParser): The configuration parser object.
+        url (str): The URL of the Moodle instance.
+        session (Session): The requests session object.
+        requestHeader (dict): The headers for the requests.
+        token (str): The authentication token.
+        userid (str): The user ID.
+
+    Methods:
+        __init__(config_file: str) -> None:
+            Initializes the MoodleAPI object.
+
+        login(username: str, password: str) -> bool:
+            Logs in to the Moodle instance using the provided username and password.
+            Sets the token for the MoodleAPI object.
+
+        get_site_info() -> dict:
+            Retrieves site information from the Moodle instance.
+
+        get_popup_notifications(user_id: str) -> dict:
+            Retrieves popup notifications for a user.
+
+        popup_notification_acknowledge(user_id: str) -> dict:
+            Acknowledges popup notifications for a user.
+
+        _post(arg0: str, user_id: str) -> dict:
+            Sends a POST request to the Moodle API.
+
+    Example:
+        ```python
+        from moodle.api import MoodleAPI
+
+        api = MoodleAPI()
+        username = api.config["moodle"]["username"] # load username from config file
+        password = api.config["moodle"]["password"] # load password from config file
+        api.login(username, password)
+        site_info = api.get_site_info()
+        print(site_info)
+        ```
     """
 
-    def __init__(self, url):
-        self.url = url
+    def __init__(self, config_file):
+        self.config = configparser.ConfigParser()
+        self.config.read(config_file)
+        self.url = self.config["moodle"]["moodleUrl"]
         self.session = requests.Session()
-        self.request_header = {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 7.1.1; ...) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile",
+        self.requestHeader = {
+            "User-Agent": (
+                "Mozilla/5.0 (Linux; Android 7.1.1; Moto G Play Build/NPIS26.48-43-2; wv) AppleWebKit/537.36"
+                + " (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile"
+            ),
             "Content-Type": "application/x-www-form-urlencoded",
         }
-        self.session.headers.update(self.request_header)
+        self.session.headers.update(self.requestHeader)
         self.token = None
         self.userid = None
 

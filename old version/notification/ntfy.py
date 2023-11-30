@@ -3,7 +3,6 @@ Helper class for sending notifications.
 """
 
 import requests
-import logging
 
 
 class Ntfy:
@@ -28,7 +27,7 @@ class Ntfy:
         self.server_url = None
         self.topic = None
 
-    def send_notification(self, topic, title, message, priority="urgent") -> bool:
+    def sendNTFY(self, topic, title, message, priority="urgent"):
         """
         Send a notification.
 
@@ -47,7 +46,5 @@ class Ntfy:
         try:
             response = requests.post(url, data=message, headers=headers)
             response.raise_for_status()  # Raise an exception if the request was not successful
-            return True
         except requests.exceptions.RequestException as e:
-            logging.error(f"Error sending ntfy notification: {e}")
-            return False
+            print(f"An error occurred while sending the notification: {e}")

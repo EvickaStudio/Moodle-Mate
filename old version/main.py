@@ -1,12 +1,13 @@
 import logging
 import time
 import traceback
+
 import bs4
-from gpt.openai_chat import GPT
+
+from ai.chat import GPT
 from moodle.api import MoodleAPI
 from notification.discord import Discord
 from notification.pushbullet import Pushbullet
-from moodle.load_config import Config
 
 
 def setup_logging():
@@ -66,14 +67,13 @@ class MoodleNotificationHandler:
     """
 
     @handle_exceptions
-    def __init__(self, config: Config):
+    def __init__(self, config_file):
         """
         Loads the configuration file and initializes the MoodleNotificationHandler.
         """
         try:
             # Initialize the MoodleAPI with the config file
-            self.url = config.get_config("moodle", "moodleUrl")
-            self.api = MoodleAPI(self.url)
+            self.api = MoodleAPI(config_file)
 
             # Login to Moodle using the username and password
             self.login()
@@ -98,8 +98,8 @@ class MoodleNotificationHandler:
         """
         try:
             # Login to Moodle using the username and password
-            self.username = config.get_config("moodle", "username")
-            self.password = config.get_config("moodle", "password")
+            self.username = self.api.config["moodle"]["username"]
+            self.password = self.api.config["moodle"]["password"]
             self.api.login(username=self.username, password=self.password)
         except Exception as e:
             logging.exception("Failed to login to Moodle")
@@ -192,19 +192,20 @@ class NotificationSummarizer:
     """
 
     @handle_exceptions
-    def __init__(self, config: Config):
-        self.api_key = config.get_config("moodle", "openaikey")
-        self.system_message = config.get_config("moodle", "systemmessage")
+    def __init__(self, api_config):
+        # Load the API key and system message from the config file
+        self.api_key = api_config["moodle"]["openaikey"]
+        self.system_message = api_config["moodle"]["systemmessage"]
 
     @handle_exceptions
     def summarize(self, text, configModel):
         try:
             # Summarize the text using GPT-3 and return the result
-            ai = GPT()
-            ai.apiKey = self.api_key
-            return ai.chat_completion(configModel, self.system_message, text)
+            gpt = GPT()
+            gpt.apiKey = self.api_key
+            return gpt.chatCompletion(configModel, self.system_message, text)
         except Exception as e:
-            logging.exception(f"Failed to summarize with {configModel}")
+            logging.exception("Failed to summarize with GPT-3")
             return None
 
 
@@ -223,12 +224,18 @@ class NotificationSender:
     """
 
     @handle_exceptions
-    def __init__(self, config: Config):
-        self.pushbullet_key = config.get_config("moodle", "pushbulletkey")
-        self.webhook_url = config.get_config("moodle", "webhookUrl")
-        self.pushbullet_state = int(config.get_config("moodle", "pushbulletState"))
-        self.webhook_state = int(config.get_config("moodle", "webhookState"))
-        self.model = config.get_config("moodle", "model")
+    def __init__(self, api_config):
+        """
+        Initializes a NotificationSender instance.
+
+        Args:
+            api_config (dict): The API configuration containing the Pushbullet API key and Discord webhook URL.
+        """
+        self.pushbullet_key = api_config["moodle"]["pushbulletkey"]
+        self.webhook_url = api_config["moodle"]["webhookUrl"]
+        self.pushbullet_state = int(api_config["moodle"].get("pushbulletState", 1))
+        self.webhook_state = int(api_config["moodle"].get("webhookState", 1))
+        self.model = api_config["moodle"]["model"]
 
     @handle_exceptions
     def send(self, subject, text, summary, useridfrom):
@@ -249,7 +256,7 @@ class NotificationSender:
             if self.pushbullet_state == 1:
                 logging.info("Sending notification to Pushbullet")
                 pb = Pushbullet(self.pushbullet_key)
-                pb.send_notification(subject, summary)
+                pb.push(subject, summary)
 
             if self.webhook_state == 1:
                 logging.info("Sending notification to Discord")
@@ -257,7 +264,7 @@ class NotificationSender:
                 useridfrom_info = moodle_handler.user_id_from(useridfrom)
                 fullname = useridfrom_info[0]["fullname"]
                 profile_url = useridfrom_info[0]["profileimageurl"]
-                dc.send_notification(subject, text, summary, fullname, profile_url)
+                dc.send(subject, text, summary, fullname, profile_url)
 
         except Exception as e:
             logging.exception("Failed to send notification")
@@ -270,6 +277,8 @@ class NotificationSender:
             dc.send_simple(subject, text)
         except Exception as e:
             logging.exception("Failed to send notification")
+
+
 
 
 def parse_html_to_text(html):
@@ -289,9 +298,7 @@ def parse_html_to_text(html):
         temp = "\n".join(
             [line for line in temp.splitlines() if not line.startswith("   ")]
         )
-        return "\n".join(
-            temp.splitlines()[:-1]
-        )  # removes the last line which is always the same
+        return "\n".join(temp.splitlines()[:-1])
     except Exception as e:
         logging.exception("Failed to parse HTML")
         return None
@@ -355,12 +362,10 @@ if __name__ == "__main__":
     print(logo)
     setup_logging()
 
-    # Initialize Config object
-    config = Config("config.ini")
+    # Initialize classes with necessary configurations
+    moodle_handler = MoodleNotificationHandler("config.ini")
+    summarizer = NotificationSummarizer(moodle_handler.api.config)
+    sender = NotificationSender(moodle_handler.api.config)
 
-    # Initialize other classes with the Config object
-    moodle_handler = MoodleNotificationHandler(config)
-    summarizer = NotificationSummarizer(config)
-    sender = NotificationSender(config)
-
+    # Start the main loop
     main_loop(moodle_handler, summarizer, sender)

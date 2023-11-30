@@ -3,10 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+# C extensions and modules
 *.so
 config.ini
 testing/
+old/
+.vscode/
 
 # Distribution / packaging
 .Python
