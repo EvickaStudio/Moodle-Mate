@@ -25,6 +25,7 @@
 Moodle Mate is an advanced Python application designed to streamline the process of receiving Moodle notifications. It fetches notifications from Moodle, summarizes them using GPT-3 or GPT-4 and sends them to the user via Pushbullet and Discord. The application is designed to run on a server and can be configured to run at specific intervals.
 
 Utilizes GPT-3.5-turbo for cost-effective operations (under 15 cents/month, excluding server costs).
+Alternatively you could just disable summarization in the config file and use the script without GPT-3/4.
 
 ---
 
