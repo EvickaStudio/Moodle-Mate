@@ -2,8 +2,9 @@
 Helper class for sending notifications.
 """
 
-import requests
 import logging
+
+import requests
 
 
 class Ntfy:

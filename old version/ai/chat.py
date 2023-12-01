@@ -53,12 +53,9 @@ class GPT:
                 messages=[
                     {
                         "role": "system",
-                        "content": systemMessage, # System message set in config
+                        "content": systemMessage,  # System message set in config
                     },
-                    {
-                        "role": "user", 
-                        "content": userMessage # Moodle message input
-                    },
+                    {"role": "user", "content": userMessage},  # Moodle message input
                 ],
             )
             return response.choices[0].message.content

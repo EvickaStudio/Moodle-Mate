@@ -60,17 +60,17 @@ class Discord:
                 "color": int(self.random_color()[1:], 16),
                 "fields": [
                     {
-                        "name": "TL;DR", # Too long; didn't read
-                        "value": summary, # GPT-3 generated summary
+                        "name": "TL;DR",  # Too long; didn't read
+                        "value": summary,  # GPT-3 generated summary
                     }
                 ],
                 "author": {
-                    "name": fullname, # Full name of the sender
-                    "icon_url": picture_url, # Profile picture of the sender
+                    "name": fullname,  # Full name of the sender
+                    "icon_url": picture_url,  # Profile picture of the sender
                 },
                 "footer": {
-                    "text": f"{current_time} - Moodle-Mate", # Current time and the name of the project
-                    "icon_url": "https://avatars.githubusercontent.com/u/68477970?v=4", # My profile picture <3
+                    "text": f"{current_time} - Moodle-Mate",  # Current time and the name of the project
+                    "icon_url": "https://avatars.githubusercontent.com/u/68477970?v=4",  # My profile picture <3
                 },
             }
             data = {"embeds": [embed]}
@@ -80,13 +80,11 @@ class Discord:
         except requests.exceptions.RequestException as e:
             print(f"An error occurred while sending the message: {e}")
             return False
-        
+
     # Simple text message sending
     def send_simple(self, subject, text):
         try:
-            data = {
-                "content": f"**{subject}**\n{text}"
-            }
+            data = {"content": f"**{subject}**\n{text}"}
             r = requests.post(self.webhook_url, json=data)
             r.raise_for_status()  # Raise an exception if the request was not successful
             return True

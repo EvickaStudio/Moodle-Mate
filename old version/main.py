@@ -3,8 +3,8 @@ import time
 import traceback
 
 import bs4
-
 from ai.chat import GPT
+
 from moodle.api import MoodleAPI
 from notification.discord import Discord
 from notification.pushbullet import Pushbullet
@@ -277,8 +277,6 @@ class NotificationSender:
             dc.send_simple(subject, text)
         except Exception as e:
             logging.exception("Failed to send notification")
-
-
 
 
 def parse_html_to_text(html):

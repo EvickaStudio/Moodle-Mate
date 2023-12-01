@@ -64,6 +64,7 @@ A configuration file, `config.ini`, is necessary for the application's operation
 - Discord Webhook URL
 - System Message for GPT-3 (Default in German)
 - Set GPT model, standard gpt-3.5-turbo (recommend: gpt-4-1106-preview)
+- If you don't want to use GPT set summary to 0, else 1
 
 Example:
 
@@ -86,6 +87,8 @@ webhookUrl = https://discord.com/api/webhooks/xxxxx/xxxxx
 systemMessage = "YOUR SYSTEM PROMPT HERE, EXAMPLE IN config_example.ini"
 ; Set GPT model, standard gpt-3.5-turbo
 model = gpt-3.5-turbo
+; If summary with GPT on set to 1, else 0
+summary = 1
 ```
 
 A example can be found in examples/example_config.ini

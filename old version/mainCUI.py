@@ -1,11 +1,12 @@
+import logging
 import os
 import time
 import traceback
-import logging
 from datetime import datetime, timedelta
-import bs4
 
+import bs4
 from ai.chat import GPT
+
 from moodle.api import MoodleAPI
 from notification.discord import Discord
 from notification.pushbullet import Pushbullet
@@ -361,8 +362,6 @@ def main_loop(handler, summarizer, sender, sleep_duration=60, max_retries=3):
 
 
 def get_status(moodle_handler, summarizer, sender):
-
-
     # Retrieve necessary information
     username = moodle_handler.api.config["moodle"]["username"]
     Status = "running"

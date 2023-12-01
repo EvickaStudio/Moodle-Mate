@@ -7,8 +7,9 @@ Github: @EvickaStudio
 """
 
 import datetime
-import random
 import logging
+import random
+
 import requests
 
 
