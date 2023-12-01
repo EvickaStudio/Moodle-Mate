@@ -44,15 +44,15 @@ class Discord:
             bool: True if the message was sent successfully, False otherwise.
     """
 
-    def __init__(self, webhook_url):
+    def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
 
-    def random_color(self):
+    def random_color(self) -> str:
         return "#{:02x}{:02x}{:02x}".format(
             random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
         )
 
-    def send_notification(self, subject, text, summary, fullname, picture_url):
+    def send_notification(self, subject: str, text: str, summary: str, fullname: str, picture_url: str):
         # Get current time for the timestamp in the footer
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
@@ -82,7 +82,7 @@ class Discord:
             return False
 
     # Simple text message sending
-    def send_simple(self, subject, text):
+    def send_simple(self, subject: str, text: str) -> None:
         try:
             data = {"content": f"**{subject}**\n{text}"}
             return self._post(data)
@@ -90,7 +90,7 @@ class Discord:
             logging.error(f"Error sending Discord notification: {e}")
             return False
 
-    def _post(self, data):
+    def _post(self, data: dict):
         try:
             r = requests.post(self.webhook_url, json=data)
             r.raise_for_status()

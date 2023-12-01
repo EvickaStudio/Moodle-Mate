@@ -14,15 +14,15 @@ class GPT:
         self._apiKey = None
 
     @property
-    def apiKey(self):
+    def apiKey(self) -> str:
         return self._apiKey
 
     @apiKey.setter
-    def apiKey(self, key):
+    def apiKey(self, key: str) -> None:
         self._apiKey = key
         openai.api_key = key
 
-    def chat_completion(self, model, systemMessage, userMessage):
+    def chat_completion(self, model: str, systemMessage: str, userMessage: str) -> str:
         """
         Chat completion endpoint for OpenAI API
 

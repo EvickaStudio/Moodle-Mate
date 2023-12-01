@@ -30,7 +30,7 @@ class MoodleNotificationHandler:
         last_notification_id (int): The ID of the last notification fetched.
     """
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config) -> None:
         """
         Loads the configuration file and initializes the MoodleNotificationHandler.
         """
@@ -53,7 +53,7 @@ class MoodleNotificationHandler:
             logging.exception("Initialization failed")
             exit(1)
 
-    def login(self):
+    def login(self) -> None:
         """
         Logs in to Moodle using the username and password.
 
@@ -68,7 +68,7 @@ class MoodleNotificationHandler:
         except Exception as e:
             logging.exception("Failed to login to Moodle")
 
-    def fetch_latest_notification(self):
+    def fetch_latest_notification(self) -> str:
         """
         Fetches the latest notification from Moodle.
         Latest notification is defined as the first notification in the list of notifications.
@@ -90,7 +90,7 @@ class MoodleNotificationHandler:
             logging.exception("Failed to fetch Moodle notification")
             return None
 
-    def fetch_newest_notification(self):
+    def fetch_newest_notification(self) -> str:
         """
         Fetches the newest notification from Moodle by comparing the ID of the last notification fetched.
 
@@ -115,7 +115,7 @@ class MoodleNotificationHandler:
             logging.exception("Failed to fetch newest Moodle notification")
             return None
 
-    def user_id_from(self, useridfrom):
+    def user_id_from(self, useridfrom: str) -> str:
         """
         Fetches the user ID from Moodle.
 

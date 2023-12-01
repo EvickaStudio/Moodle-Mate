@@ -13,7 +13,7 @@ import requests
 
 
 class Pushbullet:
-    def __init__(self, api_key):
+    def __init__(self, api_key: str):
         """
         Initializes a pushbullet instance with the provided API key.
 

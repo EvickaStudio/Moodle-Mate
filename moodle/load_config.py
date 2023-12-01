@@ -11,14 +11,14 @@ import logging
 
 
 class Config:
-    def __init__(self, config_file):
+    def __init__(self, config_file: str):
         self.config = configparser.ConfigParser()
         try:
             self.config.read(config_file)
         except configparser.Error as e:
             logging.error(f"Error reading config file: {e}")
 
-    def get_config(self, section, key):
+    def get_config(self, section: str, key: str) -> str:
         try:
             return self.config[section][key]
         except KeyError:

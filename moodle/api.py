@@ -19,7 +19,7 @@ class MoodleAPI:
 
     """
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
         self.session = requests.Session()
         self.request_header = {
@@ -30,7 +30,7 @@ class MoodleAPI:
         self.token = None
         self.userid = None
 
-    def login(self, username, password):
+    def login(self, username: str, password: str) -> bool:
         """
         login(self, username: str, password: str) -> bool:
             Logs in to the Moodle instance using the provided username and password.
@@ -50,7 +50,7 @@ class MoodleAPI:
             logging.error("Login failed")
             return False
 
-    def get_site_info(self):
+    def get_site_info(self) -> dict:
         """
         get_site_info(self) -> dict:
             Retrieves site information from the Moodle instance.
@@ -70,26 +70,26 @@ class MoodleAPI:
         self.userid = response.json()["userid"]
         return response.json()
 
-    def get_user_id(self):
+    def get_user_id(self) -> int:
         if self.token is None:
             logging.error("Token not set. Please login first.")
             return None
         site_info = self.get_site_info()
         return site_info["userid"]
 
-    def get_popup_notifications(self, user_id):
+    def get_popup_notifications(self, user_id: int):
         """
         Retrieves popup notifications for a user.
         """
         return self._post("message_popup_get_popup_notifications", user_id)
 
-    def popup_notification_unread_count(self, user_id):
+    def popup_notification_unread_count(self, user_id: int) -> int:
         """
         Retrieves the number of unread popup notifications for a user.
         """
         return self._post("message_popup_get_unread_popup_notification_count", user_id)
 
-    def core_user_get_users_by_field(self, user_id):
+    def core_user_get_users_by_field(self, user_id: int) -> dict:
         """
         Retrieves user information for a user.
         """
@@ -109,7 +109,7 @@ class MoodleAPI:
         )
         return response.json()
 
-    def _post(self, arg0, user_id):
+    def _post(self, arg0: str, user_id: str) -> dict:
         """
         Sends a POST request to the Moodle API with an given wsfunction and user ID.
         """

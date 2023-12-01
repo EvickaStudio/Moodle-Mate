@@ -9,7 +9,7 @@ import logging
 import bs4
 
 
-def parse_html_to_text(html):
+def parse_html_to_text(html: str) -> str:
     """
     Parse HTML content and extract the text.
 

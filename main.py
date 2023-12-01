@@ -26,12 +26,12 @@ class NotificationSummarizer:
     """
 
     @handle_exceptions
-    def __init__(self, config: Config):
+    def __init__(self, config: Config) -> None:
         self.api_key = config.get_config("moodle", "openaikey")
         self.system_message = config.get_config("moodle", "systemmessage")
 
     @handle_exceptions
-    def summarize(self, text, configModel):
+    def summarize(self, text: str, configModel: str) -> str:
         try:
             # Summarize the text using GPT-3 and return the result
             ai = GPT()
@@ -57,7 +57,7 @@ class NotificationSender:
     """
 
     @handle_exceptions
-    def __init__(self, config: Config):
+    def __init__(self, config: Config) -> None:
         self.pushbullet_key = config.get_config("moodle", "pushbulletkey")
         self.webhook_url = config.get_config("moodle", "webhookUrl")
         self.pushbullet_state = int(config.get_config("moodle", "pushbulletState"))
@@ -65,7 +65,7 @@ class NotificationSender:
         self.model = config.get_config("moodle", "model")
 
     @handle_exceptions
-    def send(self, subject, text, summary, useridfrom):
+    def send(self, subject: str, text: str, summary: str, useridfrom: int):
         """
         Sends a notification to Pushbullet and Discord.
 
@@ -97,7 +97,7 @@ class NotificationSender:
             logging.exception("Failed to send notification")
 
     @handle_exceptions
-    def send_simple(self, subject, text):
+    def send_simple(self, subject: str, text: str) -> None:
         try:
             logging.info("Sending notification to Discord")
             dc = Discord(self.webhook_url)
