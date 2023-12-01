@@ -11,10 +11,17 @@ import bs4
 
 def parse_html_to_text(html):
     """
-    Parses the given HTML content to plain text.
+    Parse HTML content and extract the text.
 
-    :param html: HTML content as a string.
-    :return: Plain text after removing HTML tags.
+    Args:
+        html (str): The HTML content to parse.
+
+    Returns:
+        str: The extracted text from the HTML.
+
+    Raises:
+        None.
+
     """
     try:
         # TODO: FIlter mehr ausbauen, die letzten 4 Zeilen braucht man nicht
@@ -22,7 +29,7 @@ def parse_html_to_text(html):
         temp = "\n".join(
             [line.rstrip() for line in soup.get_text().splitlines() if line.strip()]
         )
-        # remove lines with more then 3 whitespaces in the beginning
+        # remove lines with more than 3 whitespaces in the beginning
         temp = "\n".join(
             [line for line in temp.splitlines() if not line.startswith("   ")]
         )

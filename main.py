@@ -9,8 +9,8 @@ from moodle.moodle_notification_handler import MoodleNotificationHandler
 from notification.discord import Discord
 from notification.pushbullet import Pushbullet
 from utils.handle_exceptions import handle_exceptions
-from utils.setup_logging import setup_logging
 from utils.logo import logo
+from utils.setup_logging import setup_logging
 
 
 class NotificationSummarizer:
