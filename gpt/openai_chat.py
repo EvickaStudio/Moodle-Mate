@@ -6,8 +6,9 @@ Date: 18.11.2023
 Github: @EvickaStudio
 """
 
-import openai  # version 1.3.6
 import logging
+
+import openai  # version 1.3.6
 
 
 class GPT:
@@ -62,7 +63,6 @@ class GPT:
         logging.info("Requesting chat completion from OpenAI")
         try:
             response = openai.chat.completions.create(
-
                 model=model,
                 messages=[
                     {

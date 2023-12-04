@@ -6,7 +6,7 @@
 
 import logging
 
-import bs4
+from bs4 import BeautifulSoup
 
 
 def parse_html_to_text(html: str) -> str:
@@ -20,22 +20,54 @@ def parse_html_to_text(html: str) -> str:
         str: The extracted text from the HTML.
 
     Raises:
-        None.
-
+        ValueError: If the HTML content is empty.
     """
+    if not html:
+        raise ValueError("HTML content is required")
+
     try:
-        # TODO: FIlter mehr ausbauen, die letzten 4 Zeilen braucht man nicht
-        soup = bs4.BeautifulSoup(html, "html.parser")
-        temp = "\n".join(
-            [line.rstrip() for line in soup.get_text().splitlines() if line.strip()]
-        )
-        # remove lines with more than 3 whitespaces in the beginning
-        temp = "\n".join(
-            [line for line in temp.splitlines() if not line.startswith("   ")]
-        )
-        return "\n".join(
-            temp.splitlines()[:-1]
-        )  # removes the last line which is always the same
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Extract text and remove unnecessary whitespace
+        cleaned_text = remove_whitespace(soup.get_text())
+
+        # Filter out the last line
+        cleaned_text = remove_last_line(cleaned_text)
+
+        return cleaned_text
     except Exception as e:
-        logging.exception("Failed to parse HTML")
+        logging.exception("An unexpected error occurred during HTML parsing")
         return None
+
+
+def remove_whitespace(text: str) -> str:
+    """
+    Remove excess whitespace from the text.
+
+    Args:
+        text (str): The text to clean.
+
+    Returns:
+        str: The cleaned text.
+    """
+    temp = "\n".join([line.rstrip() for line in text.splitlines() if line.strip()])
+    return "\n".join([line for line in temp.splitlines() if not line.startswith("   ")])
+
+
+def remove_last_line(text: str) -> str:
+    """
+    Remove the last line from the text.
+
+    Args:
+        text (str): The text to clean.
+
+    Returns:
+        str: The text without the last line.
+    """
+    return "\n".join(text.splitlines()[:-1])
+
+
+# Example usage:
+# html_content = "<html>...</html>"
+# text = parse_html_to_text(html_content)
+# print(text)

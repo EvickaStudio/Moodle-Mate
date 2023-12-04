@@ -7,12 +7,8 @@ Github: @EvickaStudio
 """
 
 import logging
-
-import requests
-
-
 import os
-import logging
+
 import requests
 from requests.exceptions import RequestException
 
