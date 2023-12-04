@@ -11,16 +11,31 @@ import logging
 import requests
 
 
+import os
+import logging
+import requests
+from requests.exceptions import RequestException
+
+
 class MoodleAPI:
     """
-    MoodleAPI
+    A simple Moodle API wrapper for Python.
 
-    A class that provides methods for interacting with the Moodle API.
+    This class provides methods for interacting with the Moodle API, including
+    logging in, retrieving site information, and fetching user data.
 
+    Attributes:
+        url (str): Moodle API URL.
+        session (requests.Session): A session object for making requests.
+        token (str, optional): Authentication token for the Moodle API.
+        userid (int, optional): User ID of the logged-in user.
     """
 
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self, url: str = None):
+        """
+        Initializes the MoodleAPI object with the provided API URL.
+        """
+        self.url = url or os.getenv("MOODLE_URL")
         self.session = requests.Session()
         self.request_header = {
             "User-Agent": "Mozilla/5.0 (Linux; Android 7.1.1; ...) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile",
@@ -32,32 +47,54 @@ class MoodleAPI:
 
     def login(self, username: str, password: str) -> bool:
         """
-        login(self, username: str, password: str) -> bool:
-            Logs in to the Moodle instance using the provided username and password.
-            Sets the token for the MoodleAPI object.
+        Logs in to the Moodle instance using the provided username and password.
+        Sets the token for the MoodleAPI object.
+
+        Args:
+            username (str): Moodle username.
+            password (str): Moodle password.
+
+        Returns:
+            bool: True if login is successful, False otherwise.
+
+        Raises:
+            ValueError: If username or password is not provided.
         """
+        if not username:
+            raise ValueError("Username is required")
+        if not password:
+            raise ValueError("Password is required")
+
         login_data = {
             "username": username,
             "password": password,
             "service": "moodle_mobile_app",
         }
-        response = self.session.post(f"{self.url}login/token.php", data=login_data)
-        if "token" in response.text and "privatetoken" in response.text:
-            logging.info("Login successful")
-            self.token = response.json()["token"]
-            return True
-        else:
-            logging.error("Login failed")
+        try:
+            response = self.session.post(f"{self.url}/login/token.php", data=login_data)
+            response.raise_for_status()
+            if "token" in response.json():
+                self.token = response.json()["token"]
+                logging.info("Login successful")
+                return True
+            else:
+                logging.error("Login failed: Invalid credentials")
+                return False
+        except RequestException as e:
+            logging.error("Request to Moodle failed: %s", e)
             return False
 
     def get_site_info(self) -> dict:
         """
-        get_site_info(self) -> dict:
-            Retrieves site information from the Moodle instance.
+        Retrieves site information from the Moodle instance.
+
+        Returns:
+            dict: A dictionary containing site information.
         """
         if self.token is None:
             logging.error("Token not set. Please login first.")
             return None
+
         wsfunction = "core_webservice_get_site_info"
         params = {
             "wstoken": self.token,
@@ -65,9 +102,9 @@ class MoodleAPI:
             "moodlewsrestformat": "json",
         }
         response = self.session.post(
-            f"{self.url}webservice/rest/server.php", params=params
+            f"{self.url}/webservice/rest/server.php", params=params
         )
-        self.userid = response.json()["userid"]
+        self.userid = response.json().get("userid")
         return response.json()
 
     def get_user_id(self) -> int:

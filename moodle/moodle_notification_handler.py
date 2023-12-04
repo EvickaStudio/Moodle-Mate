@@ -115,7 +115,7 @@ class MoodleNotificationHandler:
             logging.exception("Failed to fetch newest Moodle notification")
             return None
 
-    def user_id_from(self, useridfrom: str) -> str:
+    def user_id_from(self, useridfrom: int) -> dict:
         """
         Fetches the user ID from Moodle.
 
@@ -124,17 +124,13 @@ class MoodleNotificationHandler:
 
         Returns:
             dict: A dictionary containing the user ID.
-
-        Example:
-            ```python
-            user_id = handler.user_id_from(1234)
-            if user_id:
-                print(user_id)
-            ```
         """
+        if not isinstance(useridfrom, int):
+            raise TypeError("useridfrom must be an integer")
+
         try:
-            # Fetches user information from Moodle using given user ID
+            # logging.info(f"Fetching user ID {useridfrom} from Moodle")
             return self.api.core_user_get_users_by_field(useridfrom)
-        except Exception as e:
-            logging.exception("Failed to fetch user id from Moodle")
+        except Exception as e:  # Hier könnten Sie spezifische API-Fehler behandeln
+            logging.exception(f"Failed to fetch user {useridfrom} from Moodle")
             return None
