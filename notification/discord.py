@@ -52,7 +52,9 @@ class Discord:
             random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
         )
 
-    def send_notification(self, subject: str, text: str, summary: str, fullname: str, picture_url: str):
+    def send_notification(
+        self, subject: str, text: str, summary: str, fullname: str, picture_url: str
+    ):
         # Get current time for the timestamp in the footer
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:

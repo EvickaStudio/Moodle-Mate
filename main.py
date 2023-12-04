@@ -121,7 +121,9 @@ def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retri
 
     while True:
         try:
-            if notification := handler.fetch_newest_notification():
+            if (
+                notification := handler.fetch_newest_notification()
+            ):  # If there is a new notification
                 if text := parse_html_to_text(notification["fullmessagehtml"]):
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
@@ -172,8 +174,5 @@ if __name__ == "__main__":
     summarizer = NotificationSummarizer(config)
     sender = NotificationSender(config)
     summary = int(config.get_config("moodle", "summary"))  # 1 = summary, 0 = no summary
-    firstMessage = int(
-        config.get_config("moodle", "firstMessage")
-    )  # 1 = last message, 0 = only new messages
 
     main_loop(moodle_handler, summarizer, sender, summary)
