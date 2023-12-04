@@ -117,16 +117,16 @@ def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retri
     :param max_retries: Maximum number of retries for fetching and processing notifications.
     """
     retry_count = 0
+    summary_setting = int(summary)
 
     while True:
         try:
             if notification := handler.fetch_newest_notification():
                 if text := parse_html_to_text(notification["fullmessagehtml"]):
-                    # if in config summary is set to 1, summarize the text elso leave summary empty
-                    if summary == 1:
+                    if summary_setting == 1:
                         logging.info("Summarizing text...")
                         summary = summarizer.summarize(text, configModel=sender.model)
-                    elif summary == 0:
+                    elif summary_setting == 0:
                         logging.info("Summary is set to 0, not summarizing text")
                         summary = ""
                     else:
@@ -172,5 +172,8 @@ if __name__ == "__main__":
     summarizer = NotificationSummarizer(config)
     sender = NotificationSender(config)
     summary = int(config.get_config("moodle", "summary"))  # 1 = summary, 0 = no summary
+    firstMessage = int(
+        config.get_config("moodle", "firstMessage")
+    )  # 1 = last message, 0 = only new messages
 
     main_loop(moodle_handler, summarizer, sender, summary)
