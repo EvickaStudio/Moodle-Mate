@@ -3,6 +3,7 @@ import time
 import traceback
 
 from filters.message_filter import parse_html_to_text
+from gpt.fakeopen_chat import FGPT  # Free alternative to openai
 from gpt.openai_chat import GPT
 from moodle.load_config import Config
 from moodle.moodle_notification_handler import MoodleNotificationHandler
@@ -32,14 +33,37 @@ class NotificationSummarizer:
 
     @handle_exceptions
     def summarize(self, text: str, configModel: str) -> str:
+        """Summarizes the given text using GPT-3 API or fakeopen API.
+
+        Args:
+            text (str): The text to summarize.
+            configModel (str): The GPT-3 model to use, or 'FGPT' to use FGPT.
+
+        Returns:
+            str: The summarized text.
+
+        Raises:
+            Exception: If summarization fails.
+        """
         try:
-            # Summarize the text using GPT-3 and return the result
-            ai = GPT()
-            ai.apiKey = self.api_key
-            return ai.chat_completion(configModel, self.system_message, text)
+            if fakeopen == 0:
+                # Use GPT-3 API for summarization
+                gpt = GPT(api_key=self.api_key)
+                result = gpt.chat_completion(configModel, self.system_message, text)
+            elif fakeopen == 1:
+                # Use FGPT API for summarization
+                fgpt = FGPT()
+                result = fgpt.chat_completion(self.system_message, text)
+            else:
+                # Invalid value for fakeopen
+                logging.error("Invalid value for fakeopen")
+                return None
+
+            return result
+
         except Exception as e:
-            logging.exception(f"Failed to summarize with {configModel}")
-            return None
+            # Summarization failed
+            raise Exception("Summarization failed") from e
 
 
 class NotificationSender:
@@ -174,5 +198,8 @@ if __name__ == "__main__":
     summarizer = NotificationSummarizer(config)
     sender = NotificationSender(config)
     summary = int(config.get_config("moodle", "summary"))  # 1 = summary, 0 = no summary
+    fakeopen = int(
+        config.get_config("moodle", "fakeopen")
+    )  # 1 = fake open, 0 = openai when selected
 
     main_loop(moodle_handler, summarizer, sender, summary)

@@ -27,6 +27,7 @@ Moodle Mate is an advanced Python application designed to streamline the process
 Utilizes GPT-3.5-turbo for cost-effective operations (under 15 cents/month, excluding server costs).
 Alternatively you could just disable summarization in the config file and use the script without GPT-3/4.
 
+NEW: implementation of fakeopen a free api for openai completion using gpt-4-32k.
 ---
 
 ## <div id="dependencies">Dependencies</div>
@@ -65,6 +66,7 @@ A configuration file, `config.ini`, is necessary for the application's operation
 - Discord Webhook URL
 - System Message for GPT-3 (Default in German)
 - Set GPT model, standard gpt-3.5-turbo (recommend: gpt-4-1106-preview)
+- Implentation of the fakeopen openai api (free gpt4)
 - If you don't want to use GPT set summary to 0, else 1
 
 Example:
@@ -88,6 +90,8 @@ webhookUrl = https://discord.com/api/webhooks/xxxxx/xxxxx
 systemMessage = "YOUR SYSTEM PROMPT HERE, EXAMPLE IN config_example.ini"
 ; Set GPT model, standard gpt-3.5-turbo
 model = gpt-3.5-turbo
+; If fake open set to 1 then the bot uses the fakeopen api to generate the summary
+fakeopen = 1 
 ; If summary with GPT on set to 1, else 0
 summary = 1
 ```
