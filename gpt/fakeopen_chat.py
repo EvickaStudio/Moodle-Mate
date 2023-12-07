@@ -65,7 +65,19 @@ class FGPT:
             system_message (str): The system message to provide context for the conversation.
             user_message (str): The user message to generate a response.
             model (str, optional): The model to use. Defaults to "gpt-4-32k".
-            ... [rest of the parameters]
+            temperature (float, optional): The temperature of the chat completion. Defaults to 1.0.
+            presence_penalty (float, optional): The presence penalty of the chat completion. Defaults to 0.0.
+            top_p (float, optional): The top p of the chat completion. Defaults to 1.0.
+            frequency_penalty (float, optional): The frequency penalty of the chat completion. Defaults to 0.0.
+            stream (bool, optional): Whether to stream the chat completion. Defaults to False, cuz i didn't implement it yet.
+
+            Tested Models:
+                - gpt-3.5-turbo # GPT-3 Turbo, 4K context size
+                - gpt-3.5-turbo-16k # GPT-3, 16K context size (Will point to gpt-3.5-turbo-1106 starting Dec 11, 2023.)
+                - gpt-3.5-turbo-1106 # GPT-3 Turbo, 16K context size
+                - gpt-4 # GPT-4, 8K context size
+                - gpt-4-32k # GPT-4, 32K context size
+                - gpt-4-1106-preview # GPT-4 Turbo, 128K context size
 
         Returns:
             Optional[str]: The response from the API or None in case of an error.
