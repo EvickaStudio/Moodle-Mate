@@ -51,7 +51,7 @@ class FGPT:
         self,
         system_message: str,
         user_message: str,
-        model: str = "gpt-4-32k",
+        model: str = "gpt-4-1106-preview",
         temperature: float = 1.0,
         presence_penalty: float = 0.0,
         top_p: float = 1.0,
