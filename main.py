@@ -4,6 +4,7 @@ import traceback
 
 from filters.message_filter import parse_html_to_text
 from gpt.openai_chat import GPT
+
 # from gpt.fakeopen_chat import FGPT # Free alternative to openai
 from moodle.load_config import Config
 from moodle.moodle_notification_handler import MoodleNotificationHandler
@@ -32,17 +33,16 @@ class NotificationSummarizer:
         self.system_message = config.get_config("moodle", "systemmessage")
 
     @handle_exceptions
-
     def summarize(self, text: str, configModel: str) -> str:
         """Summarizes the given text using GPT-3 API or FGPT.
-    
+
         Args:
         text (str): The text to summarize.
         configModel (str): The GPT-3 model to use, or 'FGPT' to use FGPT.
-        
+
         Returns:
         str: The summarized text.
-        
+
         Raises:
         Exception: If summarization fails.
         """
@@ -188,6 +188,8 @@ if __name__ == "__main__":
     summarizer = NotificationSummarizer(config)
     sender = NotificationSender(config)
     summary = int(config.get_config("moodle", "summary"))  # 1 = summary, 0 = no summary
-    fakeopen = int(config.get_config("moodle", "fakeopen"))  # 1 = fake open, 0 = openai when selected
+    fakeopen = int(
+        config.get_config("moodle", "fakeopen")
+    )  # 1 = fake open, 0 = openai when selected
 
     main_loop(moodle_handler, summarizer, sender, summary)

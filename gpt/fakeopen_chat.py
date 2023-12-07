@@ -9,23 +9,23 @@ Github: @EvickaStudio
 
 import json
 import logging
+import os
+from typing import Dict, Optional
 
 import requests
 
 
 class FGPT:
     def __init__(self) -> None:
-        self.api_key = (
-            "pk-this-is-a-real-free-pool-token-for-everyone"  # Hardcoded API key
-        )
+        self.api_key = "pk-this-is-a-real-free-pool-token-for-everyone"  # Hardcoded API key, cuz its public
         self.base_url = "https://ai.fakeopen.com/v1/chat/completions"
 
-    def _get_headers(self) -> dict:
+    def _get_headers(self) -> Dict[str, str]:
         """
         Generates the headers required for the API request.
 
         Returns:
-            dict: A dictionary of headers for the request.
+            Dict[str, str]: A dictionary of headers for the request.
         """
         return {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
@@ -49,35 +49,31 @@ class FGPT:
 
     def chat_completion(
         self,
-        systemMessage: str,
-        userMessage: str,
+        system_message: str,
+        user_message: str,
         model: str = "gpt-4-32k",
-        temperature: float = 1,
-        presence_penalty: float = 0,
-        top_p: float = 1,
-        frequency_penalty: float = 0,
+        temperature: float = 1.0,
+        presence_penalty: float = 0.0,
+        top_p: float = 1.0,
+        frequency_penalty: float = 0.0,
         stream: bool = False,
-    ) -> str:
+    ) -> Optional[str]:
         """
         Sends a request to the chat completion endpoint of the API.
 
         Args:
-            systemMessage (str): The system message to provide context for the conversation.
-            userMessage (str): The user message to generate a response.
+            system_message (str): The system message to provide context for the conversation.
+            user_message (str): The user message to generate a response.
             model (str, optional): The model to use. Defaults to "gpt-4-32k".
-            temperature (float, optional): The temperature for the response. Defaults to 1.
-            presence_penalty (float, optional): The presence penalty. Defaults to 0.
-            top_p (float, optional): The top p value. Defaults to 1.
-            frequency_penalty (float, optional): The frequency penalty. Defaults to 0.
-            stream (bool, optional): Whether to stream the response. Defaults to False cuz i didn't implement it.
+            ... [rest of the parameters]
 
         Returns:
-            str: The response from the API or an error message.
+            Optional[str]: The response from the API or None in case of an error.
         """
         data = {
             "messages": [
-                {"role": "system", "content": systemMessage},
-                {"role": "user", "content": userMessage},
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message},
             ],
             "model": model,
             "temperature": temperature,
@@ -91,18 +87,22 @@ class FGPT:
             response = requests.post(
                 self.base_url, headers=self._get_headers(), data=json.dumps(data)
             )
+            response.raise_for_status()
             response_json = response.json()
-            message = response_json["choices"][0]["message"]["content"]
-            return message
+            return (
+                response_json.get("choices", [{}])[0].get("message", {}).get("content")
+            )
+        except requests.RequestException as e:
+            logging.error(f"HTTP error occurred: {e}")
         except Exception as e:
-            logging.error(f"An unexpected error occurred: {str(e)}")
-            return None
+            logging.error(f"An unexpected error occurred: {e}")
+        return None
 
 
 # Example usage
-# gpt = GPT()
+# gpt = FGPT()
 # response = gpt.chat_completion(
-#     systemMessage="You are a helpful assistant.",
-#     userMessage="How are you?"
+#     system_message="You are a helpful assistant.",
+#     user_message="How are you?"
 # )
 # print(response)
