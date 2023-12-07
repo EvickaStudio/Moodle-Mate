@@ -8,6 +8,7 @@ __pycache__/
 config.ini
 testing/
 old/
+release/
 .vscode/
 
 # Distribution / packaging
