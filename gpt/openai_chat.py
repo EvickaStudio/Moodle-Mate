@@ -7,8 +7,9 @@ Github: @EvickaStudio
 """
 
 import logging
+import time
 
-import openai  # version 1.3.6
+import openai  # version 1.5
 
 
 class GPT:
@@ -76,6 +77,60 @@ class GPT:
                 ],
             )
             return response.choices[0].message.content
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {str(e)}")
+            return None
+
+    def assistant(self, prompt: str) -> str:
+        """
+        Assistant endpoint for OpenAI API.
+
+        It creates for each message/ summary a different thread to keep the cost low,
+        also notifications dont need to be appended, cuz. they have different context.
+        The greater the context, the greater the cost.
+
+        TODO: (optional)
+            - keep and append context (not creating a new thread for each message)
+              this will cost more but can have a better response (more context)
+            - Resume conversation (safe thread after exit)
+
+        Args:
+            prompt (str): The prompt message for the assistant.
+
+        Returns:
+            str: The response message from the assistant.
+        """
+
+        logging.info("Requesting assistant from OpenAI")
+        try:
+            thread = openai.beta.threads.create()
+            assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+            message = openai.beta.threads.messages.create(
+                thread_id=thread.id,
+                role="user",
+                content=prompt,
+            )
+            run = openai.beta.threads.runs.create(
+                thread_id=thread.id, assistant_id=assistant_id
+            )
+
+            while run.status != "completed":
+                run = openai.beta.threads.runs.retrieve(
+                    thread_id=thread.id, run_id=run.id
+                )
+                # print status but on the same line (to avoid spamming the console)
+                logging.info(f"Status: {run.status}", end="\r")
+                time.sleep(0.5)  # Add a delay to avoid excessive API calls
+
+            messages = openai.beta.threads.messages.list(thread_id=thread.id)
+            # Extract the response message
+            response_message = None
+            for message in messages.data:
+                if message.role == "assistant":
+                    response_message = message.content[0].text.value
+                    break
+            return response_message
+
         except Exception as e:
             logging.error(f"An unexpected error occurred: {str(e)}")
             return None
