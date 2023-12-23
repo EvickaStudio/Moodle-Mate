@@ -90,20 +90,20 @@ class GPT:
         The greater the context, the greater the cost.
 
         NOTE:
-            - Summarization over the assistant API takes way more time than the chat 
+            - Summarization over the assistant API takes way more time than the chat
               completion API.
-            - Current prompt: "Deine Rolle ist es, als Assistent für ein Programm namens 
-              MoodleMate zu agieren. Deine Hauptaufgabe ist es, eingehende Nachrichten für 
-              mobile Benachrichtigungen zusammenzufassen. Auf Aufforderung wirst du 
-              prägnante, hochwertige Zusammenfassungen des bereitgestellten Textes liefern, 
-              idealerweise in 1-2 Sätzen. Dein Ziel ist es, die Essenz der Nachricht genau 
-              und knapp einzufangen, ideal für schnelle mobile Benachrichtigungen. Es ist 
-              wichtig, die ursprüngliche Absicht und die Schlüsseldetails der Nachricht 
-              beizubehalten, während du sie in ein kürzeres Format kondensierst. Dabei 
-              solltest du unnötige Details oder Füllinhalte vermeiden und dich 
-              ausschließlich auf die Kernbotschaft konzentrieren. Außerdem solltest du in 
-              allen Zusammenfassungen einen neutralen und professionellen Ton beibehalten. 
-              Wenn nötig, solltest du die Nachricht auch ins Deutsche übersetzen.  
+            - Current prompt: "Deine Rolle ist es, als Assistent für ein Programm namens
+              MoodleMate zu agieren. Deine Hauptaufgabe ist es, eingehende Nachrichten für
+              mobile Benachrichtigungen zusammenzufassen. Auf Aufforderung wirst du
+              prägnante, hochwertige Zusammenfassungen des bereitgestellten Textes liefern,
+              idealerweise in 1-2 Sätzen. Dein Ziel ist es, die Essenz der Nachricht genau
+              und knapp einzufangen, ideal für schnelle mobile Benachrichtigungen. Es ist
+              wichtig, die ursprüngliche Absicht und die Schlüsseldetails der Nachricht
+              beizubehalten, während du sie in ein kürzeres Format kondensierst. Dabei
+              solltest du unnötige Details oder Füllinhalte vermeiden und dich
+              ausschließlich auf die Kernbotschaft konzentrieren. Außerdem solltest du in
+              allen Zusammenfassungen einen neutralen und professionellen Ton beibehalten.
+              Wenn nötig, solltest du die Nachricht auch ins Deutsche übersetzen.
               Füge passende Emojis hinzu."
 
         TODO: (optional)
@@ -120,39 +120,50 @@ class GPT:
 
         logging.info("Requesting assistant from OpenAI")
         try:
-            thread = openai.beta.threads.create()
-            assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
-            message = openai.beta.threads.messages.create(
-                thread_id=thread.id,
-                role="user",
-                content=prompt,
-            )
-            run = openai.beta.threads.runs.create(
-                thread_id=thread.id, assistant_id=assistant_id
-            )
-
-            while run.status != "completed":
-                run = openai.beta.threads.runs.retrieve(
-                    thread_id=thread.id, run_id=run.id
-                )
-                # print status but on the same line (to avoid spamming the console)
-                # logging.info(f"Status: {run.status}", end="\r")
-                time.sleep(3)  # Add a delay to avoid excessive API calls
-
-            logging.info(f"Status: {run.status}")
-
-            messages = openai.beta.threads.messages.list(thread_id=thread.id)
-            # Extract the response message
-            response_message = None
-            for message in messages.data:
-                if message.role == "assistant":
-                    response_message = message.content[0].text.value
-                    break
-            return response_message
-
+            return self.run_assistant(prompt)
         except Exception as e:
             logging.error(f"An unexpected error occurred: {str(e)}")
             return None
+
+    def run_assistant(self, prompt):
+        """
+        Run the assistant to generate a response.
+
+        Args:
+            prompt (str): The prompt message for the assistant.
+
+        Returns:
+            str: The response message from the assistant.
+        """
+
+        thread = openai.beta.threads.create()
+        assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+        message = openai.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=prompt,
+        )
+        run = openai.beta.threads.runs.create(
+            thread_id=thread.id, assistant_id=assistant_id
+        )
+
+        while run.status != "completed":
+            run = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            # print status but on the same line (to avoid spamming the console)
+            # logging.info(f"Status: {run.status}", end="\r")
+            time.sleep(3)  # Add a delay to avoid excessive API calls
+
+        logging.info(f"Status: {run.status}")
+
+        messages = openai.beta.threads.messages.list(thread_id=thread.id)
+        return next(
+            (
+                message.content[0].text.value
+                for message in messages.data
+                if message.role == "assistant"
+            ),
+            None,
+        )
 
 
 # Example usage
