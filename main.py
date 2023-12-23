@@ -31,7 +31,7 @@ class NotificationSummarizer:
     def __init__(self, config: Config) -> None:
         self.api_key = config.get_config("moodle", "openaikey")
         self.system_message = config.get_config("moodle", "systemmessage")
-        self.test = False
+        self.test = False # To use the assistant API, set to True.
 
     @handle_exceptions
     def summarize(self, text: str, configModel: str) -> str:
@@ -53,13 +53,9 @@ class NotificationSummarizer:
                 # Test option, summarize the text using assistant and not the
                 # chat completion API, for testing ATM.
                 ai = GPT()
-                print(f"Text = {text}, summarizing with Asistant API")
                 ai.apiKey = self.api_key
                 logging.info(f"Test = {self.test}, summarizing with Asistant API")
-                message = ai.assistant(prompt=text)
-                print(message)
-                return message
-
+                return ai.assistant(prompt=text)
             else:
                 ai = GPT()
                 ai.apiKey = self.api_key

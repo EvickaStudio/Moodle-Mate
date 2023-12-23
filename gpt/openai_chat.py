@@ -89,6 +89,23 @@ class GPT:
         also notifications dont need to be appended, cuz. they have different context.
         The greater the context, the greater the cost.
 
+        NOTE:
+            - Summarization over the assistant API takes way more time than the chat 
+              completion API.
+            - Current prompt: "Deine Rolle ist es, als Assistent für ein Programm namens 
+              MoodleMate zu agieren. Deine Hauptaufgabe ist es, eingehende Nachrichten für 
+              mobile Benachrichtigungen zusammenzufassen. Auf Aufforderung wirst du 
+              prägnante, hochwertige Zusammenfassungen des bereitgestellten Textes liefern, 
+              idealerweise in 1-2 Sätzen. Dein Ziel ist es, die Essenz der Nachricht genau 
+              und knapp einzufangen, ideal für schnelle mobile Benachrichtigungen. Es ist 
+              wichtig, die ursprüngliche Absicht und die Schlüsseldetails der Nachricht 
+              beizubehalten, während du sie in ein kürzeres Format kondensierst. Dabei 
+              solltest du unnötige Details oder Füllinhalte vermeiden und dich 
+              ausschließlich auf die Kernbotschaft konzentrieren. Außerdem solltest du in 
+              allen Zusammenfassungen einen neutralen und professionellen Ton beibehalten. 
+              Wenn nötig, solltest du die Nachricht auch ins Deutsche übersetzen.  
+              Füge passende Emojis hinzu."
+
         TODO: (optional)
             - keep and append context (not creating a new thread for each message)
               this will cost more but can have a better response (more context)
@@ -119,8 +136,10 @@ class GPT:
                     thread_id=thread.id, run_id=run.id
                 )
                 # print status but on the same line (to avoid spamming the console)
-                logging.info(f"Status: {run.status}", end="\r")
-                time.sleep(0.5)  # Add a delay to avoid excessive API calls
+                # logging.info(f"Status: {run.status}", end="\r")
+                time.sleep(3)  # Add a delay to avoid excessive API calls
+
+            logging.info(f"Status: {run.status}")
 
             messages = openai.beta.threads.messages.list(thread_id=thread.id)
             # Extract the response message
