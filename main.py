@@ -49,7 +49,7 @@ class NotificationSummarizer:
         """
         try:
             # Summarize the text using GPT-3 and return the result
-            if self.test: # Wont work ATM, 
+            if self.test:
                 # Test option, summarize the text using assistant and not the
                 # chat completion API, for testing ATM.
                 ai = GPT()
