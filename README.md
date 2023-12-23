@@ -31,6 +31,7 @@ Alternatively you could just disable summarization in the config file and use th
 
 Example:
 ```python
+# main.py
 class NotificationSummarizer:
     def __init__(self, config: Config) -> None:
         # To use the assistant API, set to True.
