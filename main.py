@@ -2,7 +2,7 @@ import logging
 import time
 import traceback
 
-from filters.message_filter import parse_html_to_text
+from filters.message_filter import parse_html_to_text, extract_and_format_for_discord
 from gpt.openai_chat import GPT
 
 # from gpt.fakeopen_chat import FGPT # Free alternative to openai
@@ -148,7 +148,7 @@ def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retri
             if (
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
-                if text := parse_html_to_text(notification["fullmessagehtml"]):
+                if text := extract_and_format_for_discord(notification["fullmessagehtml"]):
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
                         summary = summarizer.summarize(text, configModel=sender.model)
