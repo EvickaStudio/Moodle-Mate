@@ -24,10 +24,21 @@
 
 Moodle Mate is an advanced Python application designed to streamline the process of receiving Moodle notifications. It fetches notifications from Moodle, summarizes them using GPT-3 or GPT-4 and sends them to the user via Pushbullet and Discord. The application is designed to run on a server and can be configured to run at specific intervals.
 
-Utilizes GPT-3.5-turbo for cost-effective operations (under 15 cents/month, excluding server costs).
+**Cost-Effective Operations**: Utilizes GPT-3.5-turbo for cost-effective operations (under 15 cents/month, excluding server costs).
 Alternatively you could just disable summarization in the config file and use the script without GPT-3/4.
 
-NEW: implementation of fakeopen a free api for openai completion using gpt-4-32k.
+**NEW**: Moodle Mate now supports the OpenAI Assistant endpoint/API. This feature is currently under development and will be improved in future updates. Please be aware that the current version of the Assistant utilizes GPT-4 Turbo and is currently configured to provide summaries exclusively in German for now. To use the Assistant, set the `test` variable in `NotificationSummarizer` to `True`:
+
+Example:
+```python
+class NotificationSummarizer:
+    def __init__(self, config: Config) -> None:
+        # To use the assistant API, set to True.
+        self.test = True
+```
+
+**NEW**: implementation of fakeopen a free api for openai chat completion using gpt-4-32k. (not recommendet, as many chat completion requests are failing)
+
 ---
 
 ## <div id="dependencies">Dependencies</div>
@@ -91,7 +102,7 @@ systemMessage = "YOUR SYSTEM PROMPT HERE, EXAMPLE IN config_example.ini"
 ; Set GPT model, standard gpt-3.5-turbo
 model = gpt-3.5-turbo
 ; If fake open set to 1 then the bot uses the fakeopen api to generate the summary
-fakeopen = 1 
+fakeopen = 1
 ; If summary with GPT on set to 1, else 0
 summary = 1
 ```
@@ -136,7 +147,7 @@ Made with ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
 
 ## Notes
 
-I'm currently in the process of rewriting the codebase to make it more modular and easier to maintain. The current codebase is a mess and I'm sorry for that. Thus, the code might be a bit messy and not up to my 
+I'm currently in the process of rewriting the codebase to make it more modular and easier to maintain. The current codebase is a mess and I'm sorry for that. Thus, the code might be a bit messy and not up to my
 standards in the main file...
 Also the CUI version is currently not updates and thus
 removed, but will be added again in the future.
