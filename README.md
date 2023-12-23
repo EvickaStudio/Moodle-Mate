@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Logo" width="200"/>
+  <img src="assets/logo.svg" alt="Logo" width="400"/>
   <h1>Moodle Mate</h1>
   <p><strong>Automated Moodle Notification Summarization</strong></p>
 </div>
