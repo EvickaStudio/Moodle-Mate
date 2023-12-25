@@ -1,7 +1,8 @@
 import logging
+import os
 import time
 import traceback
-import os
+
 from filters.message_filter import extract_and_format_for_discord, parse_html_to_text
 from gpt.openai_chat import GPT
 
@@ -16,6 +17,7 @@ from utils.setup_logging import setup_logging
 
 # clean screen
 cls = lambda: os.system("cls" if os.name == "nt" else "clear")
+
 
 class NotificationSummarizer:
     """
