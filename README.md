@@ -130,6 +130,10 @@ A documentation of the modules can be found in its respective folder.
 
 ## <div id="screenshots">Screenshots</div>
 
+- Main Program
+<img src="assets/main.png" alt="Main Program" width="600"/>
+
+- Discord Webhook
 <img src="assets/discord.jpg" alt="Discord Screenshot" width="600"/>
 
 ---
