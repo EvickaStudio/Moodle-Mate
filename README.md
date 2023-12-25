@@ -27,7 +27,7 @@ Moodle Mate is an advanced Python application designed to streamline the process
 **Cost-Effective Operations**: Utilizes GPT-3.5-turbo for cost-effective operations (under 15 cents/month, excluding server costs).
 Alternatively you could just disable summarization in the config file and use the script without GPT-3/4.
 
-**NEW**: Moodle Mate now supports the OpenAI Assistant endpoint/API. This feature is currently under development and will be improved in future updates. Please be aware that the current version of the Assistant utilizes GPT-4 Turbo and is currently configured to provide summaries exclusively in German for now. To use the Assistant, set the `test` variable in `NotificationSummarizer` to `True`:
+**NEW**: Moodle Mate now supports the OpenAI Assistant. This feature is currently under development and will be improved in future updates. Please be aware that the current version of the Assistant utilizes GPT-4 Turbo and is currently configured to provide summaries exclusively in German for now (with context). To use the Assistant, set the `test` variable in `NotificationSummarizer` to `True`:
 
 Example:
 ```python

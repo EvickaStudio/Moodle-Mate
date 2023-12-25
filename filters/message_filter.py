@@ -82,39 +82,36 @@ def extract_and_format_for_discord(html: str) -> str:
         raise ValueError("HTML content is required")
 
     try:
-        soup = BeautifulSoup(html, "html.parser")
-
-        # Extract main content
-        content = soup.find("td", class_="content")
-        if not content:
-            return "No main content found."
-
-        # Handle links and bold text
-        for tag in content.find_all(["a", "b"]):
-            if tag.name == "a":
-                tag.replace_with(f"[{tag.get_text().strip()}]({tag['href']})")
-            elif tag.name == "b":
-                tag.replace_with(f"**{tag.get_text().strip()}**")
-
-        # Process paragraphs
-        paragraphs = content.find_all("p")
-        formatted_paragraphs = []
-        for p in paragraphs:
-            text = " ".join(p.get_text().split())
-            if text:
-                formatted_paragraphs.append(text)
-
-        formatted_text = "\n".join(formatted_paragraphs)
-
-        # Extract and format images
-        images = [img["src"] for img in content.find_all("img")]
-        # if images:
-        #     formatted_images = [f"![image]({img})" for img in images]
-        #     formatted_text += "\n\n" + "\n".join(formatted_images)
-
-        return formatted_text
+        return _extract_content(html)
     except Exception as e:
         return f"An error occurred during HTML parsing: {e}"
+
+
+def _extract_content(html):
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Extract main content
+    content = soup.find("td", class_="content")
+    if not content:
+        return "No main content found."
+
+    # Handle links and bold text
+    for tag in content.find_all(["a", "b"]):
+        if tag.name == "a":
+            tag.replace_with(f"[{tag.get_text().strip()}]({tag['href']})")
+        elif tag.name == "b":
+            tag.replace_with(f"**{tag.get_text().strip()}**")
+
+    # Process paragraphs
+    paragraphs = content.find_all("p")
+    formatted_paragraphs = []
+    for p in paragraphs:
+        if text := " ".join(p.get_text().split()):
+            formatted_paragraphs.append(text)
+
+    # Extract and format images
+    images = [img["src"] for img in content.find_all("img")]
+    return "\n".join(formatted_paragraphs)
 
 
 # Example usage:

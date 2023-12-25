@@ -55,7 +55,7 @@ class NotificationSummarizer:
                 ai = GPT()
                 ai.api_key = self.api_key
                 logging.info(f"Test = {self.test}, summarizing with Asistant API")
-                return ai.assistant(prompt=text)
+                return ai.context_assistant(prompt=text)
             else:
                 ai = GPT()
                 ai.api_key = self.api_key
