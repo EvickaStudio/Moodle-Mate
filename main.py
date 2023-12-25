@@ -2,7 +2,7 @@ import logging
 import time
 import traceback
 
-from filters.message_filter import parse_html_to_text, extract_and_format_for_discord
+from filters.message_filter import extract_and_format_for_discord, parse_html_to_text
 from gpt.openai_chat import GPT
 
 # from gpt.fakeopen_chat import FGPT # Free alternative to openai
@@ -31,7 +31,7 @@ class NotificationSummarizer:
     def __init__(self, config: Config) -> None:
         self.api_key = config.get_config("moodle", "openaikey")
         self.system_message = config.get_config("moodle", "systemmessage")
-        self.test = False # To use the assistant API, set to True.
+        self.test = False  # To use the assistant API, set to True.
 
     @handle_exceptions
     def summarize(self, text: str, configModel: str) -> str:
@@ -53,12 +53,12 @@ class NotificationSummarizer:
                 # Test option, summarize the text using assistant and not the
                 # chat completion API, for testing ATM.
                 ai = GPT()
-                ai.apiKey = self.api_key
+                ai.api_key = self.api_key
                 logging.info(f"Test = {self.test}, summarizing with Asistant API")
                 return ai.assistant(prompt=text)
             else:
                 ai = GPT()
-                ai.apiKey = self.api_key
+                ai.api_key = self.api_key
                 return ai.chat_completion(configModel, self.system_message, text)
 
         except Exception as e:
@@ -148,7 +148,9 @@ def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retri
             if (
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
-                if text := extract_and_format_for_discord(notification["fullmessagehtml"]):
+                if text := extract_and_format_for_discord(
+                    notification["fullmessagehtml"]
+                ):
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
                         summary = summarizer.summarize(text, configModel=sender.model)

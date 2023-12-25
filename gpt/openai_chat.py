@@ -2,28 +2,33 @@
 Chat module for OpenAI API
 
 Author: EvickaStudio
-Date: 18.11.2023
+Date: 25.12.2023
 Github: @EvickaStudio
 """
 
+import configparser
 import logging
-import time
+import re
+from time import sleep
 
 import openai  # version 1.5
 
 
 class GPT:
     def __init__(self) -> None:
-        self._apiKey = None
+        self._api_key = None
+        # self.api_key_regex /regex(\/sk-\w{48}\/)/
+        self.api_key_regex = r"^sk-[A-Za-z0-9]{48}$"
 
     @property
-    def apiKey(self) -> str:
-        return self._apiKey
+    def api_key(self) -> str:
+        return self._api_key
 
-    @apiKey.setter
-    def apiKey(self, key: str) -> None:
+    @api_key.setter
+    def api_key(self, key: str) -> None:
         """
-        Sets the API key and validates that it's not empty.
+        Sets the API key and validates that it's not empty and
+        validates it with a API key regex.
 
         Args:
             key (str): The API key for OpenAI.
@@ -33,129 +38,107 @@ class GPT:
         """
         if not key:
             raise ValueError("API key cannot be empty")
-        self._apiKey = key
+
+        if not re.match(self.api_key_regex, key):
+            raise ValueError("API key is invalid")
+
+        self._api_key = key
         openai.api_key = key
 
-    def chat_completion(self, model: str, systemMessage: str, userMessage: str) -> str:
+    def chat_completion(
+        self, model: str, system_message: str, user_message: str
+    ) -> str:
         """
         Chat completion endpoint for OpenAI API.
 
         Args:
             model (str): The model to use for chat completion.
-            systemMessage (str): The system message to provide context for the conversation.
-            userMessage (str): The user message to generate a response.
+            system_message (str): The system message to provide context for the conversation.
+            user_message (str): The user message to generate a response.
 
         Returns:
             str: The generated response from the chat completion, or None if an error occurs.
-
-        Examples:
-            ```python
-            gpt = GPT()
-            gpt.apiKey = "your_api_key"
-
-            response = gpt.chat_completion(
-                model="gpt-3.5-turbo",
-                systemMessage="You are a xxx",
-                userMessage="How are you?"
-            )
-            print(response)
-            ```
         """
         logging.info("Requesting chat completion from OpenAI")
-        try:
-            response = openai.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": systemMessage,
-                    },  # System message set in config
-                    {
-                        "role": "user",
-                        "content": userMessage,
-                    },  # User message set in config
-                ],
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            logging.error(f"An unexpected error occurred: {str(e)}")
-            return None
+        response = openai.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_message,
+                },
+                {
+                    "role": "user",
+                    "content": user_message,
+                },
+            ],
+        )
+        return response.choices[0].message.content
 
-    def assistant(self, prompt: str) -> str:
+    def assistant(self, prompt: str, thread_id: str = None) -> str:
         """
         Assistant endpoint for OpenAI API.
 
-        It creates for each message/ summary a different thread to keep the cost low,
-        also notifications dont need to be appended, cuz. they have different context.
+        It creates for each message/summary a different thread to keep the cost low,
+        also notifications don't need to be appended, as they have different context.
         The greater the context, the greater the cost.
-
-        NOTE:
-            - Summarization over the assistant API takes way more time than the chat
-              completion API.
-            - Current prompt: "Deine Rolle ist es, als Assistent für ein Programm namens
-              MoodleMate zu agieren. Deine Hauptaufgabe ist es, eingehende Nachrichten für
-              mobile Benachrichtigungen zusammenzufassen. Auf Aufforderung wirst du
-              prägnante, hochwertige Zusammenfassungen des bereitgestellten Textes liefern,
-              idealerweise in 1-2 Sätzen. Dein Ziel ist es, die Essenz der Nachricht genau
-              und knapp einzufangen, ideal für schnelle mobile Benachrichtigungen. Es ist
-              wichtig, die ursprüngliche Absicht und die Schlüsseldetails der Nachricht
-              beizubehalten, während du sie in ein kürzeres Format kondensierst. Dabei
-              solltest du unnötige Details oder Füllinhalte vermeiden und dich
-              ausschließlich auf die Kernbotschaft konzentrieren. Außerdem solltest du in
-              allen Zusammenfassungen einen neutralen und professionellen Ton beibehalten.
-              Wenn nötig, solltest du die Nachricht auch ins Deutsche übersetzen.
-              Füge passende Emojis hinzu."
-
-        TODO: (optional)
-            - keep and append context (not creating a new thread for each message)
-              this will cost more but can have a better response (more context)
-            - Resume conversation (safe thread after exit)
 
         Args:
             prompt (str): The prompt message for the assistant.
+            thread_id (str): The ID of the thread to use. If None, a new thread will be created.
 
         Returns:
             str: The response message from the assistant.
         """
-
         logging.info("Requesting assistant from OpenAI")
-        try:
-            return self.run_assistant(prompt)
-        except Exception as e:
-            logging.error(f"An unexpected error occurred: {str(e)}")
-            return None
+        return self.run_assistant(prompt, thread_id)
 
-    def run_assistant(self, prompt):
+    def context_assistant(self, prompt: str) -> str:
+        """
+        Assistant with saving and keeping context
+        """
+        assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+        thread_id = self.resume_thread()
+        return self.assistant(prompt, thread_id)
+
+    def run_assistant(self, text, thread_id):
         """
         Run the assistant to generate a response.
 
         Args:
-            prompt (str): The prompt message for the assistant.
+            text (str): The text message for the assistant.
+            thread_id (str): The ID of the thread to use.
 
         Returns:
             str: The response message from the assistant.
         """
+        if thread_id is None:
+            thread_id = openai.beta.threads.create().id
 
-        thread = openai.beta.threads.create()
         assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
         message = openai.beta.threads.messages.create(
-            thread_id=thread.id,
+            thread_id=thread_id,
             role="user",
-            content=prompt,
+            content=text,
         )
         run = openai.beta.threads.runs.create(
-            thread_id=thread.id, assistant_id=assistant_id
+            thread_id=thread_id, assistant_id=assistant_id
         )
 
-        while run.status != "completed":
-            run = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            # print status but on the same line (to avoid spamming the console)
-            # logging.info(f"Status: {run.status}", end="\r")
-            time.sleep(3)  # Add a delay to avoid excessive API calls
+        result = openai.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run.id)
 
-        logging.info(f"Status: {run.status}")
+        delay = 0.5
+        while result.status != "completed":
+            result = openai.beta.threads.runs.retrieve(
+                thread_id=thread_id, run_id=run.id
+            )
+            sleep(delay)
+            delay += 0.5
+            delay = min(delay, 10)
 
-        messages = openai.beta.threads.messages.list(thread_id=thread.id)
+        logging.info(f"Status: {result.status}")
+
+        messages = openai.beta.threads.messages.list(thread_id=thread_id)
         return next(
             (
                 message.content[0].text.value
@@ -165,10 +148,59 @@ class GPT:
             None,
         )
 
+    def create_thread(self) -> str:
+        """
+        Create a thread for the assistant.
+
+        Returns:
+            str: The thread ID.
+        """
+        return openai.beta.threads.create().id
+
+    def save_thread(self, thread_id: str) -> None:
+        """
+        Save the thread to .ini file to resume the conversation later.
+        """
+        self.save_or_update_thread(thread_id, "Thread saved")
+
+    def update_thread(self, thread_id: str) -> None:
+        """
+        Update the thread ID from the config with a fresh one (clear conversation).
+        """
+        self.save_or_update_thread(thread_id, "Thread updated")
+
+    def save_or_update_thread(self, thread_id: str, message: str) -> None:
+        """
+        Save or update the thread ID in the config file.
+
+        Args:
+            thread_id (str): The thread ID to save or update.
+            message (str): The message to log after saving or updating the thread.
+        """
+        config = configparser.ConfigParser()
+        config.read("thread.ini")
+        config["THREAD"] = {"thread_id": thread_id}
+        with open("thread.ini", "w") as configfile:
+            config.write(configfile)
+            logging.info(message)
+
+    def resume_thread(self) -> str:
+        """
+        Resume the thread from the.ini file.
+        """
+        config = configparser.ConfigParser()
+        config.read("thread.ini")
+        if "THREAD" not in config or "thread_id" not in config["THREAD"]:
+            thread_id = self.create_thread()
+            self.save_thread(thread_id)
+        else:
+            thread_id = config["THREAD"]["thread_id"]
+        return thread_id
+
 
 # Example usage
 # gpt = GPT()
-# gpt.apiKey = "your_api_key"
+# gpt.api_key = "your_api_key"
 # response = gpt.chat_completion(
 #     model="gpt-3.5-turbo",
 #     systemMessage="You are a helpful assistant.",

@@ -10,6 +10,7 @@ testing/
 old/
 release/
 .vscode/
+thread.ini
 
 # Distribution / packaging
 .Python
