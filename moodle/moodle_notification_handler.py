@@ -51,6 +51,7 @@ class MoodleNotificationHandler:
             self.last_notification_id = 0
         except Exception as e:
             logging.exception("Initialization failed")
+            raise e
             exit(1)
 
     def login(self) -> None:
@@ -67,6 +68,7 @@ class MoodleNotificationHandler:
             self.api.login(username=self.username, password=self.password)
         except Exception as e:
             logging.exception("Failed to login to Moodle")
+            raise e
 
     def fetch_latest_notification(self) -> str:
         """
@@ -88,7 +90,7 @@ class MoodleNotificationHandler:
             ][0]
         except Exception as e:
             logging.exception("Failed to fetch Moodle notification")
-            return None
+            raise e
 
     def fetch_newest_notification(self) -> str:
         """

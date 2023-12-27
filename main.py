@@ -3,7 +3,7 @@ import os
 import time
 import traceback
 
-from filters.message_filter import extract_and_format_for_discord, parse_html_to_text
+from filters.message_filter import extract_and_format_for_discord
 from gpt.openai_chat import GPT
 from moodle.load_config import Config
 from moodle.moodle_notification_handler import MoodleNotificationHandler
@@ -13,9 +13,11 @@ from utils.handle_exceptions import handle_exceptions
 from utils.logo import logo
 from utils.setup_logging import setup_logging
 
+
 # Clear screen
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
+
 
 # Constants
 sleep_duration_seconds: int = 60
@@ -69,7 +71,7 @@ class NotificationSummarizer:
             return ai.context_assistant(prompt=text)
         except Exception as e:
             logging.exception(f"Failed to summarize with {configModel}")
-            return None
+            raise e
 
 
 class NotificationSender:
@@ -132,6 +134,7 @@ class NotificationSender:
 
         except Exception as e:
             logging.exception("Failed to send notification")
+            raise e
 
     @handle_exceptions
     def send_simple(self, subject: str, text: str) -> None:
@@ -141,6 +144,7 @@ class NotificationSender:
             dc.send_simple(subject, text)
         except Exception as e:
             logging.exception("Failed to send notification")
+            raise e
 
 
 def main_loop(
@@ -205,6 +209,8 @@ def main_loop(
             else:
                 logging.warning(f"Retrying ({retry_count}/{max_retries})...")
                 time.sleep(sleep_duration)
+
+            raise e
 
 
 # This is the main loop of the program. We'll keep looping until something breaks

@@ -8,8 +8,8 @@ Github: @EvickaStudio
 
 import configparser
 import logging
-from functools import lru_cache
 import os
+from functools import lru_cache
 
 
 class Config:

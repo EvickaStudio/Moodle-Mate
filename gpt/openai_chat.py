@@ -97,7 +97,6 @@ class GPT:
         """
         Assistant with saving and keeping context
         """
-        assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
         thread_id = self.resume_thread()
         return self.assistant(prompt, thread_id)
 

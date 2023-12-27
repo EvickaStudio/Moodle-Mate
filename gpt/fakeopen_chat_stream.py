@@ -9,7 +9,6 @@ Github: @EvickaStudio
 
 import json
 import logging
-import os
 from typing import Dict, Optional
 
 import requests
