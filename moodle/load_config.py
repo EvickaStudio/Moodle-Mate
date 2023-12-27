@@ -8,72 +8,50 @@ Github: @EvickaStudio
 
 import configparser
 import logging
+from functools import lru_cache
 import os
 
 
 class Config:
     """
     A class to manage configuration settings for the application.
-
-    This class handles reading from a configuration file and provides
-    a method to retrieve specific configuration values. It includes error handling
-    for non-existent files and parsing errors. Additionally, it implements caching
-    to optimize performance by avoiding redundant file reads.
-
-    Attributes:
-        config (ConfigParser): An instance of ConfigParser to read config files.
-        _config_cache (dict): A cache to store and retrieve configuration values.
+    ....
     """
 
     def __init__(self, config_file: str):
         """
-        Initialize the Config class.
-
-        Args:
-            config_file (str): The path to the configuration file.
-
-        Raises:
-            FileNotFoundError: If the configuration file does not exist.
+        Initialize the Configuration class.
+        ....
         """
         self.config = configparser.ConfigParser()
-        self._config_cache = {}
+        self._config_cache = lru_cache(maxsize=None)(self._cache_config_value)
 
         # Validate the existence of the config file
-        if not os.path.exists(config_file):
-            raise FileNotFoundError(f"Config file not found: {config_file}")
-
-        # Read the configuration file and handle parsing errors
         try:
-            self.config.read(config_file)
-        except configparser.Error as e:
-            logging.error(f"Error reading config file: {e}")
+            self.config.read(self._get_absolute_path(config_file))
+        except (FileNotFoundError, configparser.Error) as e:
+            logging.error(f"Error reading config file: {str(e)}")
 
-    def get_config(self, section: str, key: str) -> str:
-        """
-        Retrieve a configuration value.
+    @staticmethod
+    def _get_absolute_path(path: str) -> str:
+        return os.path.abspath(os.path.expanduser(path))
 
-        Args:
-            section (str): The section of the configuration.
-            key (str): The key within the section to retrieve.
-
-        Returns:
-            str: The configuration value. If the key or section is not found,
-                 None is returned.
-        """
-        # Check if the value is cached
-        if (section, key) in self._config_cache:
-            return self._config_cache[(section, key)]
-
-        # Retrieve and cache the configuration value, handling missing keys or sections
+    @lru_cache(maxsize=None)
+    def _cache_config_value(self, section: str, key: str) -> str | None:
         try:
-            value = self.config[section][key]
-            self._config_cache[(section, key)] = value
-            return value
+            return self.config[section][key]
         except KeyError:
             logging.warning(f"Config key '{key}' not found in section '{section}'")
             return None
 
+    def get_config(self, section: str, key: str) -> str | None:
+        """
+        Retrieve a configuration value.
+        ....
+        """
+        return self._config_cache(section, key)
 
-# Example usage of the Config class
-# config = Config("path_to_config_file.ini")
+
+# Example usage of the Configuration class
+# config = Configuration("path_to_config_file.ini")
 # value = config.get_config("section_name", "key_name")
