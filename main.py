@@ -5,8 +5,6 @@ import traceback
 
 from filters.message_filter import extract_and_format_for_discord, parse_html_to_text
 from gpt.openai_chat import GPT
-
-# from gpt.fakeopen_chat import FGPT # Free alternative to openai
 from moodle.load_config import Config
 from moodle.moodle_notification_handler import MoodleNotificationHandler
 from notification.discord import Discord
@@ -15,8 +13,12 @@ from utils.handle_exceptions import handle_exceptions
 from utils.logo import logo
 from utils.setup_logging import setup_logging
 
-# clean screen
-cls = lambda: os.system("cls" if os.name == "nt" else "clear")
+# Clear screen
+clear_screen = lambda: os.system("cls" if os.name == "nt" else "clear")
+
+# Constants
+sleep_duration_seconds: int = 60
+max_retries: int = 3
 
 
 class NotificationSummarizer:
@@ -35,36 +37,35 @@ class NotificationSummarizer:
     def __init__(self, config: Config) -> None:
         self.api_key = config.get_config("moodle", "openaikey")
         self.system_message = config.get_config("moodle", "systemmessage")
-        self.test = False  # To use the assistant API, set to True.
 
     @handle_exceptions
-    def summarize(self, text: str, configModel: str) -> str:
-        """Summarizes the given text using GPT-3 API or FGPT.
+    def summarize(
+        self, text: str, configModel: str, use_assistant_api: bool = False
+    ) -> str:
+        """
+        Summarizes the given text using GPT-3 API or FGPT.
 
         Args:
-        text (str): The text to summarize.
-        configModel (str): The GPT-3 model to use, or 'FGPT' to use FGPT.
+            text (str): The text to summarize.
+            configModel (str): The GPT-3 model to use, or 'FGPT' to use FGPT.
+            use_assistant_api (bool, optional): Whether to use the chat completion or assistant API. Defaults to False.
 
         Returns:
-        str: The summarized text.
+            str: The summarized text.
 
         Raises:
-        Exception: If summarization fails.
+            Exception: If summarization fails.
         """
         try:
-            # Summarize the text using GPT-3 and return the result
-            if self.test:
-                # Test option, summarize the text using assistant and not the
-                # chat completion API, for testing ATM.
-                ai = GPT()
-                ai.api_key = self.api_key
-                logging.info(f"Test = {self.test}, summarizing with Asistant API")
-                return ai.context_assistant(prompt=text)
-            else:
-                ai = GPT()
-                ai.api_key = self.api_key
+            # Test option, summarize the text using assistant and not the
+            # chat completion API, for testing ATM.
+            ai = GPT()
+            ai.api_key = self.api_key
+            if not use_assistant_api:
                 return ai.chat_completion(configModel, self.system_message, text)
 
+            logging.info(f"Test = {self.test}, summarizing with Asistant API")
+            return ai.context_assistant(prompt=text)
         except Exception as e:
             logging.exception(f"Failed to summarize with {configModel}")
             return None
@@ -134,7 +135,14 @@ class NotificationSender:
             logging.exception("Failed to send notification")
 
 
-def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retries=3):
+def main_loop(
+    handler,
+    summarizer,
+    sender,
+    summary,
+    sleep_duration=sleep_duration_seconds,
+    max_retries=max_retries,
+):
     """
     Main loop of the program. Fetches and processes notifications at regular intervals.
 
@@ -179,7 +187,7 @@ def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retri
             logging.exception("An error occurred in the main loop")
             retry_count += 1
             if retry_count > max_retries:
-                # Send error message via Discord
+                # Send error message via Discord if max retries reached
                 error_message = (
                     f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
                 )
@@ -193,7 +201,7 @@ def main_loop(handler, summarizer, sender, summary, sleep_duration=60, max_retri
 
 # This is the main loop of the program. We'll keep looping until something breaks
 if __name__ == "__main__":
-    cls()
+    clear_screen()
     print(logo)
     setup_logging()
 
