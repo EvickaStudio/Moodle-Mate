@@ -14,7 +14,8 @@ from utils.logo import logo
 from utils.setup_logging import setup_logging
 
 # Clear screen
-clear_screen = lambda: os.system("cls" if os.name == "nt" else "clear")
+def clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
 
 # Constants
 sleep_duration_seconds: int = 60
@@ -92,6 +93,7 @@ class NotificationSender:
         self.pushbullet_state = int(config.get_config("moodle", "pushbulletState"))
         self.webhook_state = int(config.get_config("moodle", "webhookState"))
         self.model = config.get_config("moodle", "model")
+        self.webhook_discord = Discord(self.webhook_url)
 
     @handle_exceptions
     def send(self, subject: str, text: str, summary: str, useridfrom: int):
@@ -120,7 +122,13 @@ class NotificationSender:
                 useridfrom_info = moodle_handler.user_id_from(useridfrom)
                 fullname = useridfrom_info[0]["fullname"]
                 profile_url = useridfrom_info[0]["profileimageurl"]
-                dc.send_notification(subject, text, summary, fullname, profile_url)
+                dc(
+                    subject=subject,
+                    text=text,
+                    summary=summary,
+                    fullname=fullname,
+                    picture_url=profile_url,
+                )
 
         except Exception as e:
             logging.exception("Failed to send notification")
