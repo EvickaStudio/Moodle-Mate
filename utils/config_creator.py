@@ -9,7 +9,7 @@ Github: @EvickaStudio
 
 import configparser
 
-from logo import old_logo
+from utils.logo import old_logo
 
 
 def create_config_file():

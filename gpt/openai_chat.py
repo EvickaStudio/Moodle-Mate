@@ -10,18 +10,19 @@ import configparser
 import logging
 import re
 from time import sleep
+from typing import Optional
 
 import openai  # version 1.5
 
 
 class GPT:
     def __init__(self) -> None:
-        self._api_key = None
+        self._api_key: Optional[str] = None
         # self.api_key_regex /regex(\/sk-\w{48}\/)/
         self.api_key_regex = r"^sk-[A-Za-z0-9]{48}$"
 
     @property
-    def api_key(self) -> str:
+    def api_key(self) -> str | None:
         return self._api_key
 
     @api_key.setter
@@ -73,9 +74,9 @@ class GPT:
                 },
             ],
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content if response.choices else ""
 
-    def assistant(self, prompt: str, thread_id: str = None) -> str:
+    def assistant(self, prompt: str, thread_id: Optional[str] = None) -> str:
         """
         Assistant endpoint for OpenAI API.
 

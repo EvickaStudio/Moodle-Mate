@@ -8,6 +8,7 @@ Github: @EvickaStudio
 
 import logging
 import os
+from typing import Optional
 
 import requests
 from requests.exceptions import RequestException
@@ -29,7 +30,7 @@ class MoodleAPI:
         userid (int, optional): User ID of the logged-in user.
     """
 
-    def __init__(self, url: str = None):
+    def __init__(self, url: Optional[str] = None):
         """
         Initializes the MoodleAPI object with the provided API URL.
         """
@@ -159,7 +160,7 @@ class MoodleAPI:
         )
         return response.json()
 
-    def _post(self, arg0: str, user_id: str) -> dict | None:
+    def _post(self, arg0: str, user_id: int) -> dict | None:
         """Send a POST request to the Moodle API with given wsfunction and user ID."""
         if self.token is None:
             logger.error("Token not set. Please login first.")
