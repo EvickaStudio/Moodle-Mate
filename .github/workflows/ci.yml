@@ -49,13 +49,13 @@ jobs:
         run: |
           black --check .
 
-      - name: Check imports with isort
-        run: |
-          isort --check-only .
-
-      # - name: Test with pytest
+      # - name: Check imports with isort
       #   run: |
-      #     pytest
+      #     isort --check-only .
+
+      - name: Test with pytest
+        run: |
+          pytest
 
       - name: Generate Code Coverage
         run: |
