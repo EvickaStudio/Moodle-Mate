@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest coverage mypy black isort
+          pip install flake8 pytest coverage mypy black isort types-requests
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Lint with flake8
@@ -64,5 +64,4 @@ jobs:
 
       - name: Type Check with mypy
         run: |
-          mypy --install-types
           mypy --ignore-missing-imports --exclude notification/discord.py --exclude utils/logo.py --exclude example --exclude main.py --exclude moodle/moodle_notification_handler.py --follow-imports=skip .
