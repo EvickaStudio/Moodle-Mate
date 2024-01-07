@@ -6,12 +6,11 @@ __pycache__/
 # C extensions and modules
 *.so
 config.ini
-testing/
 old/
 release/
 .vscode/
 thread.ini
-test/
+tests/
 
 # Distribution / packaging
 .Python
