@@ -41,7 +41,9 @@ class Config:
         try:
             return self.config[section][key]
         except KeyError:
-            logging.warning(f"Config key '{key}' not found in section '{section}'")
+            logging.warning(
+                f"Config key '{key}' not found in section '{section}'"
+            )
             return None
 
     def get_config(self, section: str, key: str) -> str | None:

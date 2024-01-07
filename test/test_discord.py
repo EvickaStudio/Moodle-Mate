@@ -89,7 +89,9 @@ def test_discord_notification(
         mock_post.assert_called_once()
         assert result == expected_result
         if embed:
-            assert mock_post.call_args[1]["json"]["embeds"][0]["title"] == subject
+            assert (
+                mock_post.call_args[1]["json"]["embeds"][0]["title"] == subject
+            )
         else:
             assert mock_post.call_args[1]["json"]["content"].startswith(
                 f"<strong>{subject}</strong>"

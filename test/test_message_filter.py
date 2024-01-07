@@ -14,9 +14,12 @@
 
 import pytest
 
-from filters.message_filter import (extract_and_format_for_discord,
-                                    parse_html_to_text, remove_last_line,
-                                    remove_whitespace)
+from filters.message_filter import (
+    extract_and_format_for_discord,
+    parse_html_to_text,
+    remove_last_line,
+    remove_whitespace,
+)
 
 
 def test_parse_html_to_text():

@@ -70,7 +70,9 @@ class MoodleAPI:
         }
 
         try:
-            response = self.session.post(f"{self.url}/login/token.php", data=login_data)
+            response = self.session.post(
+                f"{self.url}/login/token.php", data=login_data
+            )
             response.raise_for_status()
 
             if "token" in response.json():

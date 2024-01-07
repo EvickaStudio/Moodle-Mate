@@ -82,9 +82,9 @@ class MoodleNotificationHandler:
         """
         try:
             logger.info("Fetching notification from Moodle")
-            if notifs := self.api.get_popup_notifications(self.moodle_user_id).get(
-                "notifications", []
-            ):
+            if notifs := self.api.get_popup_notifications(
+                self.moodle_user_id
+            ).get("notifications", []):
                 self.last_notification_id = notifs[0]["id"]
                 return notifs[0]
         except Exception as e:
@@ -100,7 +100,10 @@ class MoodleNotificationHandler:
 
         """
         new_notification = self.fetch_latest_notification()
-        if new_notification and new_notification["id"] > self.last_notification_id:
+        if (
+            new_notification
+            and new_notification["id"] > self.last_notification_id
+        ):
             self.last_notification_id = new_notification["id"]
             return new_notification
         return None

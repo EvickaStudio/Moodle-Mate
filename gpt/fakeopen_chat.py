@@ -96,12 +96,16 @@ class FGPT:
 
         try:
             response = requests.post(
-                self.base_url, headers=self._get_headers(), data=json.dumps(data)
+                self.base_url,
+                headers=self._get_headers(),
+                data=json.dumps(data),
             )
             response.raise_for_status()
             response_json = response.json()
             return (
-                response_json.get("choices", [{}])[0].get("message", {}).get("content")
+                response_json.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content")
             )
         except requests.RequestException as e:
             logging.error(f"HTTP error occurred: {e}")

@@ -27,7 +27,9 @@ class Discord:
 
     def random_color(self) -> str:
         return "#{:02x}{:02x}{:02x}".format(
-            random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
         )
 
     def __call__(

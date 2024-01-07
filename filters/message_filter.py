@@ -53,8 +53,12 @@ def remove_whitespace(text: str) -> str:
     Returns:
         str: The cleaned text.
     """
-    temp = "\n".join([line.rstrip() for line in text.splitlines() if line.strip()])
-    return "\n".join([line for line in temp.splitlines() if not line.startswith("   ")])
+    temp = "\n".join(
+        [line.rstrip() for line in text.splitlines() if line.strip()]
+    )
+    return "\n".join(
+        [line for line in temp.splitlines() if not line.startswith("   ")]
+    )
 
 
 def remove_last_line(text: str) -> str:

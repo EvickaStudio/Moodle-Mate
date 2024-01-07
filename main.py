@@ -78,7 +78,9 @@ class NotificationSummarizer:
             ai = GPT()
             ai.api_key = self.api_key
             if not use_assistant_api:
-                return ai.chat_completion(configModel, self.system_message, text)
+                return ai.chat_completion(
+                    configModel, self.system_message, text
+                )
 
             logging.info(f"Test = {self.test}, summarizing with Asistant API")
             return ai.context_assistant(prompt=text)
@@ -105,7 +107,9 @@ class NotificationSender:
     def __init__(self, config: Config) -> None:
         self.pushbullet_key = config.get_config("moodle", "pushbulletkey")
         self.webhook_url = config.get_config("moodle", "webhookUrl")
-        self.pushbullet_state = int(config.get_config("moodle", "pushbulletState"))
+        self.pushbullet_state = int(
+            config.get_config("moodle", "pushbulletState")
+        )
         self.webhook_state = int(config.get_config("moodle", "webhookState"))
         self.model = config.get_config("moodle", "model")
         self.webhook_discord = Discord(self.webhook_url)
@@ -190,12 +194,18 @@ def main_loop(
                 ):
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
-                        summary = summarizer.summarize(text, configModel=sender.model)
+                        summary = summarizer.summarize(
+                            text, configModel=sender.model
+                        )
                     elif summary_setting == 0:
-                        logging.info("Summary is set to 0, not summarizing text")
+                        logging.info(
+                            "Summary is set to 0, not summarizing text"
+                        )
                         summary = ""
                     else:
-                        logging.error("Error while checking the summary setting")
+                        logging.error(
+                            "Error while checking the summary setting"
+                        )
                     sender.send(
                         notification["subject"],
                         text,
@@ -213,9 +223,7 @@ def main_loop(
             retry_count += 1
             if retry_count > max_retries:
                 # Send error message via Discord if max retries reached
-                error_message = (
-                    f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
-                )
+                error_message = f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
                 sender.send_simple("Error", error_message)
                 logging.error("Max retries reached. Exiting main loop.")
                 break
@@ -239,7 +247,9 @@ if __name__ == "__main__":
     moodle_handler = MoodleNotificationHandler(config)
     summarizer = NotificationSummarizer(config)
     sender = NotificationSender(config)
-    summary = int(config.get_config("moodle", "summary"))  # 1 = summary, 0 = no summary
+    summary = int(
+        config.get_config("moodle", "summary")
+    )  # 1 = summary, 0 = no summary
     fakeopen = int(
         config.get_config("moodle", "fakeopen")
     )  # 1 = fake open, 0 = openai when selected

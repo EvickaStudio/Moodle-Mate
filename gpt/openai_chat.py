@@ -114,7 +114,9 @@ class GPT:
         if thread_id is None:
             thread_id = openai.beta.threads.create().id
 
-        assistant_id = "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+        assistant_id = (
+            "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+        )
         message = openai.beta.threads.messages.create(
             thread_id=thread_id,
             role="user",
@@ -124,7 +126,9 @@ class GPT:
             thread_id=thread_id, assistant_id=assistant_id
         )
 
-        result = openai.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run.id)
+        result = openai.beta.threads.runs.retrieve(
+            thread_id=thread_id, run_id=run.id
+        )
 
         delay = 0.5
         while result.status != "completed":
