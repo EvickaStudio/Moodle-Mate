@@ -15,7 +15,20 @@ from utils.setup_logging import setup_logging
 
 
 # Clear screen
-def clear_screen():
+def clear_screen() -> None:
+    """
+    Clears the terminal screen.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+
     os.system("cls" if os.name == "nt" else "clear")
 
 
