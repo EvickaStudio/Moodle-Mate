@@ -6,7 +6,6 @@ Data: 07.10.2023
 Github: @EvickaStudio
 """
 
-import json
 import logging
 
 import requests
@@ -25,12 +24,8 @@ class Pushbullet:
         """
         self.api_key = api_key
         self.url = "https://api.pushbullet.com/v2/pushes"
-        self.headers = {
-            "Access-Token": self.api_key,
-            "Content-Type": "application/json",
-        }
 
-    def send_notification(self, title, body) -> bool:
+    def send_notification(self, title: str, body: str) -> bool:
         """
         Sends a push notification with the provided title and body.
 
@@ -41,11 +36,16 @@ class Pushbullet:
         Returns:
             bool: True if the push notification was sent successfully, False otherwise.
         """
+        headers = {"Access-Token": self.api_key}
+        data = {"type": "note", "title": title, "body": body}
         try:
-            data = {"type": "note", "title": title, "body": body}
-            r = requests.post(self.url, headers=self.headers, data=json.dumps(data))
-            r.raise_for_status()  # Raise an exception if the request was not successful
+            response = requests.post(
+                url=self.url, headers=headers, json=data, timeout=5
+            )
+            response.raise_for_status()
             return True
         except requests.exceptions.RequestException as e:
-            logging.error(f"Error sending pushbullet notification: {e}")
+            logging.error(
+                f"Error sending pushbullet notification: {e}. Response status code: {response.status_code}, response text: {response.text}"
+            )
             return False

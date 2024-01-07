@@ -1,4 +1,4 @@
-from fakeopen_chat_stream import FGPT
+from gpt.fakeopen_chat_stream import FGPT
 
 gpt = FGPT()
 response = gpt.chat_completion(

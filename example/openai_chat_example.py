@@ -1,6 +1,6 @@
 import configparser
 
-from openai_chat import GPT
+from gpt.openai_chat import GPT
 
 config = configparser.ConfigParser()
 config.read("config.ini")

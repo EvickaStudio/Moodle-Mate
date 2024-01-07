@@ -1,4 +1,8 @@
 import logging
+import sys
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 def handle_exceptions(func):
@@ -12,9 +16,13 @@ def handle_exceptions(func):
 
     def wrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            logging.exception(f"Exception occurred in {func.__name__}")
+            result = func(*args, **kwargs)
+        except BaseException as e:
+            logger.exception(f"Exception occurred in {func.__name__}: {str(e)}")
+            _, err, tb = sys.exc_info()
+            logger.debug(traceback.format_tb(err.__traceback__)[-1])
             return None
+        else:
+            return result
 
     return wrapper

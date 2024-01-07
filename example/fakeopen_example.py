@@ -1,4 +1,4 @@
-from fakeopen_chat import FGPT
+from gpt.fakeopen_chat import FGPT
 
 gpt = FGPT()
 
