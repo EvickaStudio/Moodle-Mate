@@ -31,9 +31,10 @@ def parse_html_to_text(html: str) -> str:
         soup = BeautifulSoup(html, "html.parser")
 
         # Extract text and remove unnecessary whitespace
-        cleaned_text = remove_whitespace(soup.get_text())
+        cleaned_text = soup.get_text().strip()
 
         # Filter out the last line
+        # only if more than 4 lines
         cleaned_text = remove_last_line(cleaned_text)
 
         return cleaned_text
@@ -66,7 +67,8 @@ def remove_last_line(text: str) -> str:
     Returns:
         str: The text without the last line.
     """
-    return "\n".join(text.splitlines()[:-1])
+    lines = text.splitlines()
+    return "\n".join(lines[:-1]) if len(lines) > 1 else text
 
 
 def extract_and_format_for_discord(html: str) -> str:
