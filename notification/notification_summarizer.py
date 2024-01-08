@@ -60,9 +60,10 @@ class NotificationSummarizer:
             ai = GPT()
             ai.api_key = self.api_key
             if not use_assistant_api:
-                return ai.chat_completion(self.model, self.system_message, text)
+                if self.model is None or self.system_message is None:
+                    raise ValueError("Model and system message must not be None")
+                return ai.chat_completion(self.model, self.system_message, text or "")
 
-            logging.info(f"Test = {self.test}, summarizing with Asistant API")
             return ai.context_assistant(prompt=text)
         except Exception as e:
             logging.exception(f"Failed to summarize with {self.model}")

@@ -37,7 +37,7 @@ def parse_html_to_text(html: str) -> str:
         return cleaned_text
     except Exception as e:
         logging.exception("An unexpected error occurred during HTML parsing")
-        return None
+        return ""  # Return an empty string instead of None
 
 
 def remove_whitespace(text: str) -> str:
