@@ -61,8 +61,12 @@ class NotificationSummarizer:
             ai.api_key = self.api_key
             if not use_assistant_api:
                 if self.model is None or self.system_message is None:
-                    raise ValueError("Model and system message must not be None")
-                return ai.chat_completion(self.model, self.system_message, text or "")
+                    raise ValueError(
+                        "Model and system message must not be None"
+                    )
+                return ai.chat_completion(
+                    self.model, self.system_message, text or ""
+                )
 
             return ai.context_assistant(prompt=text)
         except Exception as e:
