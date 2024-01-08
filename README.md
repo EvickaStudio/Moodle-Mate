@@ -1,10 +1,39 @@
+<!--
+ Copyright 2024 EvickaStudio
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
 <div align="center">
   <img src="assets/logo.svg" alt="Logo" width="400"/>
   <h1>Moodle Mate</h1>
   <p><strong>Automated Moodle Notification Summarization</strong></p>
 </div>
 
+<p align="center">
+  <a href="https://github.com/EvickaStudio/Moodle-Mate/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/EvickaStudio/Moodle-Mate/ci.yml?+label=Build%20Status"></a>
+  <a href="https://github.com/EvickaStudio/Moodle-Mate/blob/main/LICENSE.md"><img alt="GitHub license" src="https://img.shields.io/github/license/EvickaStudio/Moodle-Mate"></a>
+  <a href="https://github.com/EvickaStudio/Moodle-Mate/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/EvickaStudio/Moodle-Mate"></a>
+  <a href="https://github.com/EvickaStudio/Moodle-Mate/pulls"><img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/EvickaStudio/Moodle-Mate"></a>
+  <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/EvickaStudio/Moodle-Mate">
+  <a href="https://github.com/EvickaStudio/Moodle-Mate/watchers"><img alt="GitHub Watchers" src="https://img.shields.io/github/watchers/EvickaStudio/Moodle-Mate?style=flat&logo=github"></a>
+  <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/EvickaStudio/Moodle-Mate">
+
 ---
+
+> [!NOTE]
+> I'm currently in the process of rewriting the codebase to make it more modular and easier to maintain. The current codebase is a mess and I'm sorry for that.
+> Find the newest version in the `dev` branch.
 
 ## Contents
 
@@ -17,6 +46,7 @@
 7. [Screenshots](#screenshots)
 8. [Contributing](#contributing)
 9. [Author](#author)
+10. [License](#author)
 
 ---
 
@@ -30,12 +60,12 @@ Alternatively you could just disable summarization in the config file and use th
 **NEW**: Moodle Mate now supports the OpenAI Assistant. This feature is currently under development and will be improved in future updates. Please be aware that the current version of the Assistant utilizes GPT-4 Turbo and is currently configured to provide summaries exclusively in German for now (with context). To use the Assistant, set the `test` variable in `NotificationSummarizer` to `True`:
 
 Example:
+
 ```python
-# main.py
-class NotificationSummarizer:
-    def __init__(self, config: Config) -> None:
-        # To use the assistant API, set to True.
-        self.test = True
+# utils > main_loop.py > main_loop()
+
+# line 56, works [08.01.2024]
+summary = summarizer.summarize(text, True)
 ```
 
 **NEW**: implementation of fakeopen a free api for openai chat completion using gpt-4-32k. (not recommendet, as many chat completion requests are failing)
@@ -131,10 +161,10 @@ A documentation of the modules can be found in its respective folder.
 ## <div id="screenshots">Screenshots</div>
 
 - Main Program
-<img src="assets/main.png" alt="Main Program" width="600"/>
+  <img src="assets/main.png" alt="Main Program" width="600"/>
 
 - Discord Webhook
-<img src="assets/discord.jpg" alt="Discord Screenshot" width="600"/>
+  <img src="assets/discord.jpg" alt="Discord Screenshot" width="600"/>
 
 ---
 
@@ -150,10 +180,6 @@ Made with ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
 
 ---
 
-## Notes
+## <div id="license">License</div>
 
-I'm currently in the process of rewriting the codebase to make it more modular and easier to maintain. The current codebase is a mess and I'm sorry for that. Thus, the code might be a bit messy and not up to my
-standards in the main file...
-Also the CUI version is currently not updates and thus
-removed, but will be added again in the future.
-Old code can be found in old version folder.
+This project is governed by the Apache 2.0 License - refer to the [LICENSE.md](LICENSE.md) file for further details.
