@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import logging
 
 from moodle.load_config import Config
@@ -20,18 +19,6 @@ from moodle.moodle_notification_handler import MoodleNotificationHandler
 from notification.discord import Discord
 from notification.pushbullet import Pushbullet
 from utils.handle_exceptions import handle_exceptions
-from moodle.load_config import Config
-from moodle.moodle_notification_handler import MoodleNotificationHandler
-
-# from notification.notification_sender import NotificationSender
-from notification.notification_summarizer import NotificationSummarizer
-from utils.main_loop import main_loop
-from utils.screen import clear_screen, logo
-from utils.setup_logging import setup_logging
-
-# Constants
-sleep_duration_seconds: int = 60
-max_retries: int = 3
 
 
 class NotificationSender:
@@ -83,10 +70,9 @@ class NotificationSender:
             if self.webhook_state == 1:
                 logging.info("Sending notification to Discord")
                 dc = Discord(self.webhook_url)
-
                 useridfrom_info = moodle_handler.user_id_from(useridfrom)
-                fullname = useridfrom_info["fullname"]
-                profile_url = useridfrom_info["profileimageurl"]
+                fullname = useridfrom_info[0]["fullname"]
+                profile_url = useridfrom_info[0]["profileimageurl"]
                 dc(
                     subject=subject,
                     text=text,
@@ -108,33 +94,3 @@ class NotificationSender:
         except Exception as e:
             logging.exception("Failed to send notification")
             raise e
-
-
-# This is the main loop of the program. We'll keep looping until something breaks
-if __name__ == "__main__":
-    clear_screen()
-    print(logo)
-    setup_logging()
-
-    # Initialize Config object
-    config = Config("config.ini")
-
-    # Initialize other classes with the Config object
-    moodle_handler = MoodleNotificationHandler(config)
-    summarizer = NotificationSummarizer(config)
-    sender = NotificationSender(config)
-    summary = int(
-        config.get_config("moodle", "summary")
-    )  # 1 = summary, 0 = no summary
-    fakeopen = int(
-        config.get_config("moodle", "fakeopen")
-    )  # 1 = fake open, 0 = openai when selected
-
-    main_loop(
-        moodle_handler,
-        summarizer,
-        sender,
-        summary,
-        sleep_duration_seconds,
-        max_retries,
-    )

@@ -81,15 +81,15 @@ class MoodleNotificationHandler:
 
         """
         try:
-            logger.info("Fetching notification from Moodle")
-            if notifs := self.api.get_popup_notifications(
-                self.moodle_user_id
-            ).get("notifications", []):
-                self.last_notification_id = notifs[0]["id"]
-                return notifs[0]
+            # Count the number of times this method has been called
+            logging.info("Fetching notification from Moodle")
+            # Parse the last notification from the Moodle API response and return it
+            return self.api.get_popup_notifications(self.moodle_user_id)[
+                "notifications"
+            ][0]
         except Exception as e:
-            logger.exception("Failed to fetch Moodle notification")
-        return None
+            logging.exception("Failed to fetch Moodle notification")
+            return None
 
     def fetch_newest_notification(self) -> dict | None:
         """
@@ -99,14 +99,24 @@ class MoodleNotificationHandler:
             dict: A dictionary containing the newest notification.
 
         """
-        new_notification = self.fetch_latest_notification()
-        if (
-            new_notification
-            and new_notification["id"] > self.last_notification_id
-        ):
-            self.last_notification_id = new_notification["id"]
-            return new_notification
-        return None
+        try:
+            # Check if there is a newer notification than the last one
+            if notification := self.fetch_latest_notification():
+                notification_id = notification["id"]
+
+                if notification_id <= self.last_notification_id:
+                    # If there isn't, return None
+                    logger.info("No new notifications")
+                    return None
+
+                logging.info("Getting newest notification from Moodle")
+                # If there is, return the notification and update the last notification ID
+                self.last_notification_id = notification_id
+                # logger.info(f"New notification found: {notification}")
+                return notification
+        except Exception as e:
+            logging.exception("Failed to fetch newest Moodle notification")
+            return None
 
     def user_id_from(self, useridfrom: int) -> dict | None:
         """

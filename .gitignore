@@ -11,6 +11,8 @@ release/
 .vscode/
 thread.ini
 tests/
+log.txt
+help.py
 
 # Distribution / packaging
 .Python
