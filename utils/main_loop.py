@@ -23,6 +23,7 @@ from filters.message_filter import (
 from filters.discord_markdown import html_to_discord_md
 from utils.wirte import write_to_log
 
+
 def main_loop(
     handler,
     summarizer,
@@ -54,10 +55,14 @@ def main_loop(
                         logging.info("Summarizing text...")
                         summary = summarizer.summarize(text)
                     elif summary_setting == 0:
-                        logging.info("Summary is set to 0, not summarizing text")
+                        logging.info(
+                            "Summary is set to 0, not summarizing text"
+                        )
                         summary = ""
                     else:
-                        logging.error("Error while checking the summary setting")
+                        logging.error(
+                            "Error while checking the summary setting"
+                        )
                     sender.send(
                         notification["subject"],
                         text,
