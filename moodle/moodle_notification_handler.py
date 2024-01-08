@@ -1,7 +1,17 @@
+"""
+Moodle notification handler.
+
+Author: EvickaStudio
+Data: 29.12.2023
+Github: @EvickaStudio
+"""
+
 import logging
 
 from moodle.api import MoodleAPI
 from moodle.load_config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class MoodleNotificationHandler:
@@ -30,28 +40,19 @@ class MoodleNotificationHandler:
         last_notification_id (int): The ID of the last notification fetched.
     """
 
-    def __init__(self, config: Config) -> None:
-        """
-        Loads the configuration file and initializes the MoodleNotificationHandler.
-        """
+    def __init__(self, config: Config):
+        """Loads the configuration file and initializes the MoodleNotificationHandler."""
         try:
-            # Initialize the MoodleAPI with the config file
             self.url = config.get_config("moodle", "moodleUrl")
             self.api = MoodleAPI(self.url)
             self.config = config
-
-            # Login to Moodle using the username and password
             self.login()
-
-            # Get the current user ID from Moodle
             self.moodle_user_id = self.api.get_user_id()
-
-            # Initialize the stalk count and last notification ID
             self.stalk_count = 0
             self.last_notification_id = 0
         except Exception as e:
-            logging.exception("Initialization failed")
-            exit(1)
+            logger.exception("Initialization failed")
+            raise e
 
     def login(self) -> None:
         """
@@ -61,14 +62,14 @@ class MoodleNotificationHandler:
             Exception: If the login fails.
         """
         try:
-            # Login to Moodle using the username and password
             self.username = self.config.get_config("moodle", "username")
             self.password = self.config.get_config("moodle", "password")
             self.api.login(username=self.username, password=self.password)
         except Exception as e:
-            logging.exception("Failed to login to Moodle")
+            logger.exception("Failed to log in to Moodle")
+            raise e
 
-    def fetch_latest_notification(self) -> str:
+    def fetch_latest_notification(self) -> dict | None:
         """
         Fetches the latest notification from Moodle.
         Latest notification is defined as the first notification in the list of notifications.
@@ -90,7 +91,7 @@ class MoodleNotificationHandler:
             logging.exception("Failed to fetch Moodle notification")
             return None
 
-    def fetch_newest_notification(self) -> str:
+    def fetch_newest_notification(self) -> dict | None:
         """
         Fetches the newest notification from Moodle by comparing the ID of the last notification fetched.
 
@@ -105,17 +106,19 @@ class MoodleNotificationHandler:
 
                 if notification_id <= self.last_notification_id:
                     # If there isn't, return None
+                    logger.info("No new notifications")
                     return None
 
                 logging.info("Getting newest notification from Moodle")
                 # If there is, return the notification and update the last notification ID
                 self.last_notification_id = notification_id
+                # logger.info(f"New notification found: {notification}")
                 return notification
         except Exception as e:
             logging.exception("Failed to fetch newest Moodle notification")
             return None
 
-    def user_id_from(self, useridfrom: int) -> dict:
+    def user_id_from(self, useridfrom: int) -> dict | None:
         """
         Fetches the user ID from Moodle.
 
@@ -129,8 +132,10 @@ class MoodleNotificationHandler:
             raise TypeError("useridfrom must be an integer")
 
         try:
-            # logging.info(f"Fetching user ID {useridfrom} from Moodle")
-            return self.api.core_user_get_users_by_field(useridfrom)
-        except Exception as e:  # Hier könnten Sie spezifische API-Fehler behandeln
-            logging.exception(f"Failed to fetch user {useridfrom} from Moodle")
-            return None
+            logger.debug(f"Fetching user ID {useridfrom} from Moodle")
+            if response := self.api.core_user_get_users_by_field(useridfrom):
+                return response[0]
+        except Exception as e:
+            logger.exception(f"Failed to fetch user {useridfrom} from Moodle")
+
+        return None

@@ -1,8 +1,8 @@
 # Testing script for MoodleAPI
 
 
-from api import MoodleAPI
-from load_config import Config
+from moodle.api import MoodleAPI
+from moodle.load_config import Config
 
 config = Config("config.ini")  # Create a Config object
 api = MoodleAPI(config)  # Pass the Config object to MoodleAPI

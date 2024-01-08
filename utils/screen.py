@@ -1,3 +1,5 @@
+import os
+
 # grey
 COLOR_BORDER = "\033[38;5;240m"
 COLOR_MOODLE = "\033[38;5;9m"
@@ -23,9 +25,25 @@ old_logo = """
 """
 
 
-if __name__ == "__main__":
-    import os
+# Clear screen
+def clear_screen() -> None:
+    """
+    Clears the terminal screen.
 
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+if __name__ == "__main__":
     cls = lambda: os.system("cls" if os.name == "nt" else "clear")
     cls()
     print(logo)

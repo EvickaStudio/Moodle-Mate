@@ -9,7 +9,6 @@ Github: @EvickaStudio
 
 import json
 import logging
-import os
 from typing import Dict, Optional
 
 import requests
@@ -88,7 +87,7 @@ class FGPT:
         top_p: float = 1.0,
         frequency_penalty: float = 0.0,
         stream: bool = True,
-    ) -> Optional[str]:
+    ) -> None:
         """
         Sends a request to the chat completion endpoint of the API.
 

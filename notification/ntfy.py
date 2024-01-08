@@ -29,7 +29,9 @@ class Ntfy:
         self.server_url = None
         self.topic = None
 
-    def send_notification(self, topic, title, message, priority="urgent") -> bool:
+    def send_notification(
+        self, topic, title, message, priority="urgent"
+    ) -> bool:
         """
         Send a notification.
 
