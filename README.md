@@ -62,11 +62,10 @@ Alternatively you could just disable summarization in the config file and use th
 Example:
 
 ```python
-# main.py
-class NotificationSummarizer:
-    def __init__(self, config: Config) -> None:
-        # To use the assistant API, set to True.
-        self.test = True
+# utils > main_loop.py > main_loop()
+
+# line 56, works [08.01.2024]
+summary = summarizer.summarize(text, True)
 ```
 
 **NEW**: implementation of fakeopen a free api for openai chat completion using gpt-4-32k. (not recommendet, as many chat completion requests are failing)
