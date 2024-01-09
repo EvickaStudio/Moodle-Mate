@@ -57,6 +57,9 @@ class NotificationSummarizer:
         try:
             # Test option, summarize the text using assistant and not the
             # chat completion API, for testing ATM.
+
+            if self.model is None or self.model == "":
+                self.model = "gpt-3.5-turbo-1106"
             ai = GPT()
             ai.api_key = self.api_key
             if not use_assistant_api:

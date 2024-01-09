@@ -93,6 +93,10 @@ class NotificationSender:
                     picture_url=profile_url,
                 )
 
+            else:
+                logging.info("No notification service selected")
+                
+
         except Exception as e:
             logging.exception("Failed to send notification")
             raise e
@@ -124,9 +128,13 @@ if __name__ == "__main__":
     summary = int(
         config.get_config("moodle", "summary")
     )  # 1 = summary, 0 = no summary
+    if summary == "" or summary is None:
+        summary = 0
     fakeopen = int(
         config.get_config("moodle", "fakeopen")
     )  # 1 = fake open, 0 = openai when selected
+    if fakeopen == "" or fakeopen is None:
+        fakeopen = 0
 
     main_loop(
         moodle_handler,
