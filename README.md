@@ -15,10 +15,12 @@
 -->
 
 <div align="center">
-  <img src="assets/logo.svg" alt="Logo" width="400"/>
+  <img src="assets/logo.svg" style="width: 160px;"/>
   <h1>Moodle Mate</h1>
   <p><strong>Automated Moodle Notification Summarization</strong></p>
 </div>
+
+---
 
 <p align="center">
   <a href="https://github.com/EvickaStudio/Moodle-Mate/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/EvickaStudio/Moodle-Mate/ci.yml?+label=Build%20Status"></a>
@@ -29,11 +31,11 @@
   <a href="https://github.com/EvickaStudio/Moodle-Mate/watchers"><img alt="GitHub Watchers" src="https://img.shields.io/github/watchers/EvickaStudio/Moodle-Mate?style=flat&logo=github"></a>
   <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/EvickaStudio/Moodle-Mate">
 
----
-
 > [!NOTE]
 > I'm currently in the process of rewriting the codebase to make it more modular and easier to maintain. The current codebase is a mess and I'm sorry for that.
 > Find the newest version in the `dev` branch.
+
+---
 
 ## Contents
 
