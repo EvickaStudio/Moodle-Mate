@@ -18,13 +18,11 @@ import logging
 from moodle.load_config import Config
 from moodle.moodle_notification_handler import MoodleNotificationHandler
 from notification.discord import Discord
-from notification.pushbullet import Pushbullet
-from utils.handle_exceptions import handle_exceptions
-from moodle.load_config import Config
-from moodle.moodle_notification_handler import MoodleNotificationHandler
 
 # from notification.notification_sender import NotificationSender
 from notification.notification_summarizer import NotificationSummarizer
+from notification.pushbullet import Pushbullet
+from utils.handle_exceptions import handle_exceptions
 from utils.main_loop import main_loop
 from utils.screen import clear_screen, logo
 from utils.setup_logging import setup_logging
