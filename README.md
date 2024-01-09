@@ -15,7 +15,7 @@
 -->
 
 <div align="center">
-  <img src="assets/logo.svg" style="width: 160px;"/>
+  <img src="assets/logo.svg" style="width: 160px;">
   <h1>Moodle Mate</h1>
   <p><strong>Automated Moodle Notification Summarization</strong></p>
 </div>
