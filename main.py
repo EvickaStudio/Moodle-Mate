@@ -95,7 +95,6 @@ class NotificationSender:
 
             else:
                 logging.info("No notification service selected")
-                
 
         except Exception as e:
             logging.exception("Failed to send notification")
