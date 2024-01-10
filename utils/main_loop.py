@@ -53,7 +53,7 @@ def main_loop(
                     # write_to_log(notification["fullmessagehtml"])
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
-                        summary = summarizer.summarize(text)
+                        summary = summarizer.summarize(text, True)
                     elif summary_setting == 0:
                         logging.info(
                             "Summary is set to 0, not summarizing text"
