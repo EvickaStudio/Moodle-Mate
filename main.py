@@ -80,12 +80,11 @@ class NotificationSender:
 
             if self.webhook_state == 1:
                 logging.info("Sending notification to Discord")
-                dc = Discord(self.webhook_url)
 
                 useridfrom_info = moodle_handler.user_id_from(useridfrom)
                 fullname = useridfrom_info["fullname"]
                 profile_url = useridfrom_info["profileimageurl"]
-                dc(
+                self.webhook_discord(
                     subject=subject,
                     text=text,
                     summary=summary,
@@ -104,8 +103,7 @@ class NotificationSender:
     def send_simple(self, subject: str, text: str) -> None:
         try:
             logging.info("Sending notification to Discord")
-            dc = Discord(self.webhook_url)
-            dc.send_simple(subject, text)
+            self.webhook_discord.send_simple(subject, text)
         except Exception as e:
             logging.exception("Failed to send notification")
             raise e
