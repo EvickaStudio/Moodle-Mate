@@ -1,0 +1,35 @@
+name: Greetings
+
+on:
+  - pull_request_target
+  - issues
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: >-
+            Hello there! 👋 Welcome to the Moodle-Mate project! We're thrilled to see your first issue. 
+
+            We're always eager for new contributors and are here to help you get started. We're particularly interested in bug reports, feature suggestions, and improvements to our documentation.
+
+            To help us better understand your issue, please provide as much detail as possible. Include what you were trying to do, what didn't work as expected, and steps to reproduce the issue. Feel free to update this issue as needed to provide additional information or clarify existing details.
+
+            We're looking forward to collaborating with you!
+          pr-message: >-
+            Welcome aboard! 🎉 We're delighted to see your first pull request to Moodle-Mate! 
+
+            Your contribution is greatly appreciated. Before we can review and merge your PR, please ensure the following:
+              
+            - Your PR description clearly explains the purpose of your changes.
+            - You've adhered to the project's coding conventions and styles (PEP8, isort, black).
+            - You've added tests for any new code or features (if applicable).
+            - You've updated any relevant documentation to reflect your changes.
+              
+            If you have any questions or need assistance, don't hesitate to ask. We're here to help guide you through the process. Thank you again for your contribution - we're excited to have you join us!
