@@ -120,10 +120,10 @@ class MoodleNotificationHandler:
 
                 if notification_id <= self.last_notification_id:
                     # If there isn't, return None
-                    logger.info("No new notifications")
+                    logger.info(f"No new notification ID found: {notification_id}")
                     return None
 
-                logging.info("Getting newest notification from Moodle")
+                logging.info(f"Getting newest notification from Moodle: {notification_id}")
                 # If there is, return the notification and update the last notification ID
                 self.last_notification_id = notification_id
                 # logger.info(f"New notification found: {notification}")
