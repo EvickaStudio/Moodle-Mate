@@ -137,6 +137,9 @@ Example can be found [here](example/example_config.ini).
 
 Once all prerequisites are met and the configuration file prepared, simply execute the main script:
 
+> [!INFO]
+> Only new notifications will be processed, current last notification will not be send.
+
 ```bash
 python3 main.py
 ```
