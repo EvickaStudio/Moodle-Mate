@@ -30,6 +30,14 @@ import openai  # version 1.5
 
 
 class GPT:
+    """
+    Interface for the OpenAI API.
+
+    Methods:
+    __init__(...) -> None: Initialize the class.
+    api_key: str | None: The API key for OpenAI.
+    """
+
     def __init__(self) -> None:
         self._api_key: Optional[str] = None
         # self.api_key_regex /regex(\/sk-\w{48}\/)/
@@ -37,19 +45,24 @@ class GPT:
 
     @property
     def api_key(self) -> str | None:
+        """
+        Gets the API key for OpenAI.
+
+        Returns:
+            str | None: The API key.
+        """
         return self._api_key
 
     @api_key.setter
     def api_key(self, key: str) -> None:
         """
-        Sets the API key and validates that it's not empty and
-        validates it with a API key regex.
+        Sets the API key for OpenAI and validates it.
 
         Args:
             key (str): The API key for OpenAI.
 
         Raises:
-            ValueError: If the API key is empty.
+            ValueError: If the API key is empty or invalid.
         """
         if not key:
             raise ValueError("API key cannot be empty")
@@ -64,7 +77,7 @@ class GPT:
         self, model: str, system_message: str, user_message: str
     ) -> str:
         """
-        Chat completion endpoint for OpenAI API.
+        Generates a response using the chat completion endpoint of OpenAI API.
 
         Args:
             model (str): The model to use for chat completion.
@@ -72,7 +85,7 @@ class GPT:
             user_message (str): The user message to generate a response.
 
         Returns:
-            str: The generated response from the chat completion, or None if an error occurs.
+            str: The generated response from the chat completion, or an empty string if an error occurs.
         """
         logging.info("Requesting chat completion from OpenAI")
         response = openai.chat.completions.create(
@@ -110,14 +123,20 @@ class GPT:
 
     def context_assistant(self, prompt: str) -> str:
         """
-        Assistant with saving and keeping context
+        Generates a response using the assistant endpoint of OpenAI API with saved context.
+
+        Args:
+            prompt (str): The prompt message for the assistant.
+
+        Returns:
+            str: The response message from the assistant.
         """
         thread_id = self.resume_thread()
         return self.assistant(prompt, thread_id)
 
     def run_assistant(self, text, thread_id):
         """
-        Run the assistant to generate a response.
+        Runs the assistant to generate a response.
 
         Args:
             text (str): The text message for the assistant.
@@ -168,7 +187,7 @@ class GPT:
 
     def create_thread(self) -> str:
         """
-        Create a thread for the assistant.
+        Creates a new thread for the assistant.
 
         Returns:
             str: The thread ID.
@@ -177,19 +196,25 @@ class GPT:
 
     def save_thread(self, thread_id: str) -> None:
         """
-        Save the thread to .ini file to resume the conversation later.
+        Saves the thread ID to a config file for resuming the conversation later.
+
+        Args:
+            thread_id (str): The thread ID to save.
         """
         self.save_or_update_thread(thread_id, "Thread saved")
 
     def update_thread(self, thread_id: str) -> None:
         """
-        Update the thread ID from the config with a fresh one (clear conversation).
+        Updates the thread ID in the config file with a fresh one (clears the conversation).
+
+        Args:
+            thread_id (str): The thread ID to update.
         """
         self.save_or_update_thread(thread_id, "Thread updated")
 
     def save_or_update_thread(self, thread_id: str, message: str) -> None:
         """
-        Save or update the thread ID in the config file.
+        Saves or updates the thread ID in the config file.
 
         Args:
             thread_id (str): The thread ID to save or update.
@@ -204,7 +229,10 @@ class GPT:
 
     def resume_thread(self) -> str:
         """
-        Resume the thread from the.ini file.
+        Resumes the thread from the config file or creates a new thread if not found.
+
+        Returns:
+            str: The thread ID.
         """
         config = configparser.ConfigParser()
         config.read("thread.ini")

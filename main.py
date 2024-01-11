@@ -27,9 +27,13 @@ from utils.main_loop import main_loop
 from utils.screen import clear_screen, logo
 from utils.setup_logging import setup_logging
 
-# Constants
-sleep_duration_seconds: int = 60
-max_retries: int = 3
+# Constants, can be changed here
+sleep_duration_seconds: int = (
+    60  # how many seconds to sleep between each iteration of the loop
+)
+max_retries: int = (
+    3  # maximum number of retries for fetching and processing notifications
+)
 
 
 class NotificationSender:
@@ -80,12 +84,11 @@ class NotificationSender:
 
             if self.webhook_state == 1:
                 logging.info("Sending notification to Discord")
-                dc = Discord(self.webhook_url)
 
                 useridfrom_info = moodle_handler.user_id_from(useridfrom)
                 fullname = useridfrom_info["fullname"]
                 profile_url = useridfrom_info["profileimageurl"]
-                dc(
+                self.webhook_discord(
                     subject=subject,
                     text=text,
                     summary=summary,
@@ -104,8 +107,7 @@ class NotificationSender:
     def send_simple(self, subject: str, text: str) -> None:
         try:
             logging.info("Sending notification to Discord")
-            dc = Discord(self.webhook_url)
-            dc.send_simple(subject, text)
+            self.webhook_discord.send_simple(subject, text)
         except Exception as e:
             logging.exception("Failed to send notification")
             raise e
@@ -113,8 +115,12 @@ class NotificationSender:
 
 # This is the main loop of the program. We'll keep looping until something breaks
 if __name__ == "__main__":
+    # Clear the screen and print the logo
     clear_screen()
     print(logo)
+
+    # Setup logging
+    # Uncomment the following line to disable logging/ output to console
     setup_logging()
 
     # Initialize Config object
@@ -135,6 +141,7 @@ if __name__ == "__main__":
     if fakeopen == "" or fakeopen is None:
         fakeopen = 0
 
+    # Start the main loop
     main_loop(
         moodle_handler,
         summarizer,

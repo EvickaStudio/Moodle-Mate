@@ -129,13 +129,16 @@ A configuration file, `config.ini`, is necessary for the application's operation
 | fakeopen        | Implementation of fakeopen API            | Yes      | 0                  |
 | summary         | Use GPT for summary (ON = 1 else 0)       | Yes      | 0                  |
 
-Example can be found [here](examples/example_config.ini).
+Example can be found [here](example/example_config.ini).
 
 ## <div id="usage">Usage</div>
 
 ---
 
 Once all prerequisites are met and the configuration file prepared, simply execute the main script:
+
+> [!TIP]
+> Only new notifications will be processed, current last notification will not be send.
 
 ```bash
 python3 main.py

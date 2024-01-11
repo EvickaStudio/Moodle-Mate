@@ -50,9 +50,17 @@ def main_loop(
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
                 if text := html_to_discord_md(notification["fullmessagehtml"]):
-                    write_to_log(notification["fullmessagehtml"])
+                    # Debug, to see notification content uncomment the line below
+                    # print(notification["fullmessagehtml"])
+
+                    # Debug, to write notification content to a file uncomment the line below
+                    # write_to_log(notification["fullmessagehtml"])
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
+                        # To use the OpenAI assistant for summarization, uncomment the line below
+                        # and comment: summary = summarizer.summarize(text)
+                        # summary = summarizer.summarize(text, True)
+
                         summary = summarizer.summarize(text)
                     elif summary_setting == 0:
                         logging.info(
