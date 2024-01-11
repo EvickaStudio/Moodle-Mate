@@ -58,7 +58,7 @@ def main_loop(
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
                         # To use the OpenAI assistant for summarization, uncomment the line below
-                        # and comment: summary = summarizer.summarize(text) 
+                        # and comment: summary = summarizer.summarize(text)
                         # summary = summarizer.summarize(text, True)
 
                         summary = summarizer.summarize(text)
