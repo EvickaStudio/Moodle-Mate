@@ -32,8 +32,7 @@
   <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/EvickaStudio/Moodle-Mate">
 
 > [!NOTE]
-> I am currently working on refactoring the codebase to improve its modularity and ease of maintenance. The current codebase is a mess and I'm sorry for that.
-> In the meantime, you can find the latest version of the code in the `dev` branch.
+> The codebase is currently under refinement for enhanced modularity and maintainability. For the latest version, please visit the [`dev`](https://github.com/EvickaStudio/Moodle-Mate/tree/dev) branch.
 
 ---
 
@@ -60,8 +59,8 @@ Moodle Mate is an automated notification summarization tool for Moodle, which re
 
 **Key Features:**
 
-- Cost-efficient operations utilizing GPT-3.5-turbo (typically less than $0.15 per month, excluding server expenses). Alternatively you could just disable summarization in the config file
-- Optional support for OpenAI Assistant, providing intelligent responses based on conversation history (currently available only in German). To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
+- Cost-effective operation with GPT-3.5-turbo, minimizing expenses. (typically less than $0.15 per month, excluding server expenses). Alternatively you could just disable summarization in the config file
+- Optional OpenAI Assistant integration for intelligent, context-aware responses, currently available in German. To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
 
   Example:
 
@@ -72,38 +71,39 @@ Moodle Mate is an automated notification summarization tool for Moodle, which re
   summary = summarizer.summarize(text, True)
   ```
 
-- Integration with popular platforms including Pushbullet, Discord, and email services
-- Flexible scheduling options allowing periodic background execution with error handling
+- Supports popular platforms including Pushbullet, Discord, and NTFY (BETA) for versatile notification delivery.
+- Offers flexible scheduling for periodic background execution and incorporates error handling mechanisms.
 
-**NEW**: implementation of fakeopen a free api for openai chat completion using gpt-4-32k. (not recommendet, as many chat completion requests are failing)
+**NEW**: Experimentation with fakeopen, a free API for GPT-4-32k chat completions. (Usage discretion advised due to potential inconsistencies.)
 
 ## <div id="dependencies">Dependencies</div>
 
 ---
 
-The software relies on the following custom API wrappers and libraries:
+Moodle Mate depends on several specialized API wrappers and libraries:
 
-- **MoodleAPI**: Interface for the Moodle API
-- **OpenAI**: Interface for the OpenAI API
-- **Pushbullet**: Interface for the Pushbullet API
-- **Discord**: Utilizes webhooks for Discord integration.
+- **MoodleAPI**: A custom interface for Moodle API interactions.
+- **OpenAI**: Integration with OpenAI's API.
+- **Pushbullet**: Connectivity with Pushbullet API.
+- **NTFY**: Connectivity with NTFY API.
+- **Discord**: Implementation using Discord webhooks.
 
-To ensure smooth operation of Moodle Mate, please check if python 3.10 or higher is installed.
+To ensure smooth operation of Moodle Mate, ensure Python 3.10 or higher is installed.
 
-- **Python >= 3.10:** Ensure you have installed Python version 3.10 or higher.
+- **Python >= 3.10:** Necessary for compatibility and functionality.
 
 ## <div id="installation">Installation</div>
 
 ---
 
-Follow these steps to get started with Moodle Mate:
+To install Moodle Mate, follow these steps:
 
-1. Clone the Git repository and navigate to the root directory:
+1. Clone the repository and access the main directory:
    ```bash
    git clone https://github.com/EvickaStudio/Moodle-Mate.git
    cd Moodle-Mate
    ```
-2. Install Python dependencies listed within the _requirements.txt_ file:
+2. Install necessary Python dependencies from the _requirements.txt_ file:
    ```bash
    pip install -r requirements.txt
    ```
@@ -112,7 +112,7 @@ Follow these steps to get started with Moodle Mate:
 
 ---
 
-A configuration file, `config.ini`, is necessary for the application's operation. It should contain:
+Configuration of Moodle Mate requires setting up a `config.ini` file. Key parameters include Moodle URL, account credentials, and various API keys for functionality and integrations.
 
 | Parameter       | Description                               | Required | Default            |
 | --------------- | ----------------------------------------- | -------- | ------------------ |
@@ -129,16 +129,16 @@ A configuration file, `config.ini`, is necessary for the application's operation
 | fakeopen        | Implementation of fakeopen API            | Yes      | 0                  |
 | summary         | Use GPT for summary (ON = 1 else 0)       | Yes      | 0                  |
 
-Example can be found [here](example/example_config.ini).
+A detailed example configuration is available [here](example/example_config.ini).
 
 ## <div id="usage">Usage</div>
 
 ---
 
-Once all prerequisites are met and the configuration file prepared, simply execute the main script:
+With the configuration complete, execute the main script to start the application:
 
 > [!TIP]
-> Only new notifications will be processed, current last notification will not be send.
+> Moodle Mate processes only new notifications, current last notification will not be send.
 
 ```bash
 python3 main.py
@@ -148,23 +148,25 @@ python3 main.py
 
 ---
 
-Detailed documentation covering various aspects of Moodle Mate is organized by module and located within each corresponding directory. Explore the contents to gain insights about individual functionalities and usage patterns.
+Comprehensive documentation, detailing functionalities and operational guidelines, is organized by module within each directory.
 
 ## <div id="screenshots">Screenshots</div>
 
 ---
 
-- Main Program
+Screenshots of the application in action:
+
+- Main Program Interface
   <img src="assets/main.png" alt="Main Program" width="600"/>
 
-- Discord Webhook
+- Discord Webhook Integration
   <img src="assets/discord.jpg" alt="Discord Screenshot" width="600"/>
 
 ## <div id="Contributing">Contributing</div>
 
 ---
 
-Your contributions are highly appreciated! Don't hesitate to report bugs, request new features, or ask questions by submitting an issue or PR.
+Contributions to Moodle Mate are welcomed. We encourage reporting of bugs, feature suggestions, and general inquiries through issues or PR.
 
 ## <div id="author">Author</div>
 
@@ -176,4 +178,4 @@ Made with ❤️ by [EvickaStudio](https://github.com/EvickaStudio). Reach out i
 
 ---
 
-This project adheres to the terms of the Apache License 2.0 – see the [LICENSE.md](LICENSE.md) file for detailed information regarding licensing conditions and restrictions.
+Moodle Mate is distributed under the Apache License 2.0. For complete licensing details, please refer to the [LICENSE.md](LICENSE.md) file.
