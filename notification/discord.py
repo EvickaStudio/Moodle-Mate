@@ -29,6 +29,23 @@ import requests
 
 class Discord:
     """
+    Discord client class to send notifications via webhooks.
+
+    This class allows sending rich embed notifications or simple text
+    messages to a Discord channel via a webhook URL.
+
+    Methods:
+
+        random_color() -> str:
+            Generate a random hex color code to use for embeds.
+
+        __call__(...) -> bool:
+            Send a notification to the configured webhook URL. Supports
+            both rich embed and simple text message formats.
+
+    """
+
+    """
     Class representing a Discord webhook client.
 
     Methods:
@@ -39,7 +56,8 @@ class Discord:
     def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
 
-    def random_color(self) -> str:
+    @staticmethod
+    def random_color() -> str:
         return "#{:02x}{:02x}{:02x}".format(
             random.randint(0, 255),
             random.randint(0, 255),
@@ -56,10 +74,10 @@ class Discord:
         picture_url: str = "",
         embed: bool = True,
     ):
-        if not embed:
-            return self.send_simple(subject, text)
-
         try:
+            if not embed:
+                return self.send_simple(subject, text)
+
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             embed_json = {
                 "title": subject,
