@@ -96,6 +96,8 @@ To ensure smooth operation of Moodle Mate, ensure Python 3.10 or higher is insta
 
 ---
 
+If you prefer to work within a virtual environment, please follow the instructions provided in the [Optional Virtual Environment Setup](/docs/ENV.md) guide. This way you can avoid potential conflicts with other Python projects and ensure a clean installation. Otherwise, you may skip this step and install Moodle Mate directly into your system.
+
 To install Moodle Mate, follow these steps:
 
 1. Clone the repository and access the main directory:

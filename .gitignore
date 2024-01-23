@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Custom Venv
+moodle-mate/
+
 # C extensions and modules
 *.so
 config.ini
