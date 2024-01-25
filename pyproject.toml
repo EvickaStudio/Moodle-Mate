@@ -15,5 +15,6 @@ exclude = '''
   | build
   | dist
   | tests
+  | moodle-mate
 )/
 '''
