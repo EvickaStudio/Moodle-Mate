@@ -17,10 +17,10 @@
 Notification Services TODO list:
 
 - [ ] Telegram: Telegram Bot API
-- [ ] Slack: Slack Webhook API
-- [ ] Microsoft Teams: Microsoft Graph API and Webhooks
+- [x] Slack: Slack Webhook API
+- [x] Microsoft Teams: Microsoft Graph API and Webhooks
 - [ ] Pushover: Pushover API
-- [ ] Gotify: Gotify REST API
+- [x] Gotify: Gotify REST API
 - [ ] SimplePush: SimplePush API
 - [ ] Matrix: Matrix API
 - [ ] Rocket.Chat: Rocket.Chat Webhooks
