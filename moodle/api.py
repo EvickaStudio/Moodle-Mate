@@ -20,6 +20,7 @@ Data: 07.10.2023
 Github: @EvickaStudio
 """
 
+
 import logging
 import os
 from typing import Optional
@@ -33,18 +34,10 @@ logger = logging.getLogger(__name__)
 class MoodleAPI:
     """
     A simple Moodle API wrapper for Python.
-
-    This class provides methods for interacting with the Moodle API, including
-    logging in, retrieving site information, and fetching user data.
-
-    Attributes:
-        url (str): Moodle API URL.
-        session (requests.Session): A session object for making requests.
-        token (str, optional): Authentication token for the Moodle API.
-        userid (int, optional): User ID of the logged-in user.
+    ....
     """
 
-    def __init__(self, url: Optional[str] = None):
+    def __init__(self, url: Optional[str] = None) -> None:
         """
         Initializes the MoodleAPI object with the provided API URL.
         """
@@ -62,14 +55,14 @@ class MoodleAPI:
         """
         Logs in to the Moodle instance using the provided username and password.
         Sets the token for the MoodleAPI object.
-
+        ....
         Args:
             username (str): Moodle username.
             password (str): Moodle password.
-
+        ....
         Returns:
             bool: True if login is successful, False otherwise.
-
+        ....
         Raises:
             ValueError: If username or password is not provided.
         """
@@ -105,7 +98,7 @@ class MoodleAPI:
     def get_site_info(self) -> dict | None:
         """
         Retrieves site information from the Moodle instance.
-
+        ....
         Returns:
             dict: A dictionary containing site information.
         """
@@ -170,7 +163,7 @@ class MoodleAPI:
         }
 
         response = self.session.post(
-            f"{self.url}webservice/rest/server.php", params=params
+            f"{self.url}/webservice/rest/server.php", params=params
         )
         return response.json()
 
@@ -189,6 +182,6 @@ class MoodleAPI:
         }
 
         response = self.session.post(
-            f"{self.url}webservice/rest/server.php", params=params
+            f"{self.url}/webservice/rest/server.php", params=params
         )
         return response.json()
