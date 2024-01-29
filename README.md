@@ -74,6 +74,7 @@ Moodle Mate is an automated notification summarization tool for Moodle, which re
 - Supports popular platforms including Pushbullet, Discord, and NTFY (BETA) for versatile notification delivery.
 - Offers flexible scheduling for periodic background execution and incorporates error handling mechanisms.
 
+**NEW**: Integration of Deepinfras API with support for dolphin-2.6-mixtral-8x7b (cheap alternative to gpt 3)
 **NEW**: Experimentation with fakeopen, a free API for GPT-4-32k chat completions. (Usage discretion advised due to potential inconsistencies.)
 
 ## <div id="dependencies">Dependencies</div>
