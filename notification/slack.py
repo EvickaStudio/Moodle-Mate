@@ -14,18 +14,34 @@
 
 # slack.py
 
-import logging
 
+import logging
 import requests
 
 
 class Slack:
-    def __init__(self, webhook_url):
+    """
+    The Slack class handles the sending of notifications to Slack.
+    ....
+    """
+
+    def __init__(self, webhook_url) -> None:
         self.webhook_url = webhook_url
 
-    def send_notification(self, subject, text):
+    def send_notification(self, subject: str, text: str) -> bool:
+        """
+        Sends a notification to Slack.
+        ....
+        Args:
+            subject (str): The subject of the notification.
+            text (str): The body of the notification.
+        ....
+        Returns:
+            bool: True if the notification was sent successfully, False otherwise.
+        Raises:
+            ValueError: If the request to Slack returned an error.
+        """
         payload = {"text": f"*{subject}*\n{text}"}
-
         try:
             response = requests.post(self.webhook_url, json=payload)
             if response.status_code != 200:
@@ -36,3 +52,8 @@ class Slack:
         except Exception as e:
             logging.error(f"Error sending notification to Slack: {e}")
             return False
+
+
+# Example usage of the Slack class
+# slack_instance = Slack("https://hooks.slack.com/services/T012AB3CDE")
+# slack_instance.send_notification("Test Subject", "Test Text")
