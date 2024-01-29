@@ -74,6 +74,19 @@ class NotificationSender:
                 useridfrom_info = self.moodle_handler.user_id_from(useridfrom)
                 fullname = useridfrom_info["fullname"]
                 profile_url = useridfrom_info["profileimageurl"]
+                data = {
+                    "username": fullname,
+                    "avatar_url": profile_url,
+                    "embeds": [
+                        {
+                            "title": subject,
+                            "description": text,
+                            "color": self.webhook_discord.random_color(),
+                        }
+                    ],
+                }
+
+                # print(data) # debug
                 self.webhook_discord(
                     subject=subject,
                     text=text,

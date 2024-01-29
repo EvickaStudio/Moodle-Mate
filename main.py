@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from moodle.load_config import Config
 from moodle.moodle_notification_handler import MoodleNotificationHandler
 from notification.notification_sender import NotificationSender
@@ -22,48 +21,43 @@ from utils.screen import clear_screen, logo
 from utils.setup_logging import setup_logging
 
 # Constants, can be changed here
-sleep_duration_seconds: int = (
+SLEEP_DURATION_SECONDS = (
     60  # how many seconds to sleep between each iteration of the loop
 )
-max_retries: int = (
+MAX_RETRIES = (
     3  # maximum number of retries for fetching and processing notifications
 )
-
 
 # This is the main loop of the program. We'll keep looping until something breaks
 if __name__ == "__main__":
     # Clear the screen and print the logo
     clear_screen()
     print(logo)
-
     # Setup logging
     # Uncomment the following line to disable logging/ output to console
     setup_logging()
-
     # Initialize Config object
     config = Config("config.ini")
-
     # Initialize other classes with the Config object
     moodle_handler = MoodleNotificationHandler(config)
     summarizer = NotificationSummarizer(config)
     sender = NotificationSender(config)
-    summary = int(
-        config.get_config("moodle", "summary")
-    )  # 1 = summary, 0 = no summary
-    if summary == "" or summary is None:
-        summary = 0
-    fakeopen = int(
-        config.get_config("moodle", "fakeopen")
-    )  # 1 = fake open, 0 = openai when selected
-    if fakeopen == "" or fakeopen is None:
-        fakeopen = 0
-
+    summary = (
+        int(config.get_config("moodle", "summary"))
+        if config.get_config("moodle", "summary")
+        else 0
+    )
+    fakeopen = (
+        int(config.get_config("moodle", "fakeopen"))
+        if config.get_config("moodle", "fakeopen")
+        else 0
+    )
     # Start the main loop
     main_loop(
         moodle_handler,
         summarizer,
         sender,
         summary,
-        sleep_duration_seconds,
-        max_retries,
+        SLEEP_DURATION_SECONDS,
+        MAX_RETRIES,
     )

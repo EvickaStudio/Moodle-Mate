@@ -15,6 +15,7 @@
 import logging
 
 from gpt.openai_chat import GPT
+from gpt.deepinfra import GPT as GPTDeepinfra
 from moodle.load_config import Config
 from utils.handle_exceptions import handle_exceptions
 
@@ -37,6 +38,7 @@ class NotificationSummarizer:
         self.system_message = config.get_config("moodle", "systemmessage")
         self.model = config.get_config("moodle", "model")
         # print(f"Model = {self.model}")  # Debug line
+        self.test = False
 
     @handle_exceptions
     def summarize(self, text: str, use_assistant_api: bool = False) -> str:
@@ -58,20 +60,26 @@ class NotificationSummarizer:
             # Test option, summarize the text using assistant and not the
             # chat completion API, for testing ATM.
 
-            if self.model is None or self.model == "":
-                self.model = "gpt-3.5-turbo-1106"
-            ai = GPT()
-            ai.api_key = self.api_key
-            if not use_assistant_api:
-                if self.model is None or self.system_message is None:
-                    raise ValueError(
-                        "Model and system message must not be None"
-                    )
-                return ai.chat_completion(
-                    self.model, self.system_message, text or ""
-                )
+            if self.test:
+                # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
+                ai = GPTDeepinfra(api_key=self.api_key)
+                return ai.chat_completion(self.system_message, text or "")
 
-            return ai.context_assistant(prompt=text)
+            else:
+                if self.model is None or self.model == "":
+                    self.model = "gpt-3.5-turbo-1106"
+                ai = GPT()
+                ai.api_key = self.api_key
+                if not use_assistant_api:
+                    if self.model is None or self.system_message is None:
+                        raise ValueError(
+                            "Model and system message must not be None"
+                        )
+                    return ai.chat_completion(
+                        self.model, self.system_message, text or ""
+                    )
+
+                return ai.context_assistant(prompt=text)
         except Exception as e:
             logging.exception(f"Failed to summarize with {self.model}")
             raise e
