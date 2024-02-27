@@ -75,6 +75,7 @@ Moodle Mate automatically retrieves your Moodle notifications and intelligently 
 
 - Supports popular platforms including **Pushbullet**, **Discord**, and **NTFY (BETA)** for versatile notification delivery.
 - Offers flexible scheduling for periodic background execution and incorporates error handling mechanisms.
+- Uses "only" 50MB of RAM 99% of the time, making it lightweight and cost-effective. (Tested on a Raspberry Pi Zero 2 W)
 
 **NEW**: Integration of Deepinfras API with support for dolphin-2.6-mixtral-8x7b (cheap alternative to gpt 3)
 **NEW**: Experimentation with fakeopen, a free API for GPT-4-32k chat completions. (Usage discretion advised due to potential inconsistencies.)
