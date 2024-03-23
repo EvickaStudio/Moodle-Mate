@@ -39,9 +39,7 @@ if __name__ == "__main__":
     # Initialize Config object
     config = Config("config.ini")
     # Initialize other classes with the Config object
-    moodle_handler = MoodleNotificationHandler(config)
-    summarizer = NotificationSummarizer(config)
-    sender = NotificationSender(config)
+
     summary = (
         int(config.get_config("moodle", "summary"))
         if config.get_config("moodle", "summary")
@@ -52,6 +50,17 @@ if __name__ == "__main__":
         if config.get_config("moodle", "fakeopen")
         else 0
     )
+    botname = config.get_config("moodle", "botname") or "MoodleMate"
+
+    thumbnail = (
+        config.get_config("moodle", "thumbnailURL")
+        or "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png"
+    )
+
+    moodle_handler = MoodleNotificationHandler(config)
+    summarizer = NotificationSummarizer(config)
+    sender = NotificationSender(config, botname, thumbnail)
+
     # Start the main loop
     main_loop(
         moodle_handler,
