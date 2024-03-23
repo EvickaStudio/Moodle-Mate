@@ -36,7 +36,7 @@ class NotificationSender:
     """
 
     @handle_exceptions
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, bot_name: str, thumbnail: str) -> None:
         self.pushbullet_key = config.get_config("moodle", "pushbulletkey")
         self.webhook_url = config.get_config("moodle", "webhookUrl")
         self.pushbullet_state = int(
@@ -44,11 +44,18 @@ class NotificationSender:
         )
         self.webhook_state = int(config.get_config("moodle", "webhookState"))
         self.model = config.get_config("moodle", "model")
-        self.webhook_discord = Discord(self.webhook_url)
+        self.bot_name = bot_name
+        self.thumbnail = thumbnail
+        self.webhook_discord = Discord(
+            self.webhook_url, self.bot_name, self.thumbnail
+        )
         self.moodle_handler = MoodleNotificationHandler(config)
 
+    # userifrom defauls to null, if you want to use your own user id, use the parameter useridfrom
     @handle_exceptions
-    def send(self, subject: str, text: str, summary: str, useridfrom: int):
+    def send(
+        self, subject: str, text: str, summary: str, useridfrom: int = None
+    ) -> None:
         """
         Sends a notification to Pushbullet and Discord.
 
@@ -70,21 +77,18 @@ class NotificationSender:
 
             if self.webhook_state == 1:
                 logging.info("Sending notification to Discord")
-
-                useridfrom_info = self.moodle_handler.user_id_from(useridfrom)
-                fullname = useridfrom_info["fullname"]
-                profile_url = useridfrom_info["profileimageurl"]
-                data = {
-                    "username": fullname,
-                    "avatar_url": profile_url,
-                    "embeds": [
-                        {
-                            "title": subject,
-                            "description": text,
-                            "color": self.webhook_discord.random_color(),
-                        }
-                    ],
-                }
+                if useridfrom is not None:
+                    useridfrom_info = self.moodle_handler.user_id_from(
+                        useridfrom
+                    )
+                    fullname = useridfrom_info["fullname"]
+                    profile_url = useridfrom_info["profileimageurl"]
+                else:
+                    useridfrom_info = "69"
+                    fullname = "EvickaStudio"
+                    profile_url = (
+                        "https://avatars.githubusercontent.com/u/68477970"
+                    )
 
                 # print(data) # debug
                 self.webhook_discord(

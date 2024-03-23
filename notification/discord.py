@@ -53,8 +53,10 @@ class Discord:
         __call__(...) -> bool: Send a notification to Discord.
     """
 
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, bot_name: str, thumbnail: str) -> None:
         self.webhook_url = webhook_url
+        self.bot_name = bot_name
+        self.thumbnail = thumbnail
 
     @staticmethod
     def random_color() -> str:
@@ -86,6 +88,7 @@ class Discord:
                 "fields": [],
                 "author": {},
                 "footer": {},
+                "thumbnail": {"url": self.thumbnail},
             }
 
             if summary:
@@ -98,9 +101,13 @@ class Discord:
             embed_json["footer"]["text"] = f"{current_time} - Moodle-Mate"
             embed_json["footer"][
                 "icon_url"
-            ] = "https://avatars.githubusercontent.com/u/68477970?v=4"
+            ] = "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png"
 
-            payload = {"embeds": [embed_json]}
+            payload = {
+                "embeds": [embed_json],
+                "username": self.bot_name,
+                "avatar_url": "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png",
+            }
             response = requests.post(self.webhook_url, json=payload)
             response.raise_for_status()
 
