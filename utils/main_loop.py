@@ -44,6 +44,14 @@ def main_loop(
     retry_count = 0
     summary_setting = int(summary)
 
+    sender.send(
+        "Bot started",
+        "Successfully connected to the Moodle API\nChecking for new notifications every "
+        + str(sleep_duration)
+        + " seconds",
+        None,
+    )
+
     while True:
         try:
             if (
@@ -89,7 +97,7 @@ def main_loop(
             if retry_count > max_retries:
                 # Send error message via Discord if max retries reached
                 error_message = f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
-                sender.send_simple("Error", error_message)
+                # sender.send_simple("Error", error_message)
                 logging.error("Max retries reached. Exiting main loop.")
                 exit(1)
             else:
