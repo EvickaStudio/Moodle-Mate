@@ -29,6 +29,23 @@ import requests
 
 class Discord:
     """
+    Discord client class to send notifications via webhooks.
+
+    This class allows sending rich embed notifications or simple text
+    messages to a Discord channel via a webhook URL.
+
+    Methods:
+
+        random_color() -> str:
+            Generate a random hex color code to use for embeds.
+
+        __call__(...) -> bool:
+            Send a notification to the configured webhook URL. Supports
+            both rich embed and simple text message formats.
+
+    """
+
+    """
     Class representing a Discord webhook client.
 
     Methods:
@@ -36,10 +53,13 @@ class Discord:
         __call__(...) -> bool: Send a notification to Discord.
     """
 
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, bot_name: str, thumbnail: str) -> None:
         self.webhook_url = webhook_url
+        self.bot_name = bot_name
+        self.thumbnail = thumbnail
 
-    def random_color(self) -> str:
+    @staticmethod
+    def random_color() -> str:
         return "#{:02x}{:02x}{:02x}".format(
             random.randint(0, 255),
             random.randint(0, 255),
@@ -56,10 +76,10 @@ class Discord:
         picture_url: str = "",
         embed: bool = True,
     ):
-        if not embed:
-            return self.send_simple(subject, text)
-
         try:
+            if not embed:
+                return self.send_simple(subject, text)
+
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             embed_json = {
                 "title": subject,
@@ -68,6 +88,7 @@ class Discord:
                 "fields": [],
                 "author": {},
                 "footer": {},
+                "thumbnail": {"url": self.thumbnail},
             }
 
             if summary:
@@ -80,9 +101,13 @@ class Discord:
             embed_json["footer"]["text"] = f"{current_time} - Moodle-Mate"
             embed_json["footer"][
                 "icon_url"
-            ] = "https://avatars.githubusercontent.com/u/68477970?v=4"
+            ] = "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png"
 
-            payload = {"embeds": [embed_json]}
+            payload = {
+                "embeds": [embed_json],
+                "username": self.bot_name,
+                "avatar_url": "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png",
+            }
             response = requests.post(self.webhook_url, json=payload)
             response.raise_for_status()
 

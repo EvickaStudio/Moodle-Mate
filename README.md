@@ -17,7 +17,7 @@
 <div align="center">
   <img src="assets/logo.svg" style="width: 160px;">
   <h1>Moodle Mate</h1>
-  <p><strong>Automated Moodle Notification Summarization</strong></p>
+  <p><strong>Your Smart Moodle Notification Assistant</strong></p>
 </div>
 
 ---
@@ -29,6 +29,7 @@
   <a href="https://github.com/EvickaStudio/Moodle-Mate/pulls"><img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/EvickaStudio/Moodle-Mate"></a>
   <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/EvickaStudio/Moodle-Mate">
   <a href="https://github.com/EvickaStudio/Moodle-Mate/watchers"><img alt="GitHub Watchers" src="https://img.shields.io/github/watchers/EvickaStudio/Moodle-Mate?style=flat&logo=github"></a>
+  <img alt="GitHub Repo Stars" src="https://img.shields.io/github/stars/EvickaStudio/Moodle-Mate?style=social">
   <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/EvickaStudio/Moodle-Mate">
 
 > [!NOTE]
@@ -40,27 +41,28 @@
 
 ---
 
-1. [Overview](#overview)
-2. [Dependencies](#dependencies)
-3. [Installation](#installation)
-4. [Configuration](#configuration)
-5. [Usage](#usage)
-6. [Documentation](#documentation)
-7. [Screenshots](#screenshots)
-8. [Contributing](#contributing)
-9. [Author](#author)
-10. [License](#license)
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Documentation](#documentation)
+- [Screenshots](#screenshots)
+- [Contributing](#contributing)
+- [Author](#author)
+- [License](#license)
 
 ## <div id="overview">Overview</div>
 
 ---
 
-Moodle Mate is an automated notification summarization tool for Moodle, which retrieves notifications from your Moodle account, summarizes their content using powerful AI models like GPT-3 or GPT-4 (optional), and delivers the exctracted information directly to you through channels such as Pushbullet and Discord. Designed for seamless integration into server environments, Moodle Mate offers high flexibility with adjustable update intervals tailored to meet your needs.
+Moodle Mate automatically retrieves your Moodle notifications and intelligently summarizes them, giving you a quick and clear overview of what's important. It delivers these summaries straight to your preferred channels like Discord, Pushbullet, and more. Designed for seamless integration into server environments, Moodle Mate offers high flexibility with adjustable update intervals tailored to meet your needs.
 
 **Key Features:**
 
-- Cost-effective operation with GPT-3.5-turbo, minimizing expenses. (typically less than $0.15 per month, excluding server expenses). Alternatively you could just disable summarization in the config file
-- Optional OpenAI Assistant integration for intelligent, context-aware responses, currently available in German. To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
+- **Cost-effective** operation with GPT-3.5-turbo, minimizing expenses. (typically less than $0.15 per month, excluding server expenses). Alternatively you could just disable summarization in the config file
+- Optional **OpenAI Assistant** integration for intelligent, context-aware responses, currently available in German. To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
 
   Example:
 
@@ -71,9 +73,11 @@ Moodle Mate is an automated notification summarization tool for Moodle, which re
   summary = summarizer.summarize(text, True)
   ```
 
-- Supports popular platforms including Pushbullet, Discord, and NTFY (BETA) for versatile notification delivery.
+- Supports popular platforms including **Pushbullet**, **Discord**, and **NTFY (BETA)** for versatile notification delivery.
 - Offers flexible scheduling for periodic background execution and incorporates error handling mechanisms.
+- Uses "only" 50MB of RAM 99% of the time, making it lightweight and cost-effective. (Tested on a Raspberry Pi Zero 2 W)
 
+**NEW**: Integration of Deepinfras API with support for dolphin-2.6-mixtral-8x7b (cheap alternative to gpt 3)
 **NEW**: Experimentation with fakeopen, a free API for GPT-4-32k chat completions. (Usage discretion advised due to potential inconsistencies.)
 
 ## <div id="dependencies">Dependencies</div>
@@ -95,6 +99,8 @@ To ensure smooth operation of Moodle Mate, ensure Python 3.10 or higher is insta
 ## <div id="installation">Installation</div>
 
 ---
+
+If you prefer to work within a virtual environment, please follow the instructions provided in the [Optional Virtual Environment Setup](/docs/ENV.md) guide. This way you can avoid potential conflicts with other Python projects and ensure a clean installation. Otherwise, you may skip this step and install Moodle Mate directly into your system.
 
 To install Moodle Mate, follow these steps:
 
@@ -166,16 +172,20 @@ Screenshots of the application in action:
 
 ---
 
-Contributions to Moodle Mate are welcomed. We encourage reporting of bugs, feature suggestions, and general inquiries through issues or PR.
+We'd love your help making Moodle Mate even better! Contribute by:
+
+- Reporting bugs
+- Suggesting new features
+- Submitting pull requests
 
 ## <div id="author">Author</div>
 
 ---
 
-Made with ❤️ by [EvickaStudio](https://github.com/EvickaStudio). Reach out if you encounter any challenges or need assistance.
+Moodle Mate is created with ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
 
 ## <div id="license">License</div>
 
 ---
 
-Moodle Mate is distributed under the Apache License 2.0. For complete licensing details, please refer to the [LICENSE.md](LICENSE.md) file.
+This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE.md) file for details.
