@@ -58,6 +58,8 @@ def main_loop(
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
                 if text := html_to_discord_md(notification["fullmessagehtml"]):
+                    logging.info(f"Original text: {notification['fullmessagehtml']}")
+                    logging.info(f"Converted text: {text}")
                     # Debug, to see notification content uncomment the line below
                     # print(notification["fullmessagehtml"])
 
