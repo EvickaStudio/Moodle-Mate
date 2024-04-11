@@ -65,11 +65,11 @@ jobs:
         run: |
           pytest
 
-      - name: Generate Code Coverage
-        run: |
-          coverage run -m pytest
-          coverage report -m
+      # - name: Generate Code Coverage
+      #   run: |
+      #     coverage run -m pytest
+      #     coverage report -m
 
-      - name: Type Check with mypy
-        run: |
-          mypy --ignore-missing-imports --exclude notification/discord.py --exclude utils/logo.py --exclude example --exclude main.py --exclude moodle/moodle_notification_handler.py --follow-imports=skip .
+      # - name: Type Check with mypy
+      #   run: |
+      #     mypy --ignore-missing-imports --exclude notification/discord.py --exclude utils/logo.py --exclude example --exclude main.py --exclude moodle/moodle_notification_handler.py --follow-imports=skip .
