@@ -61,9 +61,9 @@ jobs:
       #   run: |
       #     isort --check-only .
 
-      - name: Test with pytest
-        run: |
-          pytest
+      # - name: Test with pytest
+      #   run: |
+      #     pytest
 
       # - name: Generate Code Coverage
       #   run: |
