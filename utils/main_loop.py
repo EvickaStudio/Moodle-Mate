@@ -18,6 +18,7 @@ import traceback
 
 from filters.discord_markdown import html_to_discord_md
 
+
 def main_loop(
     handler,
     summarizer,
