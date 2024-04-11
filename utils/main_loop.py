@@ -58,7 +58,9 @@ def main_loop(
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
                 if text := html_to_discord_md(notification["fullmessagehtml"]):
-                    logging.info(f"Original text: {notification['fullmessagehtml']}")
+                    logging.info(
+                        f"Original text: {notification['fullmessagehtml']}"
+                    )
                     logging.info(f"Converted text: {text}")
                     # Debug, to see notification content uncomment the line below
                     # print(notification["fullmessagehtml"])
@@ -71,8 +73,9 @@ def main_loop(
                         # and comment: summary = summarizer.summarize(text)
                         # summary = summarizer.summarize(text, True)
 
-                        # summary = summarizer.summarize(notification["fullmessagehtml"])
-                        summary = "Test summary"
+                        summary = summarizer.summarize(
+                            notification["fullmessagehtml"]
+                        )
                     elif summary_setting == 0:
                         logging.info(
                             "Summary is set to 0, not summarizing text"
