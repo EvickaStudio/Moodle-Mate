@@ -17,12 +17,6 @@ import time
 import traceback
 
 from filters.discord_markdown import html_to_discord_md
-from filters.message_filter import (
-    extract_and_format_for_discord,
-    parse_html_to_text,
-)
-from utils.wirte import write_to_log
-
 
 def main_loop(
     handler,

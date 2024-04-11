@@ -14,8 +14,8 @@
 
 import logging
 
-from gpt.openai_chat import GPT
 from gpt.deepinfra import GPT as GPTDeepinfra
+from gpt.openai_chat import GPT
 from moodle.load_config import Config
 from utils.handle_exceptions import handle_exceptions
 
