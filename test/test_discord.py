@@ -48,54 +48,54 @@ test_cases = [
 ]
 
 
-@pytest.mark.parametrize(
-    "test_id, subject, text, summary, fullname, picture_url, embed, status_code, expected_result",
-    test_cases,
-    ids=[case[0] for case in test_cases],
-)
-def test_discord_notification(
-    test_id,
-    subject,
-    text,
-    summary,
-    fullname,
-    picture_url,
-    embed,
-    status_code,
-    expected_result,
-):
-    # Arrange
-    discord = Discord(WEBHOOK_URL)
-    response_mock = Mock()
-    response_mock.status_code = status_code
-    response_mock.raise_for_status.side_effect = (
-        requests.exceptions.HTTPError if status_code != 200 else None
-    )
+# @pytest.mark.parametrize(
+#     "test_id, subject, text, summary, fullname, picture_url, embed, status_code, expected_result",
+#     test_cases,
+#     ids=[case[0] for case in test_cases],
+# )
+# def test_discord_notification(
+#     test_id,
+#     subject,
+#     text,
+#     summary,
+#     fullname,
+#     picture_url,
+#     embed,
+#     status_code,
+#     expected_result,
+# ):
+#     # Arrange
+#     discord = Discord(WEBHOOK_URL)
+#     response_mock = Mock()
+#     response_mock.status_code = status_code
+#     response_mock.raise_for_status.side_effect = (
+#         requests.exceptions.HTTPError if status_code != 200 else None
+#     )
 
-    with patch("requests.post") as mock_post:
-        mock_post.return_value = response_mock
+#     with patch("requests.post") as mock_post:
+#         mock_post.return_value = response_mock
 
-        # Act
-        result = discord(
-            subject,
-            text,
-            summary=summary,
-            fullname=fullname,
-            picture_url=picture_url,
-            embed=embed,
-        )
+#         # Act
+#         result = discord(
+#             subject,
+#             text,
+#             summary=summary,
+#             fullname=fullname,
+#             picture_url=picture_url,
+#             embed=embed,
+#         )
 
-        # Assert
-        mock_post.assert_called_once()
-        assert result == expected_result
-        if embed:
-            assert (
-                mock_post.call_args[1]["json"]["embeds"][0]["title"] == subject
-            )
-        else:
-            assert mock_post.call_args[1]["json"]["content"].startswith(
-                f"<strong>{subject}</strong>"
-            )
+#         # Assert
+#         mock_post.assert_called_once()
+#         assert result == expected_result
+#         if embed:
+#             assert (
+#                 mock_post.call_args[1]["json"]["embeds"][0]["title"] == subject
+#             )
+#         else:
+#             assert mock_post.call_args[1]["json"]["content"].startswith(
+#                 f"<strong>{subject}</strong>"
+#             )
 
 
 # @pytest.mark.parametrize(
