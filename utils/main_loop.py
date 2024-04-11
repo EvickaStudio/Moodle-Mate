@@ -44,13 +44,13 @@ def main_loop(
     retry_count = 0
     summary_setting = int(summary)
 
-    sender.send(
-        "Bot started",
-        "Successfully connected to the Moodle API\nChecking for new notifications every "
-        + str(sleep_duration)
-        + " seconds",
-        None,
-    )
+    # sender.send(
+    #     "Bot started",
+    #     "Successfully connected to the Moodle API\nChecking for new notifications every "
+    #     + str(sleep_duration)
+    #     + " seconds",
+    #     None,
+    # )
 
     while True:
         try:
@@ -71,7 +71,8 @@ def main_loop(
                         # and comment: summary = summarizer.summarize(text)
                         # summary = summarizer.summarize(text, True)
 
-                        summary = summarizer.summarize(text)
+                        # summary = summarizer.summarize(notification["fullmessagehtml"])
+                        summary = "Test summary"
                     elif summary_setting == 0:
                         logging.info(
                             "Summary is set to 0, not summarizing text"
