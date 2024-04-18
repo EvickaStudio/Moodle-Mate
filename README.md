@@ -162,11 +162,20 @@ Comprehensive documentation, detailing functionalities and operational guideline
 
 Screenshots of the application in action:
 
-- Main Program Interface
+<div align="center">
+  <h3>Main Program Interface</h3>
   <img src="assets/main.png" alt="Main Program" width="600"/>
+</div>
 
-- Discord Webhook Integration
-  <img src="assets/discord.jpg" alt="Discord Screenshot" width="600"/>
+<div align="center">
+  <h3>Discord Webhook Integration (Old)</h3>
+  <img src="assets/discord.jpg" alt="Discord Screenshot (old)" width="600"/>
+</div>
+
+<div align="center">
+  <h3>Discord Webhook Integration (New)</h3>
+  <img src="assets/preview.png" alt="Discord Screenshot" width="600"/>
+</div>
 
 ## <div id="Contributing">Contributing</div>
 
