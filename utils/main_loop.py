@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import sys
 import time
 import traceback
 
@@ -100,7 +101,7 @@ def main_loop(
                 error_message = f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
                 # sender.send_simple("Error", error_message)
                 logging.error("Max retries reached. Exiting main loop.")
-                exit(1)
+                sys.exit(1)
             else:
                 logging.warning(f"Retrying ({retry_count}/{max_retries})...")
                 time.sleep(sleep_duration)
