@@ -17,4 +17,3 @@
 def write_to_log(message):
     with open("log.txt", "a") as log:
         log.write(message + "\n")
-        log.close()
