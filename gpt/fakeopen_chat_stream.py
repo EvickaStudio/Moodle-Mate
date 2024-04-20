@@ -30,6 +30,7 @@ import requests
 
 class FGPT:
     def __init__(self) -> None:
+        # file deepcode ignore NoHardcodedCredentials: <Public API key>
         self.api_key = "pk-this-is-a-real-free-pool-token-for-everyone"  # Hardcoded API key, cuz its public
         self.base_url = "https://ai.fakeopen.com/v1/chat/completions"
 
