@@ -50,6 +50,7 @@
 - [Documentation](#documentation)
 - [Screenshots](#screenshots)
 - [Contributing](#contributing)
+- [Status](#status)
 - [Author](#author)
 - [License](#license)
 
@@ -186,6 +187,9 @@ We'd love your help making Moodle Mate even better! Contribute by:
 - Reporting bugs
 - Suggesting new features
 - Submitting pull requests
+
+## <div id="status">Status</div>
+![Alt](https://repobeats.axiom.co/api/embed/b1216afa25c240df409d5ed2f4371776947ad394.svg "Repobeats analytics image")
 
 ## <div id="author">Author</div>
 
