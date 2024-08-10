@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import logging
+import sys
 import time
 import traceback
 
-from filters.discord_markdown import html_to_discord_md
+from filters.converter import convert
 
 
 def main_loop(
@@ -52,7 +53,7 @@ def main_loop(
             if (
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
-                if text := html_to_discord_md(notification["fullmessagehtml"]):
+                if text := convert(notification["fullmessagehtml"]):
                     logging.info(
                         f"Original text: {notification['fullmessagehtml']}"
                     )
@@ -100,7 +101,7 @@ def main_loop(
                 error_message = f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
                 # sender.send_simple("Error", error_message)
                 logging.error("Max retries reached. Exiting main loop.")
-                exit(1)
+                sys.exit(1)
             else:
                 logging.warning(f"Retrying ({retry_count}/{max_retries})...")
                 time.sleep(sleep_duration)
