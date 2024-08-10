@@ -34,9 +34,11 @@ if __name__ == "__main__":
     clear_screen()
     print(logo)
     # Setup logging
+
     # Uncomment the following line to disable logging/ output to console
     setup_logging()
     # Initialize Config object
+
     config = Config("config.ini")
     # Initialize other classes with the Config object
 

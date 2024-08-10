@@ -17,7 +17,7 @@ import sys
 import time
 import traceback
 
-from filters.discord_markdown import html_to_discord_md
+from filters.converter import convert
 
 
 def main_loop(
@@ -53,7 +53,7 @@ def main_loop(
             if (
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
-                if text := html_to_discord_md(notification["fullmessagehtml"]):
+                if text := convert(notification["fullmessagehtml"]):
                     logging.info(
                         f"Original text: {notification['fullmessagehtml']}"
                     )
