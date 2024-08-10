@@ -1,8 +1,10 @@
 import subprocess
+import os
 
 def convert(html_content: str) -> str:
+    script_path = os.path.join("assets", "convert.js")
     result = subprocess.run(
-        ["node", "assets\\convert.js"],
+        ["node", script_path],
         input=html_content,
         text=True,
         capture_output=True,
