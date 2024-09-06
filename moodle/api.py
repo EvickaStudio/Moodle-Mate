@@ -95,29 +95,36 @@ class MoodleAPI:
             logger.error("Request to Moodle failed: %s", e)
             return False
 
-    def get_site_info(self) -> dict | None:
-        """
-        Retrieves site information from the Moodle instance.
-        ....
-        Returns:
-            dict: A dictionary containing site information.
-        """
-        if self.token is None:
-            logger.error("Token not set. Please login first.")
-            return None
+    # ==========================================================================
+    #
+    # NOTE: This method is not in use, but it's a good example to check for
+    # available endpoints for a specific user.
+    #
+    # def get_site_info(self) -> dict | None:
+    #     """
+    #     Retrieves site information from the Moodle instance.
+    #     ....
+    #     Returns:
+    #         dict: A dictionary containing site information.
+    #     """
+    #     if self.token is None:
+    #         logger.error("Token not set. Please login first.")
+    #         return None
 
-        wsfunction = "core_webservice_get_site_info"
-        params = {
-            "wstoken": self.token,
-            "wsfunction": wsfunction,
-            "moodlewsrestformat": "json",
-        }
+    #     wsfunction = "core_webservice_get_site_info"
+    #     params = {
+    #         "wstoken": self.token,
+    #         "wsfunction": wsfunction,
+    #         "moodlewsrestformat": "json",
+    #     }
 
-        response = self.session.post(
-            f"{self.url}/webservice/rest/server.php", params=params
-        )
-        self.userid = response.json().get("userid")
-        return response.json()
+    #     response = self.session.post(
+    #         f"{self.url}/webservice/rest/server.php", params=params
+    #     )
+    #     self.userid = response.json().get("userid")
+    #     return response.json()
+    #
+    # ==========================================================================
 
     def get_user_id(self) -> int | None:
         """
