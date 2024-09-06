@@ -32,7 +32,7 @@ username = config.get_config("moodle", "username")
 password = config.get_config("moodle", "password")
 
 moodle_api.login(username, password)
-site_info = moodle_api.get_site_info() # Not accessible atm (read comment)
+site_info = moodle_api.get_site_info()
 print(site_info)
 ```
 
