@@ -11,4 +11,7 @@ def convert(html_content: str) -> str:
         encoding="utf-8"
     )
 
+    if result.returncode != 0:
+        print(f"Error: {result.stderr}")
+
     return result.stdout
