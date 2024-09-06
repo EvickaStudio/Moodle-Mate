@@ -106,13 +106,22 @@ If you prefer to work within a virtual environment, please follow the instructio
 To install Moodle Mate, follow these steps:
 
 1. Clone the repository and access the main directory:
+
    ```bash
    git clone https://github.com/EvickaStudio/Moodle-Mate.git
    cd Moodle-Mate
    ```
+
 2. Install necessary Python dependencies from the _requirements.txt_ file:
+
    ```bash
    pip install -r requirements.txt
+   ```
+
+3. Install turndown package for html to markdown conversion using `npm` or other package managers:
+
+   ```bash
+   npm install turndown
    ```
 
 ## <div id="configuration">Configuration</div>
@@ -189,6 +198,7 @@ We'd love your help making Moodle Mate even better! Contribute by:
 - Submitting pull requests
 
 ## <div id="status">Status</div>
+
 ![Alt](https://repobeats.axiom.co/api/embed/b1216afa25c240df409d5ed2f4371776947ad394.svg "Repobeats analytics image")
 
 ## <div id="author">Author</div>
