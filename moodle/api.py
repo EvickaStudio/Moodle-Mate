@@ -143,14 +143,20 @@ class MoodleAPI:
         """
         return self._post("message_popup_get_popup_notifications", user_id)
 
-    def popup_notification_unread_count(self, user_id: int) -> int | None:
-        """
-        Send a post request to retrieve the number of unread popup notifications for a user.
-        """
-        result = self._post(
-            "message_popup_get_unread_popup_notification_count", user_id
-        )
-        return result.get("count") if result else None
+    # ==========================================================================
+    #
+    # NOTE: This method is not in use, but it's a good example to check for
+    #
+    # def popup_notification_unread_count(self, user_id: int) -> int | None:
+    #     """
+    #     Send a post request to retrieve the number of unread popup notifications for a user.
+    #     """
+    #     result = self._post(
+    #         "message_popup_get_unread_popup_notification_count", user_id
+    #     )
+    #     return result.get("count") if result else None
+    #
+    # ==========================================================================
 
     def core_user_get_users_by_field(self, user_id: int) -> dict | None:
         """
