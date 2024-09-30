@@ -25,10 +25,4 @@ def convert(html_content: str) -> str:
     )
 
     if result.returncode != 0:
-<<<<<<< HEAD
-        print(f"Error: {result.stderr}")
-=======
         raise RuntimeError(result.stderr)
->>>>>>> bd33e8684ba946aa1a388b58032d45ff080eb148
-
-    return result.stdout
