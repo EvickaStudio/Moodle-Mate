@@ -2,7 +2,12 @@ from src.moodle.moodle_notification_handler import MoodleNotificationHandler
 from src.notification.notification_processor import NotificationProcessor
 from src.notification.notification_sender import NotificationSender
 from src.notification.notification_summarizer import NotificationSummarizer
-from src.ui.screen import clear_screen, logo
+from src.ui.screen import (
+    animate_logo,
+    clear_screen,
+    loading_animation,
+    logo_lines,
+)
 from src.ui.setup_logging import setup_logging
 from src.utils.load_config import Config
 
@@ -13,7 +18,7 @@ MAX_RETRIES = 3  # Max retries for fetching and processing notifications
 if __name__ == "__main__":
     # Clear the screen and print the logo
     clear_screen()
-    print(logo)
+    animate_logo(logo_lines)
 
     # Set up logging
     setup_logging()
