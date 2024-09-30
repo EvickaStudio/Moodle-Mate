@@ -1,26 +1,3 @@
-# Copyright 2024 EvickaStudio
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""
-Simple Moodle API wrapper for Python.
-
-Author: EvickaStudio
-Data: 07.10.2023
-Github: @EvickaStudio
-"""
-
-
 import logging
 import os
 from typing import Optional
@@ -34,7 +11,6 @@ logger = logging.getLogger(__name__)
 class MoodleAPI:
     """
     A simple Moodle API wrapper for Python.
-    ....
     """
 
     def __init__(self, url: Optional[str] = None) -> None:
@@ -44,7 +20,11 @@ class MoodleAPI:
         self.url = url or os.getenv("MOODLE_URL")
         self.session = requests.Session()
         self.request_header = {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 7.1.1; ...) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile",
+            "User-Agent": (
+                "Mozilla/5.0 (Linux; Android 7.1.1; ...) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 "
+                "Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile"
+            ),
             "Content-Type": "application/x-www-form-urlencoded",
         }
         self.session.headers.update(self.request_header)
@@ -54,17 +34,6 @@ class MoodleAPI:
     def login(self, username: str, password: str) -> bool:
         """
         Logs in to the Moodle instance using the provided username and password.
-        Sets the token for the MoodleAPI object.
-        ....
-        Args:
-            username (str): Moodle username.
-            password (str): Moodle password.
-        ....
-        Returns:
-            bool: True if login is successful, False otherwise.
-        ....
-        Raises:
-            ValueError: If username or password is not provided.
         """
         if not username:
             raise ValueError("Username is required")
@@ -95,12 +64,9 @@ class MoodleAPI:
             logger.error("Request to Moodle failed: %s", e)
             return False
 
-    def get_site_info(self) -> dict | None:
+    def get_site_info(self) -> Optional[dict]:
         """
         Retrieves site information from the Moodle instance.
-        ....
-        Returns:
-            dict: A dictionary containing site information.
         """
         if self.token is None:
             logger.error("Token not set. Please login first.")
@@ -113,15 +79,20 @@ class MoodleAPI:
             "moodlewsrestformat": "json",
         }
 
-        response = self.session.post(
-            f"{self.url}/webservice/rest/server.php", params=params
-        )
-        self.userid = response.json().get("userid")
-        return response.json()
+        try:
+            response = self.session.post(
+                f"{self.url}/webservice/rest/server.php", params=params
+            )
+            response.raise_for_status()
+            self.userid = response.json().get("userid")
+            return response.json()
+        except RequestException as e:
+            logger.error(f"Failed to get site info: {e}")
+            return None
 
-    def get_user_id(self) -> int | None:
+    def get_user_id(self) -> Optional[int]:
         """
-        Retrieve the user id.
+        Retrieve the user ID.
         """
         if self.token is None:
             logger.error("Token not set. Please login first.")
@@ -130,30 +101,17 @@ class MoodleAPI:
         result = self.get_site_info()
         return result["userid"] if result else None
 
-    def get_popup_notifications(self, user_id: int) -> dict | None:
+    def get_popup_notifications(self, user_id: int) -> Optional[dict]:
         """
-        Send a post request to retrieve popup notifications for a user.
+        Retrieves popup notifications for a user.
         """
         return self._post("message_popup_get_popup_notifications", user_id)
 
-    # ==========================================================================
-    #
-    # NOTE: This method is not in use, but it's a good example to check for
-    #
-    # def popup_notification_unread_count(self, user_id: int) -> int | None:
-    #     """
-    #     Send a post request to retrieve the number of unread popup notifications for a user.
-    #     """
-    #     result = self._post(
-    #         "message_popup_get_unread_popup_notification_count", user_id
-    #     )
-    #     return result.get("count") if result else None
-    #
-    # ==========================================================================
-
-    def core_user_get_users_by_field(self, user_id: int) -> dict | None:
+    def core_user_get_users_by_field(
+        self, field: str, value: str
+    ) -> Optional[dict]:
         """
-        Send a post request to retrieve user info based on user id.
+        Retrieves user info based on a specific field and value.
         """
         if self.token is None:
             logger.error("Token not set. Please login first.")
@@ -163,23 +121,29 @@ class MoodleAPI:
         params = {
             "wstoken": self.token,
             "wsfunction": wsfunction,
-            "field": "id",
-            "values[0]": user_id,
+            "field": field,
+            "values[0]": value,
             "moodlewsrestformat": "json",
         }
 
-        response = self.session.post(
-            f"{self.url}/webservice/rest/server.php", params=params
-        )
-        return response.json()
+        try:
+            response = self.session.post(
+                f"{self.url}/webservice/rest/server.php", params=params
+            )
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            logger.error(f"Failed to get user by field: {e}")
+            return None
 
-    def _post(self, arg0: str, user_id: int) -> dict | None:
-        """Send a POST request to the Moodle API with given wsfunction and user ID."""
+    def _post(self, wsfunction: str, user_id: int) -> Optional[dict]:
+        """
+        Sends a POST request to the Moodle API with the given wsfunction and user ID.
+        """
         if self.token is None:
             logger.error("Token not set. Please login first.")
             return None
 
-        wsfunction = arg0
         params = {
             "wstoken": self.token,
             "wsfunction": wsfunction,
@@ -187,7 +151,12 @@ class MoodleAPI:
             "moodlewsrestformat": "json",
         }
 
-        response = self.session.post(
-            f"{self.url}/webservice/rest/server.php", params=params
-        )
-        return response.json()
+        try:
+            response = self.session.post(
+                f"{self.url}/webservice/rest/server.php", params=params
+            )
+            response.raise_for_status()
+            return response.json()
+        except RequestException as e:
+            logger.error(f"Request to Moodle failed: {e}")
+            return None

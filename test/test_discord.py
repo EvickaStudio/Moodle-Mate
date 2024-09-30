@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from notification.discord import Discord
+from modules.discord import Discord
 
 # Constants for tests
 WEBHOOK_URL = "https://discord.com/api/webhooks/test-webhook-id"

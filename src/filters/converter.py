@@ -1,7 +1,6 @@
 import os
 import subprocess
 
-
 # Git Path
 SCRIPT_PATH = os.path.join("assets", "convert.js")
 

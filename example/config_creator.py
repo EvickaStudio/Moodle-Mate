@@ -23,7 +23,7 @@ Github: @EvickaStudio
 
 import configparser
 
-from utils.screen import old_logo
+from ui.screen import old_logo
 
 
 def create_config_file():

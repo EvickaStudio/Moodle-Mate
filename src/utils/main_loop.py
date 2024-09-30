@@ -1,17 +1,3 @@
-# Copyright 2024 EvickaStudio
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import logging
 import re
 import sys
@@ -54,26 +40,19 @@ def main_loop(
             if (
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
-                data_text = convert(notification["fullmessagehtml"])
-
-                # Post processing
-                # remove imgage tags from markdown with reges completely eg: [![Jasmin Sponholz](https://lernraum.th-luebeck.de/pluginfile.php/47078/user/icon/boost_union/f2?rev=13871127 "Jasmin Sponholz")](https://lernraum.th-luebeck.de/user/view.php?id=8803&course=1007)
-                reg = r"\[!\[.*\]\(.*\)\]\(.*\)"
-                data_text = re.sub(reg, "", data_text)
-
-                # remove *** from the text
-                data_text = data_text.replace("***", "")
-
-                if text := data_text:
+                if text := convert(notification["fullmessagehtml"]):
                     logging.info(
                         f"Original text: {notification['fullmessagehtml']}"
                     )
                     logging.info(f"Converted text: {text}")
+
+                    reg = r"\[!\[.*\]\(.*\)\]\(.*\)"
+                    re.sub(reg, "", text)
+                    text.replace("***", "")
+
                     # Debug, to see notification content uncomment the line below
                     # print(notification["fullmessagehtml"])
 
-                    # Debug, to write notification content to a file uncomment the line below
-                    # write_to_log(notification["fullmessagehtml"])
                     if summary_setting == 1:
                         logging.info("Summarizing text...")
                         # To use the OpenAI assistant for summarization, uncomment the line below
