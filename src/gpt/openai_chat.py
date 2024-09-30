@@ -1,25 +1,3 @@
-# Copyright 2024 EvickaStudio
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""
-Chat module for OpenAI API
-
-Author: EvickaStudio
-Date: 25.12.2023
-Github: @EvickaStudio
-"""
-
 import configparser
 import logging
 import re
@@ -56,21 +34,10 @@ class GPT:
             "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
             "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
         },
-        "o1-preview": {
-            "input": 15.00 / 1_000_000,  # $15.00 per 1M input tokens
-            "output": 60.00
-            / 1_000_000,  # $60.00 per 1M output tokens (includes internal reasoning tokens)
-        },
-        "o1-mini": {
-            "input": 3.00 / 1_000_000,  # $3.00 per 1M input tokens
-            "output": 12.00
-            / 1_000_000,  # $12.00 per 1M output tokens (includes internal reasoning tokens)
-        },
     }
 
     def __init__(self) -> None:
         self._api_key: Optional[str] = None
-        # self.api_key_regex /regex(\/sk-\w{48}\/)/
         self.api_key_regex = r"^sk-[A-Za-z0-9]{48}$"
 
     @property
@@ -114,8 +81,12 @@ class GPT:
         Returns:
             int: The number of tokens.
         """
-        encoder = tiktoken.encoding_for_model(model)
-        return len(encoder.encode(text))
+        try:
+            encoder = tiktoken.encoding_for_model(model)
+            return len(encoder.encode(text))
+        except Exception as e:
+            logging.error(f"Error counting tokens for model {model}: {e}")
+            return 0
 
     def chat_completion(
         self, model: str, system_message: str, user_message: str
@@ -133,6 +104,10 @@ class GPT:
             str: The generated response from the chat completion, or an empty string if an error occurs.
         """
         logging.info("Requesting chat completion from OpenAI")
+
+        if model not in self.PRICING:
+            logging.error(f"Model {model} not found in pricing information.")
+            return ""
 
         messages = [
             {"role": "system", "content": system_message},
@@ -219,45 +194,49 @@ class GPT:
         Returns:
             str: The response message from the assistant.
         """
-        if thread_id is None:
-            thread_id = openai.beta.threads.create().id
+        try:
+            if thread_id is None:
+                thread_id = openai.beta.threads.create().id
 
-        assistant_id = (
-            "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
-        )
-        message = openai.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=text,
-        )
-        run = openai.beta.threads.runs.create(
-            thread_id=thread_id, assistant_id=assistant_id
-        )
+            assistant_id = (
+                "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+            )
+            message = openai.beta.threads.messages.create(
+                thread_id=thread_id,
+                role="user",
+                content=text,
+            )
+            run = openai.beta.threads.runs.create(
+                thread_id=thread_id, assistant_id=assistant_id
+            )
 
-        result = openai.beta.threads.runs.retrieve(
-            thread_id=thread_id, run_id=run.id
-        )
-
-        delay = 0.5
-        while result.status != "completed":
             result = openai.beta.threads.runs.retrieve(
                 thread_id=thread_id, run_id=run.id
             )
-            sleep(delay)
-            delay += 0.5
-            delay = min(delay, 10)
 
-        logging.info(f"Status: {result.status}")
+            delay = 0.5
+            while result.status != "completed":
+                result = openai.beta.threads.runs.retrieve(
+                    thread_id=thread_id, run_id=run.id
+                )
+                sleep(delay)
+                delay += 0.5
+                delay = min(delay, 10)
 
-        messages = openai.beta.threads.messages.list(thread_id=thread_id)
-        return next(
-            (
-                message.content[0].text.value
-                for message in messages.data
-                if message.role == "assistant"
-            ),
-            None,
-        )
+            logging.info(f"Status: {result.status}")
+
+            messages = openai.beta.threads.messages.list(thread_id=thread_id)
+            return next(
+                (
+                    message.content[0].text.value
+                    for message in messages.data
+                    if message.role == "assistant"
+                ),
+                None,
+            )
+        except Exception as e:
+            logging.error(f"An error occurred during assistant run: {e}")
+            return ""
 
     def create_thread(self) -> str:
         """
@@ -266,7 +245,11 @@ class GPT:
         Returns:
             str: The thread ID.
         """
-        return openai.beta.threads.create().id
+        try:
+            return openai.beta.threads.create().id
+        except Exception as e:
+            logging.error(f"An error occurred while creating a new thread: {e}")
+            return ""
 
     def save_thread(self, thread_id: str) -> None:
         """
@@ -294,12 +277,17 @@ class GPT:
             thread_id (str): The thread ID to save or update.
             message (str): The message to log after saving or updating the thread.
         """
-        config = configparser.ConfigParser()
-        config.read("thread.ini")
-        config["THREAD"] = {"thread_id": thread_id}
-        with open("thread.ini", "w") as configfile:
-            config.write(configfile)
-            logging.info(message)
+        try:
+            config = configparser.ConfigParser()
+            config.read("thread.ini")
+            config["THREAD"] = {"thread_id": thread_id}
+            with open("thread.ini", "w") as configfile:
+                config.write(configfile)
+                logging.info(message)
+        except Exception as e:
+            logging.error(
+                f"An error occurred while saving/updating the thread: {e}"
+            )
 
     def resume_thread(self) -> str:
         """
@@ -308,22 +296,15 @@ class GPT:
         Returns:
             str: The thread ID.
         """
-        config = configparser.ConfigParser()
-        config.read("thread.ini")
-        if "THREAD" not in config or "thread_id" not in config["THREAD"]:
-            thread_id = self.create_thread()
-            self.save_thread(thread_id)
-        else:
-            thread_id = config["THREAD"]["thread_id"]
-        return thread_id
-
-
-# Example usage
-# gpt = GPT()
-# gpt.api_key = "your_api_key"
-# response = gpt.chat_completion(
-#     model="gpt-3.5-turbo",
-#     systemMessage="You are a helpful assistant.",
-#     userMessage="How are you?"
-# )
-# print(response)
+        try:
+            config = configparser.ConfigParser()
+            config.read("thread.ini")
+            if "THREAD" not in config or "thread_id" not in config["THREAD"]:
+                thread_id = self.create_thread()
+                self.save_thread(thread_id)
+            else:
+                thread_id = config["THREAD"]["thread_id"]
+            return thread_id
+        except Exception as e:
+            logging.error(f"An error occurred while resuming the thread: {e}")
+            return self.create_thread()
