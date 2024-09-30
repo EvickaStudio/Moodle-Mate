@@ -28,18 +28,14 @@ class NotificationProcessor:
         while True:
             try:
                 if notification := self.handler.fetch_newest_notification():
+                    # # print(notification)
+                    # print(notification["fullmessagehtml"])
                     if text := convert(notification["fullmessagehtml"]):
+                        # print(text)
                         logging.info(
                             f"Original text: {notification['fullmessagehtml']}"
                         )
                         logging.info(f"Converted text: {text}")
-
-                        # Clean up the text
-                        import re
-
-                        reg = r"\[!\[.*\]\(.*\)\]\(.*\)"
-                        text = re.sub(reg, "", text)
-                        text = text.replace("***", "")
 
                         if self.summary_setting == 1:
                             logging.info("Summarizing text...")
