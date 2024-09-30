@@ -27,6 +27,7 @@ from time import sleep
 from typing import Optional
 
 import openai  # version 1.5
+import tiktoken
 
 
 class GPT:
@@ -37,6 +38,35 @@ class GPT:
     __init__(...) -> None: Initialize the class.
     api_key: str | None: The API key for OpenAI.
     """
+
+    PRICING = {
+        "gpt-4o": {
+            "input": 5.00 / 1_000_000,  # $5.00 per 1M input tokens
+            "output": 15.00 / 1_000_000,  # $15.00 per 1M output tokens
+        },
+        "gpt-4o-2024-08-06": {
+            "input": 2.50 / 1_000_000,  # $2.50 per 1M input tokens
+            "output": 10.00 / 1_000_000,  # $10.00 per 1M output tokens
+        },
+        "gpt-4o-mini": {
+            "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
+            "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
+        },
+        "gpt-4o-mini-2024-07-18": {
+            "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
+            "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
+        },
+        "o1-preview": {
+            "input": 15.00 / 1_000_000,  # $15.00 per 1M input tokens
+            "output": 60.00
+            / 1_000_000,  # $60.00 per 1M output tokens (includes internal reasoning tokens)
+        },
+        "o1-mini": {
+            "input": 3.00 / 1_000_000,  # $3.00 per 1M input tokens
+            "output": 12.00
+            / 1_000_000,  # $12.00 per 1M output tokens (includes internal reasoning tokens)
+        },
+    }
 
     def __init__(self) -> None:
         self._api_key: Optional[str] = None
@@ -73,11 +103,26 @@ class GPT:
         self._api_key = key
         openai.api_key = key
 
+    def count_tokens(self, text: str, model: str = "gpt-4o-mini") -> int:
+        """
+        Counts the number of tokens in the given text for the specified model.
+
+        Args:
+            text (str): The text to tokenize.
+            model (str): The model name.
+
+        Returns:
+            int: The number of tokens.
+        """
+        encoder = tiktoken.encoding_for_model(model)
+        return len(encoder.encode(text))
+
     def chat_completion(
         self, model: str, system_message: str, user_message: str
     ) -> str:
         """
         Generates a response using the chat completion endpoint of OpenAI API.
+        Logs the pricing details based on token usage.
 
         Args:
             model (str): The model to use for chat completion.
@@ -88,20 +133,49 @@ class GPT:
             str: The generated response from the chat completion, or an empty string if an error occurs.
         """
         logging.info("Requesting chat completion from OpenAI")
-        response = openai.chat.completions.create(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_message,
-                },
-                {
-                    "role": "user",
-                    "content": user_message,
-                },
-            ],
+
+        messages = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message},
+        ]
+
+        # Count input tokens
+        input_tokens = sum(
+            self.count_tokens(message["content"], model=model)
+            for message in messages
         )
-        return response.choices[0].message.content if response.choices else ""
+
+        try:
+            response = openai.chat.completions.create(
+                model=model,
+                messages=messages,
+            )
+
+            output_text = (
+                response.choices[0].message.content if response.choices else ""
+            )
+            output_tokens = self.count_tokens(output_text, model=model)
+
+            # Calculate costs
+            input_cost = input_tokens * self.PRICING[model]["input"]
+            output_cost = output_tokens * self.PRICING[model]["output"]
+            total_cost = input_cost + output_cost
+
+            # Log the costs
+            logging.info(
+                f"Model: {model}\n"
+                f"Input Tokens: {input_tokens}\n"
+                f"Output Tokens: {output_tokens}\n"
+                f"Input Cost: ${input_cost:.6f}\n"
+                f"Output Cost: ${output_cost:.6f}\n"
+                f"Total Cost: ${total_cost:.6f}"
+            )
+
+            return output_text
+
+        except Exception as e:
+            logging.error(f"An error occurred during chat completion: {e}")
+            return ""
 
     def assistant(self, prompt: str, thread_id: Optional[str] = None) -> str:
         """
