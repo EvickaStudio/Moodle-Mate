@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import re
 import sys
 import time
 import traceback
@@ -53,7 +54,17 @@ def main_loop(
             if (
                 notification := handler.fetch_newest_notification()
             ):  # If there is a new notification
-                if text := convert(notification["fullmessagehtml"]):
+                data_text = convert(notification["fullmessagehtml"])
+
+                # Post processing
+                # remove imgage tags from markdown with reges completely eg: [![Jasmin Sponholz](https://lernraum.th-luebeck.de/pluginfile.php/47078/user/icon/boost_union/f2?rev=13871127 "Jasmin Sponholz")](https://lernraum.th-luebeck.de/user/view.php?id=8803&course=1007)
+                reg = r"\[!\[.*\]\(.*\)\]\(.*\)"
+                data_text = re.sub(reg, "", data_text)
+
+                # remove *** from the text
+                data_text = data_text.replace("***", "")
+
+                if text := data_text:
                     logging.info(
                         f"Original text: {notification['fullmessagehtml']}"
                     )

@@ -15,6 +15,13 @@ exclude = '''
   | build
   | dist
   | tests
-  | moodle-mate
+  | venv
 )/
 '''
+
+
+[tool.isort]
+profile = "black"
+line_length = 80
+multi_line_output = 3
+include_trailing_comma = true
