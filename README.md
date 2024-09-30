@@ -1,21 +1,5 @@
-<!--
- Copyright 2024 EvickaStudio
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
--->
-
 <div align="center">
-  <img src="assets/logo.svg" style="width: 160px;">
+  <img src="assets/logo.svg" alt="Moodle Mate Logo" width="160">
   <h1>Moodle Mate</h1>
   <p><strong>Your Smart Moodle Notification Assistant</strong></p>
 </div>
@@ -39,51 +23,71 @@
 
 ## Table of Contents
 
----
-
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
+- [Features](#features)
 - [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Documentation](#documentation)
 - [Screenshots](#screenshots)
+  - [Main Program Interface](#main-program-interface)
+  - [Discord Webhook Integration (Old)](#discord-webhook-integration-old)
+  - [Discord Webhook Integration (New)](#discord-webhook-integration-new)
 - [Contributing](#contributing)
 - [Status](#status)
 - [Author](#author)
 - [License](#license)
 
-## <div id="overview">Overview</div>
-
 ---
+
+## Overview
 
 Moodle Mate automatically retrieves your Moodle notifications and intelligently summarizes them, giving you a quick and clear overview of what's important. It delivers these summaries straight to your preferred channels like Discord, Pushbullet, and more. Designed for seamless integration into server environments, Moodle Mate offers high flexibility with adjustable update intervals tailored to meet your needs.
 
-**Key Features:**
+## Features
 
-- **Cost-effective** operation with GPT-3.5-turbo, minimizing expenses. (typically less than $0.15 per month, excluding server expenses). Alternatively you could just disable summarization in the config file
-- Optional **OpenAI Assistant** integration for intelligent, context-aware responses, currently available in German. To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
-
-  Example:
+- **Cost-effective Operation**: Utilizes GPT-3.5-turbo or GPT-4o-mini to minimize expenses (typically less than $0.15 per month, excluding server expenses). Alternatively, you can disable summarization in the config file.
+<!-- - **OpenAI Assistant Integration**: Optional integration for intelligent, context-aware responses, currently available in German. To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
 
   ```python
   # utils > main_loop.py > main_loop()
 
   # line 56, works [08.01.2024]
   summary = summarizer.summarize(text, True)
-  ```
+  ``` -->
 
-- Supports popular platforms including **Pushbullet**, **Discord**, and **NTFY (BETA)** for versatile notification delivery.
-- Offers flexible scheduling for periodic background execution and incorporates error handling mechanisms.
-- Uses "only" 50MB of RAM 99% of the time, making it lightweight and cost-effective. (Tested on a Raspberry Pi Zero 2 W)
+- **Multi-Platform Support**: Supports popular platforms including **Pushbullet**, **Discord**, and **NTFY (BETA)** for versatile notification delivery.
+- **Flexible Scheduling**: Offers adjustable update intervals for periodic background execution.
+- **Efficient Resource Usage**: Uses only ~50MB of RAM 99% of the time, making it lightweight and cost-effective (tested on a Raspberry Pi Zero 2 W).
 
-**NEW**: Integration of Deepinfras API with support for dolphin-2.6-mixtral-8x7b (cheap alternative to gpt 3)
-**NEW**: Experimentation with fakeopen, a free API for GPT-4-32k chat completions. (Usage discretion advised due to potential inconsistencies.)
+**New Features:**
 
-## <div id="dependencies">Dependencies</div>
+- **Deepinfras API Integration**: Support for `dolphin-2.6-mixtral-8x7b` as a cost-effective alternative to GPT-3.
+- **FakeOpen Experimentation**: Implementation with FakeOpen, a free API for GPT-4-32k chat completions (usage discretion advised due to potential inconsistencies).
 
----
+> **Note**: Cost calculations with current prices as of 30/09/24 can be seen in the logs for some models.
+
+```bash
+...
+2024-09-30 15:28:40 [INFO] Summarizing text...
+2024-09-30 15:28:40 [INFO] Requesting chat completion from OpenAI
+2024-09-30 15:28:43 [INFO] HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2024-09-30 15:28:43 [INFO]
+----------------------------------------
+Model          : gpt-4o-mini
+Input Tokens   : 1323  # Notification converted into tokens
+Output Tokens  : 115
+Input Cost     : $0.000198
+Output Cost    : $0.000069
+Total Cost     : $0.000267
+----------------------------------------
+2024-09-30 15:28:43 [INFO] Sending notification to Discord
+...
+```
+
+## Dependencies
 
 Moodle Mate depends on several specialized API wrappers and libraries:
 
@@ -93,63 +97,55 @@ Moodle Mate depends on several specialized API wrappers and libraries:
 - **NTFY**: Connectivity with NTFY API.
 - **Discord**: Implementation using Discord webhooks.
 
-To ensure smooth operation of Moodle Mate, ensure Python 3.10 or higher is installed.
+Ensure Python 3.10 or higher is installed for compatibility and functionality.
 
-- **Python >= 3.10:** Necessary for compatibility and functionality.
-
-## <div id="installation">Installation</div>
-
----
-
-If you prefer to work within a virtual environment, please follow the instructions provided in the [Optional Virtual Environment Setup](/docs/ENV.md) guide. This way you can avoid potential conflicts with other Python projects and ensure a clean installation. Otherwise, you may skip this step and install Moodle Mate directly into your system.
+## Installation
 
 To install Moodle Mate, follow these steps:
 
-1. Clone the repository and access the main directory:
+1. **Clone the Repository**:
 
    ```bash
    git clone https://github.com/EvickaStudio/Moodle-Mate.git
    cd Moodle-Mate
    ```
 
-2. Install necessary Python dependencies from the _requirements.txt_ file:
+2. **Install Python Dependencies**:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Install turndown package for html to markdown conversion using `npm` or other package managers:
+3. **Install Turndown Package** (for HTML to Markdown conversion):
 
    ```bash
    npm install turndown
    ```
 
-## <div id="configuration">Configuration</div>
+> **Optional**: If you prefer to work within a virtual environment, please follow the instructions provided in the [Optional Virtual Environment Setup](docs/ENV.md) guide. This helps avoid potential conflicts with other Python projects and ensures a clean installation.
 
----
+## Configuration
 
 Configuration of Moodle Mate requires setting up a `config.ini` file. Key parameters include Moodle URL, account credentials, and various API keys for functionality and integrations.
 
-| Parameter       | Description                               | Required | Default            |
-| --------------- | ----------------------------------------- | -------- | ------------------ |
-| moodleUrl       | Moodle URL for API access                 | Yes      | N/A                |
-| username        | Moodle Account Username                   | Yes      | N/A                |
-| password        | Moodle Account Password                   | Yes      | N/A                |
-| openaikey       | OpenAI API Key                            | No       | N/A                |
-| pushbulletkey   | Pushbullet API Key                        | No       | N/A                |
-| pushbulletState | Pushbullet State (ON = 1 else 0)          | No       | 0                  |
-| webhookState    | Webhook State (ON = 1 else 0)             | No       | 0                  |
-| webhookUrl      | Discord Webhook URL                       | Yes      | N/A                |
-| systemMessage   | System Message for GPTs                   | Yes      | default config     |
-| model           | GPT Model (recommend: gpt-4-1106-preview) | No       | gpt-3.5-turbo-1106 |
-| fakeopen        | Implementation of fakeopen API            | Yes      | 0                  |
-| summary         | Use GPT for summary (ON = 1 else 0)       | Yes      | 0                  |
+| Parameter        | Description                                  | Required | Default               |
+|------------------|----------------------------------------------|----------|-----------------------|
+| `moodleUrl`      | Moodle URL for API access                    | Yes      | N/A                   |
+| `username`       | Moodle Account Username                      | Yes      | N/A                   |
+| `password`       | Moodle Account Password                      | Yes      | N/A                   |
+| `openaikey`      | OpenAI API Key                               | No       | N/A                   |
+| `pushbulletkey`  | Pushbullet API Key                           | No       | N/A                   |
+| `pushbulletState`| Pushbullet State (`1` for ON, else `0`)      | No       | `0`                   |
+| `webhookState`   | Webhook State (`1` for ON, else `0`)         | No       | `0`                   |
+| `webhookUrl`     | Discord Webhook URL                          | Yes      | N/A                   |
+| `systemMessage`  | System Message for GPTs                      | Yes      | Default configuration |
+| `model`          | GPT Model (e.g., `gpt-4o-mini`)              | No       | `gpt-3.5-turbo-1106`  |
+| `fakeopen`       | Implementation of FakeOpen API (`1` or `0`)  | Yes      | `0`                   |
+| `summary`        | Use GPT for summary (`1` for ON, else `0`)   | Yes      | `0`                   |
 
-A detailed example configuration is available [here](example/example_config.ini).
+A detailed example configuration is available in the [example configuration file](example/example_config.ini).
 
-## <div id="usage">Usage</div>
-
----
+## Usage
 
 With the configuration complete, execute the main script to start the application:
 
@@ -160,55 +156,46 @@ With the configuration complete, execute the main script to start the applicatio
 python3 main.py
 ```
 
-## <div id="Documentation">Documentation</div>
-
----
+## Documentation
 
 Comprehensive documentation, detailing functionalities and operational guidelines, is organized by module within each directory.
 
-## <div id="screenshots">Screenshots</div>
+## Screenshots
 
----
-
-Screenshots of the application in action:
+### Main Program Interface
 
 <div align="center">
-  <h3>Main Program Interface</h3>
-  <img src="assets/main.png" alt="Main Program" width="600"/>
+  <img src="assets/main.png" alt="Main Program Interface" width="600">
 </div>
+
+### Discord Webhook Integration (Old)
 
 <div align="center">
-  <h3>Discord Webhook Integration (Old)</h3>
-  <img src="assets/discord.jpg" alt="Discord Screenshot (old)" width="600"/>
+  <img src="assets/discord.jpg" alt="Discord Screenshot (Old)" width="600">
 </div>
+
+### Discord Webhook Integration (New)
 
 <div align="center">
-  <h3>Discord Webhook Integration (New)</h3>
-  <img src="assets/preview.png" alt="Discord Screenshot" width="600"/>
+  <img src="assets/preview.png" alt="Discord Screenshot (New)" width="600">
 </div>
 
-## <div id="Contributing">Contributing</div>
+## Contributing
 
----
-
-We'd love your help making Moodle Mate even better! Contribute by:
+We welcome contributions to make Moodle Mate even better! You can contribute by:
 
 - Reporting bugs
 - Suggesting new features
 - Submitting pull requests
 
-## <div id="status">Status</div>
+## Status
 
-![Alt](https://repobeats.axiom.co/api/embed/b1216afa25c240df409d5ed2f4371776947ad394.svg "Repobeats analytics image")
+![Repobeats Analytics](https://repobeats.axiom.co/api/embed/b1216afa25c240df409d5ed2f4371776947ad394.svg "Repobeats analytics image")
 
-## <div id="author">Author</div>
-
----
+## Author
 
 Moodle Mate is created with ❤️ by [EvickaStudio](https://github.com/EvickaStudio).
 
-## <div id="license">License</div>
+## License
 
----
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the **Apache License 2.0** - see the [LICENSE.md](LICENSE.md) file for details.
