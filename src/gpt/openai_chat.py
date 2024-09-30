@@ -26,6 +26,10 @@ class GPT:
             "input": 2.50 / 1_000_000,  # $2.50 per 1M input tokens
             "output": 10.00 / 1_000_000,  # $10.00 per 1M output tokens
         },
+        "gpt-4o-2024-05-13": {
+            "input": 5.00 / 1_000_000,  # $5.00 per 1M input tokens
+            "output": 15.00 / 1_000_000,  # $15.00 per 1M output tokens
+        },
         "gpt-4o-mini": {
             "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
             "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
@@ -33,6 +37,10 @@ class GPT:
         "gpt-4o-mini-2024-07-18": {
             "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
             "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
+        },
+        "gpt-3.5-turbo": {
+            "input": 3.00 / 1_000_000,  # $3.00 per 1M input tokens
+            "output": 6.00 / 1_000_000,  # $6.00 per 1M output tokens
         },
     }
 
