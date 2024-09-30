@@ -28,14 +28,13 @@ class NotificationProcessor:
         while True:
             try:
                 if notification := self.handler.fetch_newest_notification():
-                    # # print(notification)
-                    # print(notification["fullmessagehtml"])
                     if text := convert(notification["fullmessagehtml"]):
-                        # print(text)
-                        logging.info(
-                            f"Original text: {notification['fullmessagehtml']}"
-                        )
-                        logging.info(f"Converted text: {text}")
+
+                        # Debug, to see notification content uncomment the line below
+                        # logging.info(
+                        #     f"Original text: {notification['fullmessagehtml']}"
+                        # )
+                        # logging.info(f"Converted text: {text}")
 
                         if self.summary_setting == 1:
                             logging.info("Summarizing text...")
