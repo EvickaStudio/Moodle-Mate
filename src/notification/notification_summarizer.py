@@ -20,9 +20,9 @@ class NotificationSummarizer:
 
     @handle_exceptions
     def __init__(self, config: Config) -> None:
-        self.api_key = config.get_config("moodle", "openaikey")
-        self.system_message = config.get_config("moodle", "systemmessage")
-        self.model = config.get_config("moodle", "model")
+        self.api_key = config.get_config("summary", "OPENAI_API_KEY")
+        self.system_message = config.get_config("summary", "SYSTEM_PROMPT")
+        self.model = config.get_config("summary", "MODEL")
         # print(f"Model = {self.model}")  # Debug line
         self.test = False
 

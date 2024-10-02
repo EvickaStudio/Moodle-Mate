@@ -23,13 +23,13 @@ class NotificationSender:
 
     @handle_exceptions
     def __init__(self, config: Config, bot_name: str, thumbnail: str) -> None:
-        self.pushbullet_key = config.get_config("moodle", "pushbulletkey")
-        self.webhook_url = config.get_config("moodle", "webhookUrl")
-        self.pushbullet_state = int(
-            config.get_config("moodle", "pushbulletState")
+        self.pushbullet_key = config.get_config(
+            "pushbullet", "PUSHBULLET_API_KEY"
         )
-        self.webhook_state = int(config.get_config("moodle", "webhookState"))
-        self.model = config.get_config("moodle", "model")
+        self.pushbullet_state = int(config.get_config("pushbullet", "ENABLED"))
+        self.webhook_url = config.get_config("discord", "WEBHOOK_URL")
+        self.webhook_state = int(config.get_config("discord", "ENABLED"))
+        self.model = config.get_config("summary", "MODEL")
         self.bot_name = bot_name
         self.thumbnail = thumbnail
         self.webhook_discord = Discord(

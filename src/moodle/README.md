@@ -28,8 +28,8 @@ from load_config import Config
 config = Config("config.ini")
 moodle_api = MoodleAPI(config)
 
-username = config.get_config("moodle", "username")
-password = config.get_config("moodle", "password")
+username = config.get_config("moodle", "MOODLE_USERNAME")
+password = config.get_config("moodle", "MOODLE_PASSWORD")
 
 moodle_api.login(username, password)
 site_info = moodle_api.get_site_info()
