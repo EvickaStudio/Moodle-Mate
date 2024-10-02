@@ -3,7 +3,7 @@ import sys
 import time
 import traceback
 
-from src.filters.converter import convert
+from src.filters import convert
 
 
 class NotificationProcessor:

@@ -1,13 +1,13 @@
 import logging
-from typing import Optional
 
-from src.moodle.moodle_notification_handler import MoodleNotificationHandler
-from src.notification.notification_processor import NotificationProcessor
-from src.notification.notification_sender import NotificationSender
-from src.notification.notification_summarizer import NotificationSummarizer
-from src.ui.screen import animate_logo, clear_screen, logo_lines
-from src.ui.setup_logging import setup_logging
-from src.utils.load_config import Config
+from src.moodle import MoodleNotificationHandler
+from src.notification import (
+    NotificationProcessor,
+    NotificationSender,
+    NotificationSummarizer,
+)
+from src.ui import animate_logo, clear_screen, logo_lines, setup_logging
+from src.utils import Config
 
 
 def get_int_config(

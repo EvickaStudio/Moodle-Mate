@@ -1,9 +1,7 @@
 import logging
 
-from src.gpt.deepinfra import GPT as GPTDeepinfra
-from src.gpt.openai_chat import GPT
-from src.utils.handle_exceptions import handle_exceptions
-from src.utils.load_config import Config
+from src.gpt import GPT
+from src.utils import Config, handle_exceptions
 
 
 class NotificationSummarizer:
@@ -28,6 +26,7 @@ class NotificationSummarizer:
 
     @handle_exceptions
     def summarize(self, text: str, use_assistant_api: bool = False) -> str:
+        # sourcery skip: remove-pass-body
         """
         Summarizes the given text using GPT-3 API or FGPT.
 
@@ -47,9 +46,12 @@ class NotificationSummarizer:
             # chat completion API, for testing ATM.
 
             if self.test:
-                # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
-                ai = GPTDeepinfra(api_key=self.api_key)
-                return ai.chat_completion(self.system_message, text or "")
+                ############################################################
+                # # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
+                # ai = GPTDeepinfra(api_key=self.api_key)
+                # return ai.chat_completion(self.system_message, text or "")
+                ############################################################
+                pass
 
             else:
                 if self.model is None or self.model == "":

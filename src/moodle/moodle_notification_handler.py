@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from src.utils.load_config import Config
+from src.utils import Config
 
 from .api import MoodleAPI
 

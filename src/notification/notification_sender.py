@@ -1,10 +1,8 @@
 import logging
 
-from src.modules.discord import Discord
-from src.modules.pushbullet import Pushbullet
-from src.moodle.moodle_notification_handler import MoodleNotificationHandler
-from src.utils.handle_exceptions import handle_exceptions
-from src.utils.load_config import Config
+from src.modules import Discord, Pushbullet
+from src.moodle import MoodleNotificationHandler
+from src.utils import Config, handle_exceptions
 
 
 class NotificationSender:

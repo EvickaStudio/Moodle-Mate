@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 
 # ANSI escape codes for colors and effects
