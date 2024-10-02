@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 
 from src.utils.load_config import Config
+
 from .api import MoodleAPI
 
 logger = logging.getLogger(__name__)
