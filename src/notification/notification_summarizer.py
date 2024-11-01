@@ -1,23 +1,7 @@
-# Copyright 2024 EvickaStudio
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import logging
 
-from gpt.deepinfra import GPT as GPTDeepinfra
-from gpt.openai_chat import GPT
-from moodle.load_config import Config
-from utils.handle_exceptions import handle_exceptions
+from src.gpt import GPT
+from src.utils import Config, handle_exceptions
 
 
 class NotificationSummarizer:
@@ -34,14 +18,15 @@ class NotificationSummarizer:
 
     @handle_exceptions
     def __init__(self, config: Config) -> None:
-        self.api_key = config.get_config("moodle", "openaikey")
-        self.system_message = config.get_config("moodle", "systemmessage")
-        self.model = config.get_config("moodle", "model")
+        self.api_key = config.get_config("summary", "OPENAI_API_KEY")
+        self.system_message = config.get_config("summary", "SYSTEM_PROMPT")
+        self.model = config.get_config("summary", "MODEL")
         # print(f"Model = {self.model}")  # Debug line
         self.test = False
 
     @handle_exceptions
     def summarize(self, text: str, use_assistant_api: bool = False) -> str:
+        # sourcery skip: remove-pass-body
         """
         Summarizes the given text using GPT-3 API or FGPT.
 
@@ -61,9 +46,12 @@ class NotificationSummarizer:
             # chat completion API, for testing ATM.
 
             if self.test:
-                # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
-                ai = GPTDeepinfra(api_key=self.api_key)
-                return ai.chat_completion(self.system_message, text or "")
+                ############################################################
+                # # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
+                # ai = GPTDeepinfra(api_key=self.api_key)
+                # return ai.chat_completion(self.system_message, text or "")
+                ############################################################
+                pass
 
             else:
                 if self.model is None or self.model == "":

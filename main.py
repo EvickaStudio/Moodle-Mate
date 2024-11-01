@@ -1,74 +1,96 @@
-# Copyright 2024 EvickaStudio
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+import logging
 
-from moodle.load_config import Config
-from moodle.moodle_notification_handler import MoodleNotificationHandler
-from notification.notification_sender import NotificationSender
-from notification.notification_summarizer import NotificationSummarizer
-from utils.main_loop import main_loop
-from utils.screen import clear_screen, logo
-from utils.setup_logging import setup_logging
-
-# Constants, can be changed here
-SLEEP_DURATION_SECONDS = (
-    60  # how many seconds to sleep between each iteration of the loop
+from src.moodle import MoodleNotificationHandler
+from src.notification import (
+    NotificationProcessor,
+    NotificationSender,
+    NotificationSummarizer,
 )
-MAX_RETRIES = (
-    3  # maximum number of retries for fetching and processing notifications
-)
+from src.ui import animate_logo, clear_screen, logo_lines, setup_logging
+from src.utils import Config
 
-# This is the main loop of the program. We'll keep looping until something breaks
+
+def get_int_config(
+    config: Config, section: str, option: str, default: int
+) -> int:
+    """
+    Retrieves an integer value from the configuration.
+    If the value is missing or invalid, returns the default.
+    """
+    value = config.get_config(section, option)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        logging.warning(
+            f"Invalid or missing integer for [{section}] {option}, using default {default}."
+        )
+        return default
+
+
+def get_str_config(
+    config: Config, section: str, option: str, default: str
+) -> str:
+    """
+    Retrieves a string value from the configuration.
+    If the value is missing, returns the default.
+    """
+    value = config.get_config(section, option)
+    if value is None:
+        logging.warning(
+            f"Missing string for [{section}] {option}, using default '{default}'."
+        )
+        return default
+    return value
+
+
+def main() -> None:
+    try:
+        # Clear the screen and print the logo
+        clear_screen()
+        animate_logo(logo_lines)
+
+        # Set up logging
+        setup_logging()
+
+        # Initialize Config object
+        config = Config("config.ini")
+
+        # Read configurations with error handling
+        sleep_duration_seconds: int = get_int_config(
+            config, "settings", "FETCH_INTERVAL", 60
+        )
+        max_retries: int = get_int_config(config, "settings", "MAX_RETRIES", 3)
+        summary: int = get_int_config(config, "summary", "SUMMARIZE", 0)
+        bot_name: str = get_str_config(
+            config, "discord", "BOT_NAME", "Moodle Mate"
+        )
+        thumbnail: str = get_str_config(
+            config,
+            "discord",
+            "THUMBNAIL_URL",
+            "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png",
+        )
+
+        # Initialize other classes with the Config object
+        moodle_handler = MoodleNotificationHandler(config)
+        summarizer = NotificationSummarizer(config)
+        sender = NotificationSender(config, bot_name, thumbnail)
+
+        # Start the notification processor
+        processor = NotificationProcessor(
+            handler=moodle_handler,
+            summarizer=summarizer,
+            sender=sender,
+            summary_setting=summary,
+            sleep_duration=sleep_duration_seconds,
+            max_retries=max_retries,
+        )
+        processor.run()
+
+    except Exception as e:
+        logging.exception("An unexpected error occurred during execution.")
+        exit(1)
+
+
 if __name__ == "__main__":
-    # Clear the screen and print the logo
-    clear_screen()
-    print(logo)
-    # Setup logging
-
-    # Uncomment the following line to disable logging/ output to console
-    setup_logging()
-    # Initialize Config object
-
-    config = Config("config.ini")
-    # Initialize other classes with the Config object
-
-    summary = (
-        int(config.get_config("moodle", "summary"))
-        if config.get_config("moodle", "summary")
-        else 0
-    )
-    fakeopen = (
-        int(config.get_config("moodle", "fakeopen"))
-        if config.get_config("moodle", "fakeopen")
-        else 0
-    )
-    botname = config.get_config("moodle", "botname") or "MoodleMate"
-
-    thumbnail = (
-        config.get_config("moodle", "thumbnailURL")
-        or "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png"
-    )
-
-    moodle_handler = MoodleNotificationHandler(config)
-    summarizer = NotificationSummarizer(config)
-    sender = NotificationSender(config, botname, thumbnail)
-
-    # Start the main loop
-    main_loop(
-        moodle_handler,
-        summarizer,
-        sender,
-        summary,
-        SLEEP_DURATION_SECONDS,
-        MAX_RETRIES,
-    )
+    main()

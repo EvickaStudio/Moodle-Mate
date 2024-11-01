@@ -1,24 +1,8 @@
-# Copyright 2024 EvickaStudio
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import logging
 
-from moodle.load_config import Config
-from moodle.moodle_notification_handler import MoodleNotificationHandler
-from notification.discord import Discord
-from notification.pushbullet import Pushbullet
-from utils.handle_exceptions import handle_exceptions
+from src.modules import Discord, Pushbullet
+from src.moodle import MoodleNotificationHandler
+from src.utils import Config, handle_exceptions
 
 
 class NotificationSender:
@@ -37,13 +21,13 @@ class NotificationSender:
 
     @handle_exceptions
     def __init__(self, config: Config, bot_name: str, thumbnail: str) -> None:
-        self.pushbullet_key = config.get_config("moodle", "pushbulletkey")
-        self.webhook_url = config.get_config("moodle", "webhookUrl")
-        self.pushbullet_state = int(
-            config.get_config("moodle", "pushbulletState")
+        self.pushbullet_key = config.get_config(
+            "pushbullet", "PUSHBULLET_API_KEY"
         )
-        self.webhook_state = int(config.get_config("moodle", "webhookState"))
-        self.model = config.get_config("moodle", "model")
+        self.pushbullet_state = int(config.get_config("pushbullet", "ENABLED"))
+        self.webhook_url = config.get_config("discord", "WEBHOOK_URL")
+        self.webhook_state = int(config.get_config("discord", "ENABLED"))
+        self.model = config.get_config("summary", "MODEL")
         self.bot_name = bot_name
         self.thumbnail = thumbnail
         self.webhook_discord = Discord(

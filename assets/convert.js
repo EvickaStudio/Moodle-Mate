@@ -1,4 +1,3 @@
-const fs = require('fs');
 const TurndownService = require('turndown');
 
 // Create a new instance of TurndownService
