@@ -136,7 +136,7 @@ cp example/example_config.ini config.ini
 
 | Parameter            | Description                                                                 | Required | Default                                       |
 |----------------------|-----------------------------------------------------------------------------|----------|-----------------------------------------------|
-| `MOODLE_URL`         | URL for Moodle API access                                                    | Yes      | N/A                                           |
+| `MOODLE_URL`         | Full URL for Moodle instance (must include `https://`, e.g. `https://moodle.myschool.edu/`)  | Yes      | N/A                                           |
 | `MOODLE_USERNAME`    | Username for Moodle login                                                     | Yes      | N/A                                           |
 | `MOODLE_PASSWORD`    | Password for Moodle login                                                     | Yes      | N/A                                           |
 | `SUMMARIZE`          | Enable or disable summarization (1 = enabled, 0 = disabled)                 | Yes      | `1`                                           |
