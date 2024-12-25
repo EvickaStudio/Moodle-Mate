@@ -47,24 +47,15 @@ Moodle Mate automatically retrieves your Moodle notifications and intelligently 
 
 ## Features
 
-- **Cost-effective Operation**: Utilizes GPT-3.5-turbo or GPT-4o-mini to minimize expenses (typically less than $0.15 per month, excluding server expenses). Alternatively, you can disable summarization in the config file.
-<!-- - **OpenAI Assistant Integration**: Optional integration for intelligent, context-aware responses, currently available in German. To use the Assistant, set the `test` variable in `summarizer.summarize` to `True`:
+- **Cost-effective Operation**: Utilizes GPT-3.5-turbo or GPT-4o-mini to minimize expenses (typically less than $0.10 per month, excluding server expenses). Alternatively, you can disable summarization in the config file.
 
-  ```python
-  # utils > main_loop.py > main_loop()
-
-  # line 56, works [08.01.2024]
-  summary = summarizer.summarize(text, True)
-  ``` -->
-
-- **Multi-Platform Support**: Supports popular platforms including **Pushbullet**, **Discord**, and **NTFY (BETA)** for versatile notification delivery.
+- **Multi-Platform Support**: Supports popular platforms including **Discord**, **NTFY (BETA)**, Pushbullet for versatile notification delivery.
 - **Flexible Scheduling**: Offers adjustable update intervals for periodic background execution.
 - **Efficient Resource Usage**: Uses only ~50MB of RAM 99% of the time, making it lightweight and cost-effective (tested on a Raspberry Pi Zero 2 W).
 
 **New Features:**
 
-- **Deepinfras API Integration**: Support for `dolphin-2.6-mixtral-8x7b` as a cost-effective alternative to GPT-3.
-- **FakeOpen Experimentation**: Implementation with FakeOpen, a free API for GPT-4-32k chat completions (usage discretion advised due to potential inconsistencies).
+- **OpenAI API Endpoint Customization**: Allows the use of OpenAI-compatible REST API endpoints from other providers, local instances, or other models.
 
 > **Note**: Cost calculations with current prices as of 30/09/24 can be seen in the logs for some models.
 
