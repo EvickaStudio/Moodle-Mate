@@ -72,7 +72,9 @@ class MoodleNotificationHandler:
                 logger.info("Fetching notifications from Moodle.")
                 response = self.api.get_popup_notifications(self.moodle_user_id)
                 if notifications := response.get("notifications", []):
-                    logger.debug(f"Latest notification fetched: {notifications[0]}")
+                    logger.debug(
+                        f"Latest notification fetched: {notifications[0]}"
+                    )
                     return notifications[0]
                 else:
                     logger.info("No notifications found.")
@@ -107,7 +109,9 @@ class MoodleNotificationHandler:
                         return notification
                     elif notification_id > self.last_notification_id:
                         # New notification found
-                        logger.info(f"New notification found: ID {notification_id}")
+                        logger.info(
+                            f"New notification found: ID {notification_id}"
+                        )
                         self.last_notification_id = notification_id
                         return notification
                     else:
