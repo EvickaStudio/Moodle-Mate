@@ -46,7 +46,7 @@ class GPT:
 
     def __init__(self) -> None:
         self._api_key: Optional[str] = None
-        self.api_key_regex = r"^sk-[A-Za-z0-9]{48}$"
+        self.api_key_regex = r"^sk-[A-Za-z0-9_-]{48,}$"  # Updated regex
 
     @property
     def api_key(self) -> str | None:
