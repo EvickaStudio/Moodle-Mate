@@ -60,6 +60,6 @@ class Pushbullet:
             return True
         except requests.exceptions.RequestException as e:
             logging.error(
-                f"Error sending pushbullet notification: {e}. Response status code: {response.status_code}, response text: {response.text}"
+                f"Error sending pushbullet notification: {e}. Response status code: {response.status_code}, response text: {response.text}"  # noqa: E501
             )
             return False

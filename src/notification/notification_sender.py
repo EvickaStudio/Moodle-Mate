@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from src.modules import Discord, Pushbullet
 from src.moodle import MoodleNotificationHandler
@@ -38,7 +39,11 @@ class NotificationSender:
     # userifrom defauls to null, if you want to use your own user id, use the parameter useridfrom
     @handle_exceptions
     def send(
-        self, subject: str, text: str, summary: str, useridfrom: int = None
+        self,
+        subject: str,
+        text: str,
+        summary: str,
+        useridfrom: Optional[int] = None,
     ) -> None:
         """
         Sends a notification to Pushbullet and Discord.

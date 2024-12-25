@@ -128,20 +128,30 @@ To install Moodle Mate, follow these steps:
 
 Configuration of Moodle Mate requires setting up a `config.ini` file. Key parameters include Moodle URL, account credentials, and various API keys for functionality and integrations.
 
-| Parameter        | Description                                  | Required | Default               |
-|------------------|----------------------------------------------|----------|-----------------------|
-| `moodleUrl`      | Moodle URL for API access                    | Yes      | N/A                   |
-| `username`       | Moodle Account Username                      | Yes      | N/A                   |
-| `password`       | Moodle Account Password                      | Yes      | N/A                   |
-| `openaikey`      | OpenAI API Key                               | No       | N/A                   |
-| `pushbulletkey`  | Pushbullet API Key                           | No       | N/A                   |
-| `pushbulletState`| Pushbullet State (`1` for ON, else `0`)      | No       | `0`                   |
-| `webhookState`   | Webhook State (`1` for ON, else `0`)         | No       | `0`                   |
-| `webhookUrl`     | Discord Webhook URL                          | Yes      | N/A                   |
-| `systemMessage`  | System Message for GPTs                      | Yes      | Default configuration |
-| `model`          | GPT Model (e.g., `gpt-4o-mini`)              | No       | `gpt-3.5-turbo-1106`  |
-| `fakeopen`       | Implementation of FakeOpen API (`1` or `0`)  | Yes      | `0`                   |
-| `summary`        | Use GPT for summary (`1` for ON, else `0`)   | Yes      | `0`                   |
+Just copy the example configuration file and fill in the required fields:
+
+```bash
+cp example/example_config.ini config.ini
+```
+
+| Parameter            | Description                                                                 | Required | Default                                       |
+|----------------------|-----------------------------------------------------------------------------|----------|-----------------------------------------------|
+| `MOODLE_URL`         | Full URL for Moodle instance (must include `https://`, e.g. `https://moodle.myschool.edu/`)  | Yes      | N/A                                           |
+| `MOODLE_USERNAME`    | Username for Moodle login                                                     | Yes      | N/A                                           |
+| `MOODLE_PASSWORD`    | Password for Moodle login                                                     | Yes      | N/A                                           |
+| `SUMMARIZE`          | Enable or disable summarization (1 = enabled, 0 = disabled)                 | Yes      | `1`                                           |
+| `OPENAI_API_ENDPOINT`| OpenAI API endpoint (e.g., <https://api.openai.com/v1/chat/completions>)  or OpenAI compatible API endpoint      | No       | `https://api.openai.com/v1/chat/completions` |
+| `OPENAI_API_KEY`     | (OpenAI) API key                                                                | No       | N/A                                           |
+| `MODEL`              | Model to use for summarization (e.g., gpt-3.5-turbo, gpt-4)                  | No       | `gpt-4o-mini`                                 |
+| `SYSTEM_PROMPT`      | System prompt for AI summarization                                            | Yes      | Default configuration                         |
+| `MAX_RETRIES`        | Maximum number of retries to fetch new messages before giving up             | No       | `5`                                           |
+| `FETCH_INTERVAL`     | Interval in seconds to fetch new messages from Moodle                         | No       | `60`                                          |
+| `ENABLED`            | Enable or disable Pushbullet notifications (1 = enabled, 0 = disabled)       | No       | `0`                                           |
+| `PUSHBULLET_API_KEY` | Pushbullet API key                                                            | No       | N/A                                           |
+| `ENABLED`            | Enable or disable Discord notifications (1 = enabled, 0 = disabled)          | No       | `1`                                           |
+| `WEBHOOK_URL`        | Discord webhook URL                                                           | Yes      | N/A                                           |
+| `BOT_NAME`           | Name of the bot as displayed in Discord                                      | No       | `Moodle Mate`                                  |
+| `THUMBNAIL_URL`      | Thumbnail URL for Discord messages (e.g., favicon URL)                        | No       | `https://subdomain.example.com/favicon.ico`  |
 
 A detailed example configuration is available in the [example configuration file](example/example_config.ini).
 

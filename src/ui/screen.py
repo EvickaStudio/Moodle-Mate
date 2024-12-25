@@ -10,13 +10,13 @@ COLOR_FADE = "\033[2m"
 
 # Define the logo lines
 logo_lines = [
-    f"{COLOR_BORDER}╭─┐ {COLOR_RESET}{COLOR_BOLD}Moodle Mate{COLOR_RESET} {COLOR_BORDER}┌{'─'*56}╮{COLOR_RESET}",
-    f"{COLOR_BORDER}│       {COLOR_MOODLE}__  ___             ____    {COLOR_RESET}__  ___     __        ,-------,      {COLOR_BORDER}│{COLOR_RESET}",
-    f"{COLOR_BORDER}│      {COLOR_MOODLE}/  |/  /__  ___  ___/ / /__ {COLOR_RESET}/  |/  /__ _/ /____   /       / |     {COLOR_BORDER}│{COLOR_RESET}",
-    f"{COLOR_BORDER}│     {COLOR_MOODLE}/ /|_/ / _ \\/ _ \\/ _  / / -_){COLOR_RESET} /|_/ / _ `/ __/ -_) /______ /  /     {COLOR_BORDER}│{COLOR_RESET}",
-    f"{COLOR_BORDER}│    {COLOR_MOODLE}/_/  /_/\\___/\\___/\\_,_/_/\\__/{COLOR_RESET}_/  /_/\\_,_/\\__/\\__/ |___/___/  /      {COLOR_BORDER}│{COLOR_RESET}",
-    f"{COLOR_BORDER}│     {COLOR_RESET}-—--–=¤=—--–-- - -  {COLOR_BOLD}EvickaStudio{COLOR_RESET}  - - --–--—=¤=--|__..___|.'- -    {COLOR_BORDER}│{COLOR_RESET}",
-    f"{COLOR_BORDER}│                                                        {COLOR_RESET}//              {COLOR_BORDER}│{COLOR_RESET}",
+    f"{COLOR_BORDER}╭─┐ {COLOR_RESET}{COLOR_BOLD}Moodle Mate{COLOR_RESET} {COLOR_BORDER}┌{'─'*56}╮{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}│       {COLOR_MOODLE}__  ___             ____    {COLOR_RESET}__  ___     __        ,-------,      {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}│      {COLOR_MOODLE}/  |/  /__  ___  ___/ / /__ {COLOR_RESET}/  |/  /__ _/ /____   /       / |     {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}│     {COLOR_MOODLE}/ /|_/ / _ \\/ _ \\/ _  / / -_){COLOR_RESET} /|_/ / _ `/ __/ -_) /______ /  /     {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}│    {COLOR_MOODLE}/_/  /_/\\___/\\___/\\_,_/_/\\__/{COLOR_RESET}_/  /_/\\_,_/\\__/\\__/ |___/___/  /      {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}│     {COLOR_RESET}-—--–=¤=—--–-- - -  {COLOR_BOLD}EvickaStudio{COLOR_RESET}  - - --–--—=¤=--|__..___|.'- -    {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}│                                                        {COLOR_RESET}//              {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
     f"{COLOR_BORDER}╰{'─'*72}╯{COLOR_RESET}",
 ]
 

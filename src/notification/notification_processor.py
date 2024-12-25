@@ -1,7 +1,6 @@
 import logging
 import sys
 import time
-import traceback
 
 from src.filters import convert
 
@@ -60,7 +59,7 @@ class NotificationProcessor:
                 logging.exception("An error occurred in the main loop")
                 retry_count += 1
                 if retry_count > self.max_retries:
-                    error_message = f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
+                    # error_message = f"An error occurred in the main loop:\n\n{traceback.format_exc()}"
                     # Optionally, send the error message via Discord
                     # self.sender.send_simple("Error", error_message)
                     logging.error("Max retries reached. Exiting main loop.")

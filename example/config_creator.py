@@ -128,9 +128,9 @@ def get_summary_config() -> Dict[str, str]:
 
         # System prompt selection
         system_message_templates = {
-            "DE1": "Bitte fassen Sie den folgenden Text umfassend und qualitativ hochwertig zusammen. Zusammenfassung sollte 1-2 Sätze umfassen.",
-            "DE2": "Du bist ein Assistent. Deine Aufgabe ist es, eingehende Nachrichten prägnant zusammenzufassen. Dein Ziel ist eine knappe, jedoch präzise Darstellung des Originaltextes, ohne Wiederholungen. Halte dich also kurz und verwende passende Emojis. Gebe keine Links aus",
-            "EN": "Please summarize the following text comprehensively. The summary should be concise and 1-2 sentences long.",
+            "DE1": "Bitte fassen Sie den folgenden Text umfassend und qualitativ hochwertig zusammen. Zusammenfassung sollte 1-2 Sätze umfassen.",  # noqa: E501
+            "DE2": "Du bist ein Assistent. Deine Aufgabe ist es, eingehende Nachrichten prägnant zusammenzufassen. Dein Ziel ist eine knappe, jedoch präzise Darstellung des Originaltextes, ohne Wiederholungen. Halte dich also kurz und verwende passende Emojis. Gebe keine Links aus",  # noqa: E501
+            "EN": "Please summarize the following text comprehensively. The summary should be concise and 1-2 sentences long.",  # noqa: E501
         }
         print("\nAvailable system prompts:")
         for key, message in system_message_templates.items():
@@ -187,7 +187,7 @@ def create_config_file():
             ----------------------------------
             Moodle Mate streamlines the process of receiving Moodle notifications and summaries across different platforms.
             This utility facilitates the creation of a robust configuration file for Moodle Mate.
-            """
+            """  # noqa: E501
         )
 
         # Gather configurations

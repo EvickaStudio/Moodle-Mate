@@ -81,7 +81,7 @@ class Discord:
                 return self.send_simple(subject, text)
 
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            embed_json = {
+            embed_json: dict = {
                 "title": subject,
                 "description": text,
                 "color": int(self.random_color()[1:], 16),
@@ -116,7 +116,7 @@ class Discord:
             logging.error(f"Error sending Discord notification: {e}")
             return False
 
-    def send_simple(self, subject: str, text: str) -> None:
+    def send_simple(self, subject: str, text: str) -> bool:
         try:
             payload = {"content": f"<strong>{subject}</strong>\n{text}"}
             response = requests.post(self.webhook_url, json=payload)
