@@ -52,7 +52,7 @@ class TurndownService:
     def __init__(self, options=None):
         """
         Initializes the TurndownService with given options or defaults.
-        
+
         :param options: A dictionary of options to customize the conversion process.
         """
         if options is None:
