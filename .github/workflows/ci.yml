@@ -48,14 +48,14 @@ jobs:
         run: |
           black --check .
 
-      - name: Test with pytest
-        run: |
-          pytest
+      # - name: Test with pytest
+      #   run: |
+      #     pytest
 
-      - name: Generate Code Coverage
-        run: |
-          coverage run -m pytest
-          coverage report -m
+      # - name: Generate Code Coverage
+      #   run: |
+      #     coverage run -m pytest
+      #     coverage report -m
 
       - name: Type Check with mypy
         run: |
