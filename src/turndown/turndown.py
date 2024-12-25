@@ -51,26 +51,9 @@ class TurndownService:
 
     def __init__(self, options=None):
         """
-        Initialize the Turndown instance with the given options.
-
-        Parameters:
-        options (dict, optional): A dictionary of options to customize the behavior of the Turndown instance.
-            If not provided, default options will be used. The available options are:
-            - rules: The set of rules to use for converting HTML to Markdown. Default is COMMONMARK_RULES.
-            - headingStyle: The style to use for headings. Default is "setext".
-            - hr: The string to use for horizontal rules. Default is "* * *".
-            - bulletListMarker: The marker to use for bullet lists. Default is "*".
-            - codeBlockStyle: The style to use for code blocks. Default is "indented".
-            - fence: The string to use for fenced code blocks. Default is "```".
-            - emDelimiter: The delimiter to use for emphasis. Default is "_".
-            - strongDelimiter: The delimiter to use for strong emphasis. Default is "**".
-            - linkStyle: The style to use for links. Default is "inlined".
-            - linkReferenceStyle: The style to use for link references. Default is "full".
-            - br: The string to use for line breaks. Default is "  ".
-            - preformattedCode: Whether to preserve preformatted code blocks. Default is False.
-            - blankReplacement: A function to replace blank nodes. Default is a lambda function.
-            - keepReplacement: A function to replace nodes that should be kept. Default is a lambda function.
-            - defaultReplacement: A function to replace nodes by default. Default is a lambda function.
+        Initializes the TurndownService with given options or defaults.
+        
+        :param options: A dictionary of options to customize the conversion process.
         """
         if options is None:
             options = {}
@@ -88,15 +71,15 @@ class TurndownService:
             "linkReferenceStyle": "full",
             "br": "  ",
             "preformattedCode": False,
-            "blankReplacement": lambda content, node: (
+            "blankReplacement": lambda content, node, options: (
                 "\n\n" if getattr(node, "is_block", False) else ""
             ),
-            "keepReplacement": lambda content, node: (
+            "keepReplacement": lambda content, node, options: (
                 "\n\n" + node.outer_html + "\n\n"
                 if getattr(node, "is_block", False)
                 else node.outer_html
             ),
-            "defaultReplacement": lambda content, node: (
+            "defaultReplacement": lambda content, node, options: (
                 "\n\n" + content + "\n\n"
                 if getattr(node, "is_block", False)
                 else content

@@ -448,7 +448,7 @@ COMMONMARK_RULES = {
     "emphasis": {"filter": ["em", "i"], "replacement": emphasis_rule},
     "strong": {"filter": ["strong", "b"], "replacement": strong_rule},
     "code": {
-        "filter": lambda node: (
+        "filter": lambda node, options: (
             node.node_name == "CODE"
             and not (
                 node.parent
@@ -456,7 +456,9 @@ COMMONMARK_RULES = {
                 and (node.previous_sibling or node.next_sibling)
             )
         ),
-        "replacement": code_rule,
+        "replacement": lambda content, node, options: code_rule(
+            content, node, options
+        ),
     },
     "image": {"filter": "img", "replacement": image_rule},
 }
