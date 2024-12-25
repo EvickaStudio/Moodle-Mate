@@ -49,9 +49,9 @@ class NotificationSummarizer:
                 ############################################################
                 # # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
                 # ai = GPTDeepinfra(api_key=self.api_key)
-                # return ai.chat_completion(self.system_message, text or "")
+                # return ai.chat_completion(self.system_message, text or ""
                 ############################################################
-                pass
+                return ""  # Added return statement
 
             else:
                 if self.model is None or self.model == "":

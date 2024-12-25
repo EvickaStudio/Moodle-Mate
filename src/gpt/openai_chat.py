@@ -1,4 +1,3 @@
-import configparser
 import logging
 import re
 from typing import Optional
@@ -160,38 +159,38 @@ class GPT:
             logging.error(f"An error occurred during chat completion: {e}")
             return ""
 
-    def assistant(self, prompt: str, thread_id: Optional[str] = None) -> str:
-        """
-        Assistant endpoint for OpenAI API.
-
-        It creates for each message/summary a different thread to keep the cost low,
-        also notifications don't need to be appended, as they have different context.
-        The greater the context, the greater the cost.
-
-        Args:
-            prompt (str): The prompt message for the assistant.
-            thread_id (str): The ID of the thread to use. If None, a new thread will be created.
-
-        Returns:
-            str: The response message from the assistant.
-        """
-        logging.info("Requesting assistant from OpenAI")
-        return self.run_assistant(prompt, thread_id)
-
-    def context_assistant(self, prompt: str) -> str:
-        """
-        Generates a response using the assistant endpoint of OpenAI API with saved context.
-
-        Args:
-            prompt (str): The prompt message for the assistant.
-
-        Returns:
-            str: The response message from the assistant.
-        """
-        thread_id = self.resume_thread()
-        return self.assistant(prompt, thread_id)
-
     ### Deprecated method, not planning to use it in the future ## noqa: E266
+
+    # def assistant(self, prompt: str, thread_id: Optional[str] = None) -> str:
+    #     """
+    #     Assistant endpoint for OpenAI API.
+
+    #     It creates for each message/summary a different thread to keep the cost low,
+    #     also notifications don't need to be appended, as they have different context.
+    #     The greater the context, the greater the cost.
+
+    #     Args:
+    #         prompt (str): The prompt message for the assistant.
+    #         thread_id (str): The ID of the thread to use. If None, a new thread will be created.
+
+    #     Returns:
+    #         str: The response message from the assistant.
+    #     """
+    #     logging.info("Requesting assistant from OpenAI")
+    #     return self.assistant(prompt, thread_id)
+
+    # def context_assistant(self, prompt: str) -> str:
+    #     """
+    #     Generates a response using the assistant endpoint of OpenAI API with saved context.
+
+    #     Args:
+    #         prompt (str): The prompt message for the assistant.
+
+    #     Returns:
+    #         str: The response message from the assistant.
+    #     """
+    #     thread_id = self.resume_thread()
+    #     return self.assistant(prompt, thread_id)
 
     # def run_assistant(self, text, thread_id):
     #     """
@@ -248,73 +247,73 @@ class GPT:
     #         logging.error(f"An error occurred during assistant run: {e}")
     #         return ""
 
-    def create_thread(self) -> str:
-        """
-        Creates a new thread for the assistant.
+    # def create_thread(self) -> str:
+    #     """
+    #     Creates a new thread for the assistant.
 
-        Returns:
-            str: The thread ID.
-        """
-        try:
-            return openai.beta.threads.create().id
-        except Exception as e:
-            logging.error(f"An error occurred while creating a new thread: {e}")
-            return ""
+    #     Returns:
+    #         str: The thread ID.
+    #     """
+    #     try:
+    #         return openai.beta.threads.create().id
+    #     except Exception as e:
+    #         logging.error(f"An error occurred while creating a new thread: {e}")
+    #         return ""
 
-    def save_thread(self, thread_id: str) -> None:
-        """
-        Saves the thread ID to a config file for resuming the conversation later.
+    # def save_thread(self, thread_id: str) -> None:
+    #     """
+    #     Saves the thread ID to a config file for resuming the conversation later.
 
-        Args:
-            thread_id (str): The thread ID to save.
-        """
-        self.save_or_update_thread(thread_id, "Thread saved")
+    #     Args:
+    #         thread_id (str): The thread ID to save.
+    #     """
+    #     self.save_or_update_thread(thread_id, "Thread saved")
 
-    def update_thread(self, thread_id: str) -> None:
-        """
-        Updates the thread ID in the config file with a fresh one (clears the conversation).
+    # def update_thread(self, thread_id: str) -> None:
+    #     """
+    #     Updates the thread ID in the config file with a fresh one (clears the conversation).
 
-        Args:
-            thread_id (str): The thread ID to update.
-        """
-        self.save_or_update_thread(thread_id, "Thread updated")
+    #     Args:
+    #         thread_id (str): The thread ID to update.
+    #     """
+    #     self.save_or_update_thread(thread_id, "Thread updated")
 
-    def save_or_update_thread(self, thread_id: str, message: str) -> None:
-        """
-        Saves or updates the thread ID in the config file.
+    # def save_or_update_thread(self, thread_id: str, message: str) -> None:
+    #     """
+    #     Saves or updates the thread ID in the config file.
 
-        Args:
-            thread_id (str): The thread ID to save or update.
-            message (str): The message to log after saving or updating the thread.
-        """
-        try:
-            config = configparser.ConfigParser()
-            config.read("thread.ini")
-            config["THREAD"] = {"thread_id": thread_id}
-            with open("thread.ini", "w") as configfile:
-                config.write(configfile)
-                logging.info(message)
-        except Exception as e:
-            logging.error(
-                f"An error occurred while saving/updating the thread: {e}"
-            )
+    #     Args:
+    #         thread_id (str): The thread ID to save or update.
+    #         message (str): The message to log after saving or updating the thread.
+    #     """
+    #     try:
+    #         config = configparser.ConfigParser()
+    #         config.read("thread.ini")
+    #         config["THREAD"] = {"thread_id": thread_id}
+    #         with open("thread.ini", "w") as configfile:
+    #             config.write(configfile)
+    #             logging.info(message)
+    #     except Exception as e:
+    #         logging.error(
+    #             f"An error occurred while saving/updating the thread: {e}"
+    #         )
 
-    def resume_thread(self) -> str:
-        """
-        Resumes the thread from the config file or creates a new thread if not found.
+    # def resume_thread(self) -> str:
+    #     """
+    #     Resumes the thread from the config file or creates a new thread if not found.
 
-        Returns:
-            str: The thread ID.
-        """
-        try:
-            config = configparser.ConfigParser()
-            config.read("thread.ini")
-            if "THREAD" not in config or "thread_id" not in config["THREAD"]:
-                thread_id = self.create_thread()
-                self.save_thread(thread_id)
-            else:
-                thread_id = config["THREAD"]["thread_id"]
-            return thread_id
-        except Exception as e:
-            logging.error(f"An error occurred while resuming the thread: {e}")
-            return self.create_thread()
+    #     Returns:
+    #         str: The thread ID.
+    #     """
+    #     try:
+    #         config = configparser.ConfigParser()
+    #         config.read("thread.ini")
+    #         if "THREAD" not in config or "thread_id" not in config["THREAD"]:
+    #             thread_id = self.create_thread()
+    #             self.save_thread(thread_id)
+    #         else:
+    #             thread_id = config["THREAD"]["thread_id"]
+    #         return thread_id
+    #     except Exception as e:
+    #         logging.error(f"An error occurred while resuming the thread: {e}")
+    #         return self.create_thread()
