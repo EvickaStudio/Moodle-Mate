@@ -33,8 +33,7 @@
 - [Documentation](#documentation)
 - [Screenshots](#screenshots)
   - [Main Program Interface](#main-program-interface)
-  - [Discord Webhook Integration (Old)](#discord-webhook-integration-old)
-  - [Discord Webhook Integration (New)](#discord-webhook-integration-new)
+  - [Discord Webhook Integration](#discord-webhook-integration)
 - [Contributing](#contributing)
 - [Status](#status)
 - [Author](#author)
@@ -175,16 +174,10 @@ Comprehensive documentation, detailing functionalities and operational guideline
 ### Main Program Interface
 
 <div align="center">
-  <img src="assets/main.png" alt="Main Program Interface" width="600">
+  <img src="assets/running.webp" alt="Main Program Interface" width="600">
 </div>
 
-### Discord Webhook Integration (Old)
-
-<div align="center">
-  <img src="assets/discord.jpg" alt="Discord Screenshot (Old)" width="600">
-</div>
-
-### Discord Webhook Integration (New)
+### Discord Webhook Integration
 
 <div align="center">
   <img src="assets/preview.png" alt="Discord Screenshot (New)" width="600">
