@@ -19,10 +19,11 @@ class MoodleNotificationHandler:
         """
         self.config = config
         self.last_notification_id: Optional[int] = None
+        self.logged_in = False
         try:
             self.url = self._get_config_value("moodle", "MOODLE_URL")
             self.api = MoodleAPI(self.url)
-            self.login()
+            self.__login()
             self.moodle_user_id = self.api.get_user_id()
         except Exception as e:
             logger.exception("Initialization failed.")
@@ -39,17 +40,19 @@ class MoodleNotificationHandler:
                 f"Configuration value '{key}' is missing in section '{section}'."
             )
 
-    def login(self) -> None:
+    def __login(self) -> None:
         """
         Logs in to Moodle using the username and password.
         """
-        try:
-            self.username = self._get_config_value("moodle", "MOODLE_USERNAME")
-            self.password = self._get_config_value("moodle", "MOODLE_PASSWORD")
-            self.api.login(username=self.username, password=self.password)
-        except Exception as e:
-            logger.exception("Failed to log in to Moodle.")
-            raise
+        if not self.logged_in:
+            try:
+                self.username = self._get_config_value("moodle", "MOODLE_USERNAME")
+                self.password = self._get_config_value("moodle", "MOODLE_PASSWORD")
+                if self.api.login(username=self.username, password=self.password):
+                    self.logged_in = True
+            except Exception as e:
+                logger.exception("Failed to log in to Moodle.")
+                raise
 
     def fetch_latest_notification(self) -> Optional[dict]:
         """
