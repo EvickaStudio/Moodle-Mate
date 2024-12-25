@@ -88,7 +88,7 @@ def main() -> None:
         processor.run()
 
     except Exception as e:
-        logging.exception("An unexpected error occurred during execution.")
+        logging.exception(f"An unexpected error occurred during execution: {e}")
         exit(1)
 
 

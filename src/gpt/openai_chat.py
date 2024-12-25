@@ -1,7 +1,6 @@
 import configparser
 import logging
 import re
-from time import sleep
 from typing import Optional
 
 import openai  # version 1.5
@@ -192,60 +191,62 @@ class GPT:
         thread_id = self.resume_thread()
         return self.assistant(prompt, thread_id)
 
-    def run_assistant(self, text, thread_id):
-        """
-        Runs the assistant to generate a response.
+    ### Deprecated method, not planning to use it in the future ## noqa: E266
 
-        Args:
-            text (str): The text message for the assistant.
-            thread_id (str): The ID of the thread to use.
+    # def run_assistant(self, text, thread_id):
+    #     """
+    #     Runs the assistant to generate a response.
 
-        Returns:
-            str: The response message from the assistant.
-        """
-        try:
-            if thread_id is None:
-                thread_id = openai.beta.threads.create().id
+    #     Args:
+    #         text (str): The text message for the assistant.
+    #         thread_id (str): The ID of the thread to use.
 
-            assistant_id = (
-                "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
-            )
-            message = openai.beta.threads.messages.create(
-                thread_id=thread_id,
-                role="user",
-                content=text,
-            )
-            run = openai.beta.threads.runs.create(
-                thread_id=thread_id, assistant_id=assistant_id
-            )
+    #     Returns:
+    #         str: The response message from the assistant.
+    #     """
+    #     try:
+    #         if thread_id is None:
+    #             thread_id = openai.beta.threads.create().id
 
-            result = openai.beta.threads.runs.retrieve(
-                thread_id=thread_id, run_id=run.id
-            )
+    #         assistant_id = (
+    #             "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
+    #         )
+    #         message = openai.beta.threads.messages.create(
+    #             thread_id=thread_id,
+    #             role="user",
+    #             content=text,
+    #         )
+    #         run = openai.beta.threads.runs.create(
+    #             thread_id=thread_id, assistant_id=assistant_id
+    #         )
 
-            delay = 0.5
-            while result.status != "completed":
-                result = openai.beta.threads.runs.retrieve(
-                    thread_id=thread_id, run_id=run.id
-                )
-                sleep(delay)
-                delay += 0.5
-                delay = min(delay, 10)
+    #         result = openai.beta.threads.runs.retrieve(
+    #             thread_id=thread_id, run_id=run.id
+    #         )
 
-            logging.info(f"Status: {result.status}")
+    #         delay = 0.5
+    #         while result.status != "completed":
+    #             result = openai.beta.threads.runs.retrieve(
+    #                 thread_id=thread_id, run_id=run.id
+    #             )
+    #             sleep(delay)
+    #             delay += 0.5
+    #             delay = min(delay, 10)
 
-            messages = openai.beta.threads.messages.list(thread_id=thread_id)
-            return next(
-                (
-                    message.content[0].text.value
-                    for message in messages.data
-                    if message.role == "assistant"
-                ),
-                None,
-            )
-        except Exception as e:
-            logging.error(f"An error occurred during assistant run: {e}")
-            return ""
+    #         logging.info(f"Status: {result.status}")
+
+    #         messages = openai.beta.threads.messages.list(thread_id=thread_id)
+    #         return next(
+    #             (
+    #                 message.content[0].text.value
+    #                 for message in messages.data
+    #                 if message.role == "assistant"
+    #             ),
+    #             None,
+    #         )
+    #     except Exception as e:
+    #         logging.error(f"An error occurred during assistant run: {e}")
+    #         return ""
 
     def create_thread(self) -> str:
         """

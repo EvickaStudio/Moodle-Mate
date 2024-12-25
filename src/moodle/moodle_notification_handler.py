@@ -26,7 +26,7 @@ class MoodleNotificationHandler:
             self.__login()
             self.moodle_user_id = self.api.get_user_id()
         except Exception as e:
-            logger.exception("Initialization failed.")
+            logger.exception(f"Initialization failed: {e}")
             raise
 
     def _get_config_value(self, section: str, key: str) -> str:
@@ -46,12 +46,19 @@ class MoodleNotificationHandler:
         """
         if not self.logged_in:
             try:
-                self.username = self._get_config_value("moodle", "MOODLE_USERNAME")
-                self.password = self._get_config_value("moodle", "MOODLE_PASSWORD")
-                if self.api.login(username=self.username, password=self.password):
+                self.username = self._get_config_value(
+                    "moodle", "MOODLE_USERNAME"
+                )
+                self.password = self._get_config_value(
+                    "moodle", "MOODLE_PASSWORD"
+                )
+                if self.api.login(
+                    username=self.username, password=self.password
+                ):
+
                     self.logged_in = True
             except Exception as e:
-                logger.exception("Failed to log in to Moodle.")
+                logger.exception(f"Failed to log in to Moodle: {e}")
                 raise
 
     def fetch_latest_notification(self) -> Optional[dict]:
@@ -68,7 +75,7 @@ class MoodleNotificationHandler:
                 logger.info("No notifications found.")
                 return None
         except Exception as e:
-            logger.exception("Failed to fetch Moodle notifications.")
+            logger.exception(f"Failed to fetch Moodle notifications: {e}")
             return None
 
     def fetch_newest_notification(self) -> Optional[dict]:
@@ -106,7 +113,9 @@ class MoodleNotificationHandler:
                 logger.info("No notifications fetched.")
                 return None
         except Exception as e:
-            logger.exception("Failed to fetch the newest Moodle notification.")
+            logger.exception(
+                f"Failed to fetch the newest Moodle notification: {e}"
+            )
             return None
 
     def user_id_from(self, useridfrom: int) -> Optional[dict]:
@@ -124,5 +133,7 @@ class MoodleNotificationHandler:
                 logger.info(f"No user found with ID {useridfrom}.")
                 return None
         except Exception as e:
-            logger.exception(f"Failed to fetch user {useridfrom} from Moodle.")
+            logger.exception(
+                f"Failed to fetch user {useridfrom} from Moodle: {e}"
+            )
             return None
