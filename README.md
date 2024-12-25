@@ -31,6 +31,7 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Documentation](#documentation)
+  - [HTML to Markdown Conversion](#html-to-markdown-conversion)
 - [Screenshots](#screenshots)
   - [Main Program Interface](#main-program-interface)
   - [Discord Webhook Integration](#discord-webhook-integration)
@@ -106,11 +107,11 @@ To install Moodle Mate, follow these steps:
    pip install -r requirements.txt
    ```
 
-3. **Install Turndown Package** (for HTML to Markdown conversion):
+<!-- 3. **Install Turndown Package** (for HTML to Markdown conversion):
 
    ```bash
    npm install turndown
-   ```
+   ``` -->
 
 > **Optional**: If you prefer to work within a virtual environment, please follow the instructions provided in the [Optional Virtual Environment Setup](docs/ENV.md) guide. This helps avoid potential conflicts with other Python projects and ensures a clean installation.
 
@@ -158,7 +159,11 @@ python3 main.py
 
 ## Documentation
 
-Comprehensive documentation, detailing functionalities and operational guidelines, is organized by module within each directory.
+Comprehensive documentation, detailing functionalities and operational guidelines, is organized by module within each directory. (Coming soon!)
+
+### HTML to Markdown Conversion
+
+Moodle Mate used Turndown, a JavaScript library, to convert HTML content to Markdown as other Python libraries did not perform as good as Turndown. But to remove further dependencies, I've tried to port the Turndown library to Python. The ported version is available in the [`turndown`](src/turndown/) directory. The ported version is not fully functional and may not work as expected. The original Turndown library can be found [here](https://github.com/mixmark-io/turndown/tree/master).
 
 ## Screenshots
 
