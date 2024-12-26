@@ -187,7 +187,7 @@ def _join_markdown(first, second):
     # Figure out how many newlines we had at the boundary
     newlines_count = (len(first) - len(s1)) + (len(second) - len(s2))
     # Cap at 2
-    sep = "\n\n"[0:newlines_count]
+    sep = "\n\n"[:newlines_count]
     return s1 + sep + s2
 
 
