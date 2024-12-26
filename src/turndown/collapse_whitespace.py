@@ -108,10 +108,7 @@ def _determine_next_node(previous_node, current_node, is_pre_fn):
     if (previous_node and previous_node.parent == current_node) or is_pre_fn(
         current_node
     ):
-        return (
-            current_node.next_sibling or current_node.parent
-
-        )
+        return current_node.next_sibling or current_node.parent
 
     # Otherwise, we go down into children first, else siblings, else up
     if current_node.first_child:
