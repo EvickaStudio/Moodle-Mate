@@ -127,7 +127,7 @@ class TurndownHTMLParser(html.parser.HTMLParser):
         while temp and temp.node_name.lower() != tag.lower():
             temp = temp.parent
         if temp:
-            self.current_node = temp.parent if temp.parent else temp
+            self.current_node = temp.parent or temp
 
     def handle_startendtag(self, tag, attrs):
         # Self-closing
