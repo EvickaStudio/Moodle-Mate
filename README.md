@@ -9,12 +9,13 @@
 <p align="center">
   <a href="https://github.com/EvickaStudio/Moodle-Mate/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/EvickaStudio/Moodle-Mate/ci.yml?+label=Build%20Status"></a>
   <a href="https://github.com/EvickaStudio/Moodle-Mate/blob/main/LICENSE.md"><img alt="GitHub license" src="https://img.shields.io/github/license/EvickaStudio/Moodle-Mate"></a>
+  <a href="https://github.com/EvickaStudio/Moodle-Mate/commits"><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/EvickaStudio/Moodle-Mate?label=commits"></a>
   <a href="https://github.com/EvickaStudio/Moodle-Mate/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/EvickaStudio/Moodle-Mate"></a>
   <a href="https://github.com/EvickaStudio/Moodle-Mate/pulls"><img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/EvickaStudio/Moodle-Mate"></a>
   <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/EvickaStudio/Moodle-Mate">
   <a href="https://github.com/EvickaStudio/Moodle-Mate/watchers"><img alt="GitHub Watchers" src="https://img.shields.io/github/watchers/EvickaStudio/Moodle-Mate?style=flat&logo=github"></a>
-  <img alt="GitHub Repo Stars" src="https://img.shields.io/github/stars/EvickaStudio/Moodle-Mate?style=social">
   <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/EvickaStudio/Moodle-Mate">
+</p>
 
 > [!NOTE]
 > The codebase is currently under refinement for enhanced modularity and maintainability. For the latest version, please visit the [`dev`](https://github.com/EvickaStudio/Moodle-Mate/tree/dev) branch.
@@ -26,7 +27,6 @@
 - [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Features](#features)
-- [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
@@ -78,7 +78,7 @@ Total Cost     : $0.000267
 ...
 ```
 
-## Dependencies
+<!-- ## Dependencies
 
 Moodle Mate depends on several specialized API wrappers and libraries:
 
@@ -88,7 +88,7 @@ Moodle Mate depends on several specialized API wrappers and libraries:
 - **NTFY**: Connectivity with NTFY API.
 - **Discord**: Implementation using Discord webhooks.
 
-Ensure Python 3.10 or higher is installed for compatibility and functionality.
+Ensure Python 3.10 or higher is installed for compatibility and functionality. -->
 
 ## Installation
 
