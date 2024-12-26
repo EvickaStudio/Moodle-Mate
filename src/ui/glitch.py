@@ -61,7 +61,7 @@ def draw_logo(stdscr, start_row, start_col, frame, color_pairs):
                 # Trim off the left part if wave pushes into negative columns
                 cropped_line = cropped_line[-col:]
                 col = 0
-            elif col + len(line) > width:
+            elif col + len(cropped_line) > width:
                 # Trim on the right if it extends beyond screen width
                 cropped_line = cropped_line[: width - col]
 
