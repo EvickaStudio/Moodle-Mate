@@ -90,9 +90,8 @@ def fenced_code_block_rule(content, node, options):
     """
     class_name = node.first_child.get_attribute("class") or ""
     language = ""
-    match = re.search(r"language-(\S+)", class_name)
-    if match:
-        language = match.group(1)
+    if match := re.search(r"language-(\S+)", class_name):
+        language = match[1]
 
     code_text = node.first_child.text_content().rstrip("\n")
     fence_char = options["fence"][0]
