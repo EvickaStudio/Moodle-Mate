@@ -63,7 +63,7 @@ class Node:
             return None
         siblings = self.parent.children
         idx = siblings.index(self)
-        return siblings[idx - 1] if idx - 1 >= 0 else None
+        return siblings[idx - 1] if idx >= 1 else None
 
     @property
     def node_value(self):
