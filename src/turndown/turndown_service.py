@@ -199,6 +199,4 @@ def _can_convert(x):
         return False
     if isinstance(x, str):
         return True
-    if hasattr(x, "node_type"):
-        return x.node_type in [1, 9, 11]
-    return False
+    return x.node_type in [1, 9, 11] if hasattr(x, "node_type") else False
