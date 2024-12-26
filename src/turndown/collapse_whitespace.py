@@ -32,7 +32,7 @@ def collapse_whitespace(element, is_block_fn, is_void_fn, is_pre_fn):
     current_node = element.first_child
     prev_node = element  # We'll track the previously processed node to know where to continue from
 
-    while current_node != prev_node:
+    while current_node != element:
         if current_node.node_type in (3, 4):  # TEXT_NODE or CDATA_SECTION_NODE
             # Reduce multiple spaces into a single space
             new_data = re.sub(r"[ \r\n\t]+", " ", current_node.data)
