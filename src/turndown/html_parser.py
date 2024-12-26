@@ -149,10 +149,7 @@ class TurndownHTMLParser(html.parser.HTMLParser):
     def handle_charref(self, name):
         text_node = Node("#text", 3, parent=self.current_node)
         try:
-            if name.startswith("x"):
-                codepoint = int(name[1:], 16)
-            else:
-                codepoint = int(name)
+            codepoint = int(name[1:], 16) if name.startswith("x") else int(name)
             text_node.data = chr(codepoint)
         except ValueError:
             text_node.data = f"&#{name};"
