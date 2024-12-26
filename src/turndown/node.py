@@ -64,9 +64,8 @@ def _compute_flanking_whitespace(node, options):
 
 
 def _extract_edge_whitespace(text):
-    match = re.match(r"^(\s*)(.*?)(\s*)$", text, flags=re.DOTALL)
-    if match:
-        return match.group(1), match.group(3)
+    if match := re.match(r"^(\s*)(.*?)(\s*)$", text, flags=re.DOTALL):
+        return match[1], match[3]
     return "", ""
 
 
