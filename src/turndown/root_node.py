@@ -59,4 +59,4 @@ def _is_pre_or_code(node, options=None):
     """
     Basic check: node is <pre> or <code>.
     """
-    return (node.node_name == "PRE") or (node.node_name == "CODE")
+    return node.node_name in ["PRE", "CODE"]
