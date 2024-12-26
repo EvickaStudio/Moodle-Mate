@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import curses
-import time
 import math
 import random
+import time
 
 LOGO_LINES = [
     r"╭─┐ Moodle Mate ┌────────────────────────────────────────────────────────╮",

@@ -51,6 +51,7 @@ BLOCK_ELEMENTS = [
     "TR",
     "UL",
 ]
+
 VOID_ELEMENTS = [
     "AREA",
     "BASE",
@@ -69,6 +70,7 @@ VOID_ELEMENTS = [
     "TRACK",
     "WBR",
 ]
+
 MEANINGFUL_WHEN_BLANK = [
     "A",
     "TABLE",
@@ -86,14 +88,7 @@ MEANINGFUL_WHEN_BLANK = [
 
 def extend(destination, *sources):
     """
-    Extends the destination dictionary with key-value pairs from one or more source dictionaries.
-
-    Args:
-        destination (dict): The dictionary to be extended.
-        *sources (dict): One or more dictionaries containing key-value pairs to add to the destination.
-
-    Returns:
-        dict: The extended destination dictionary.
+    Copy all key-value pairs from each source dict into 'destination'.
     """
     for source in sources:
         for k, v in source.items():
@@ -101,148 +96,62 @@ def extend(destination, *sources):
     return destination
 
 
-def repeat(character, count):
-    """
-    Repeats a given character a specified number of times.
-
-    Args:
-        character (str): The character to be repeated.
-        count (int): The number of times to repeat the character.
-
-    Returns:
-        str: A string containing the repeated character.
-    """
-    return character * count
+def repeat(char, count):
+    return char * count
 
 
-def trim_leading_newlines(string):
-    """
-    Remove leading newlines from a given string.
-
-    Args:
-        string (str): The input string from which leading newlines should be removed.
-
-    Returns:
-        str: The string with leading newlines removed.
-    """
-
-    return re.sub(r"^\n+", "", string)
+def trim_leading_newlines(s):
+    return re.sub(r"^\n+", "", s)
 
 
-def trim_trailing_newlines(string):
-    """
-    Remove trailing newline characters from the given string.
-
-    Args:
-        string (str): The input string from which trailing newlines will be removed.
-
-    Returns:
-        str: The string with trailing newline characters removed.
-    """
-
-    return re.sub(r"\n+$", "", string)
+def trim_trailing_newlines(s):
+    return re.sub(r"\n+$", "", s)
 
 
 def is_block(node):
-    """
-    Check if a given node is a block-level element.
-
-    Args:
-        node (Node): The node to check. It should have a 'node_name' attribute.
-
-    Returns:
-        bool: True if the node is a block-level element, False otherwise.
-    """
     return node.node_name in BLOCK_ELEMENTS
 
 
 def is_void(node):
-    """
-    Check if a given node is a void element.
-
-    Void elements are HTML elements that do not have closing tags.
-
-    Args:
-        node (Node): The node to check.
-
-    Returns:
-        bool: True if the node is a void element, False otherwise.
-    """
     return node.node_name in VOID_ELEMENTS
 
 
 def has_void(node):
     """
-    Checks if a given node or any of its descendants is a void element.
-
-    A void element is an element that cannot have any child nodes.
-
-    Args:
-        node: The root node to start the search from. It is expected to have a 'children' attribute which is iterable.
-
-    Returns:
-        bool: True if the node or any of its descendants is a void element, False otherwise.
+    Check if 'node' or any of its descendants is void.
     """
     stack = [node]
     while stack:
-        current = stack.pop()
-        for c in current.children:
-            if is_void(c):
+        cur = stack.pop()
+        for child in cur.children:
+            if is_void(child):
                 return True
-            stack.append(c)
+            stack.append(child)
     return False
 
 
 def is_meaningful_when_blank(node):
-    """
-    Check if a node is considered meaningful when it is blank.
-
-    Args:
-        node (Node): The node to check. It should have an attribute `node_name`.
-
-    Returns:
-        bool: True if the node's name is in the MEANINGFUL_WHEN_BLANK set, False otherwise.
-    """
     return node.node_name in MEANINGFUL_WHEN_BLANK
 
 
 def has_meaningful_when_blank(node):
     """
-    Determines if a node or any of its descendants have meaningful content when blank.
-
-    This function traverses the given node and its children to check if any of them
-    are considered meaningful when blank. It uses a depth-first search approach.
-
-    Args:
-        node: The root node to start the traversal from. It is expected to have a
-              'children' attribute that is iterable.
-
-    Returns:
-        bool: True if any node or its descendants are meaningful when blank, False otherwise.
+    Recursively checks node + children to see if any is in MEANINGFUL_WHEN_BLANK.
     """
     stack = [node]
     while stack:
-        current = stack.pop()
-        for c in current.children:
-            if is_meaningful_when_blank(c):
+        cur = stack.pop()
+        for child in cur.children:
+            if is_meaningful_when_blank(child):
                 return True
-            stack.append(c)
+            stack.append(child)
     return False
 
 
-def clean_attribute(attribute):
+def clean_attribute(attr):
     """
-    Cleans the given attribute by reducing large amounts of whitespace or line breaks.
-
-    Args:
-        attribute (str): The attribute to be cleaned.
-
-    Returns:
-        str: The cleaned attribute with reduced whitespace and line breaks.
+    Reduce multiple newlines or line breaks. Return a 'cleaned' attribute or empty string.
     """
-    if not attribute:
+    if not attr:
         return ""
-    import re
-
-    # Replace multiple newlines with a single newline
-    return re.sub(r"(\n+\s*)+", "\n", attribute)
+    return re.sub(r"(\n+\s*)+", "\n", attr)

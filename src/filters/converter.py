@@ -1,8 +1,8 @@
 import re
 
-from src.turndown import TurndownService
+from src.turndown import MarkdownConverter
 
-td = TurndownService({"headingStyle": "atx", "codeBlockStyle": "fenced"})
+td = MarkdownConverter({"headingStyle": "atx", "codeBlockStyle": "fenced"})
 
 
 def convert(html_content: str) -> str:
@@ -15,7 +15,7 @@ def convert(html_content: str) -> str:
     Returns:
         str: The converted and cleaned content.
     """
-    md_output = td.turndown(html_content)
+    md_output = td.to_markdown(html_content)
     return clean_converted_text(md_output)
 
 

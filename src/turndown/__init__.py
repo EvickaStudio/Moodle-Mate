@@ -1,7 +1,7 @@
 """
-Python Turndown - A Python port of the Turndown JavaScript HTML-to-Markdown converter
+Refactored Python Turndown - A Python port of the Turndown JavaScript HTML-to-Markdown converter
 """
 
-from .turndown import TurndownService
+from .turndown_service import MarkdownConverter
 
-__all__ = ["TurndownService"]
+__all__ = ["MarkdownConverter"]

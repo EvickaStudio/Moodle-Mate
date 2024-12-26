@@ -1,176 +1,89 @@
-# flake8: noqa: E501
-
-
-class Rules:
+class RuleManager:
     """
-    The Rules class is responsible for managing and applying rules based on given configuration options. It supports adding, keeping, and removing rules, as well as determining the appropriate rule for a given node.
+    Manages rules for converting nodes to Markdown. Supports:
+    - keep-rules (bypass normal conversion)
+    - remove-rules (omit output)
+    - normal rules (with a 'filter' and 'replacement')
 
-
-    Methods:
-        __init__(options):
-
-        add(key, rule):
-
-        keep(filter_func):
-
-        remove(filter_func):
-
-        forNode(node):
-
-        forEach(fn):
-
-        _find_rule(rules_list, node):
+    Also handles a 'blankRule' and 'defaultRule'.
     """
 
     def __init__(self, options):
-        """
-        Initialize the Rules class with the given options.
-
-        Args:
-            options (dict): A dictionary containing configuration options for the rules.
-                - "blankReplacement" (str): The replacement string for blank rules.
-                - "keepReplacement" (str): The replacement string for rules to keep.
-                - "defaultReplacement" (str): The replacement string for default rules.
-                - "rules" (dict): A dictionary of custom rules where keys are rule names and values are rule definitions.
-
-        Attributes:
-            options (dict): The configuration options for the rules.
-            _keep (list): A list to store rules to keep.
-            _remove (list): A list to store rules to remove.
-            blankRule (dict): A dictionary containing the replacement string for blank rules.
-            keepReplacement (str): The replacement string for rules to keep.
-            defaultRule (dict): A dictionary containing the replacement string for default rules.
-            array (list): A list to store custom rule definitions.
-        """
         self.options = options
-        self._keep = []
-        self._remove = []
+        self._keep_rules = []
+        self._remove_rules = []
 
         self.blankRule = {"replacement": options["blankReplacement"]}
         self.keepReplacement = options["keepReplacement"]
         self.defaultRule = {"replacement": options["defaultReplacement"]}
-        self.array = []
-        for k, v in options["rules"].items():
-            self.array.append(v)
+
+        self.rule_list = []
+        for rule_def in options["rules"].values():
+            self.rule_list.append(rule_def)
 
     def add(self, key, rule):
         """
-        Add a rule to the beginning of the array.
-
-        Parameters:
-        key (str): The key associated with the rule.
-        rule (object): The rule to be added to the array.
+        Insert a custom rule at the front of the list. This has priority.
         """
-        self.array.insert(0, rule)
+        self.rule_list.insert(0, rule)
 
     def keep(self, filter_func):
         """
-        Adds a filter function to the list of keep rules.
-
-        Args:
-            filter_func (function): A function that takes an element as input and
-                                    returns True if the element should be kept,
-                                    False otherwise.
+        Keep a node "as-is" if filter_func(node) is True.
         """
-        self._keep.insert(
+        self._keep_rules.insert(
             0, {"filter": filter_func, "replacement": self.keepReplacement}
         )
 
     def remove(self, filter_func):
         """
-        Adds a removal rule to the list of rules.
-
-        This method inserts a new rule at the beginning of the `_remove` list. The rule consists of a filter function and a replacement function that returns an empty string.
-
-        Args:
-            filter_func (function): A function that determines whether an element should be removed. It should take an element as an argument and return a boolean.
+        Remove a node if filter_func(node) is True (emits empty string).
         """
-        self._remove.insert(
+        self._remove_rules.insert(
             0, {"filter": filter_func, "replacement": lambda c, n, o: ""}
         )
 
-    def forNode(self, node):
+    def for_node(self, node):
         """
-        Determines the appropriate rule for a given node.
-
-        This method first checks if the node is blank and returns the blankRule if true.
-        If the node is not blank, it searches for a matching rule in the following order:
-        1. self.array
-        2. self._keep
-        3. self._remove
-
-        If a matching rule is found in any of these collections, it is returned.
-        Otherwise, the defaultRule is returned.
-
-        Args:
-            node: The node for which the rule needs to be determined.
-
-        Returns:
-            The rule that matches the node, or the defaultRule if no match is found.
+        Returns the first matching rule for the node, or a blankRule/defaultRule otherwise.
         """
         if getattr(node, "is_blank", False):
             return self.blankRule
 
-        # Search for a matching rule
+        # normal custom rules
         rule = (
-            self._find_rule(self.array, node)
-            or self._find_rule(self._keep, node)
-            or self._find_rule(self._remove, node)
+            self._match_rule(self.rule_list, node)
+            or self._match_rule(self._keep_rules, node)
+            or self._match_rule(self._remove_rules, node)
         )
         return rule if rule else self.defaultRule
 
-    def forEach(self, fn):
+    def for_each_rule(self, fn):
         """
-        Applies a given function to each element in the array.
-
-        Args:
-            fn (function): A function that takes two arguments, the current element
-                           and its index, and performs an operation on them.
+        Allows iterating over all rules in the main rule list (e.g., for post-processing).
         """
-        for i, rule in enumerate(self.array):
-            fn(rule, i)
+        for i, r in enumerate(self.rule_list):
+            fn(r, i)
 
-    def _find_rule(self, rules_list, node):
-        """
-        Find and return the first rule object from the given list that matches the specified node.
-
-        Args:
-            rules_list (list): A list of rule objects, where each rule object is a dictionary
-                               containing a "filter" key.
-            node (object): The node to be matched against the filter of each rule object.
-
-        Returns:
-            dict or None: The first rule object that matches the node, or None if no match is found.
-        """
-        for rule_obj in rules_list:
-            if _filter_value(rule_obj["filter"], node, self.options):
-                return rule_obj
+    def _match_rule(self, rules_list, node):
+        for rule_def in rules_list:
+            if _rule_filter_matches(rule_def["filter"], node, self.options):
+                return rule_def
         return None
 
 
-def _filter_value(filter_item, node, options):
+def _rule_filter_matches(filt, node, options):
     """
-    Determines if a node matches a given filter.
-
-    Args:
-        filter_item (Union[str, list, callable]): The filter to apply. This can be:
-            - A string: The node's name must match this string (case-insensitive).
-            - A list: The node's name must be one of the strings in this list (case-insensitive).
-            - A callable: A function that takes the node and options as arguments and returns a boolean.
-        node (Node): The node to be checked.
-        options (dict): Additional options that may be used by the callable filter.
-
-    Returns:
-        bool: True if the node matches the filter, False otherwise.
-
-    Raises:
-        TypeError: If the filter_item is not a string, list, or callable.
+    Return True if a node matches the filter 'filt' in a rule:
+      - str => node.node_name.lower() == filt
+      - list => node.node_name.lower() in filt
+      - callable => filt(node, options) => bool
     """
-    if isinstance(filter_item, str):
-        return filter_item == node.node_name.lower()
-    elif isinstance(filter_item, list):
-        return node.node_name.lower() in filter_item
-    elif callable(filter_item):
-        return filter_item(node, options)
+    if isinstance(filt, str):
+        return node.node_name.lower() == filt
+    elif isinstance(filt, list):
+        return node.node_name.lower() in filt
+    elif callable(filt):
+        return filt(node, options)
     else:
-        raise TypeError("Filter must be string, list, or callable.")
+        raise TypeError("Rule filters must be str, list, or callable.")

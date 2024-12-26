@@ -1,140 +1,122 @@
 """
-The collapseWhitespace function is adapted from collapse-whitespace by Luc Thevenard.
-
+The collapse_whitespace function is adapted from collapse-whitespace by Luc Thevenard.
 The MIT License (MIT)
-
-Copyright (c) 2014 Luc Thevenard <lucthevenard@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software ...
+Copyright (c) 2014 Luc Thevenard
 """
 
 import re
 
 
-def collapse_whitespace(element, is_block, is_void, is_pre):
+def collapse_whitespace(element, is_block_fn, is_void_fn, is_pre_fn):
     """
-    Collapses consecutive whitespace characters into a single space within the given element's text nodes,
-    while preserving whitespace in preformatted text and void elements.
+    Collapses consecutive whitespace characters in `element`'s text nodes into a single space.
+    Preserves whitespace in preformatted text and void elements.
 
     Args:
         element (Node): The root element to process.
-        is_block (function): A function that takes a node and returns True if it is a block-level element.
-        is_void (function): A function that takes a node and returns True if it is a void element.
-        is_pre (function): A function that takes a node and returns True if it is a preformatted text element.
+        is_block_fn (callable): A function(node) -> bool indicating whether the node is block-level.
+        is_void_fn (callable): A function(node) -> bool indicating whether the node is a void element.
+        is_pre_fn (callable): A function(node) -> bool indicating whether the node is a pre/code element.
 
     Returns:
-        None
+        None. Modifies the node-tree in-place.
     """
-
-    if not element.first_child or is_pre(element):
+    if not element.first_child or is_pre_fn(element):
         return
 
-    prev_text = None
-    keep_leading_ws = False
+    prev_text_node = None
+    keep_leading_space = False
 
-    prev = None
-    node = _next(prev, element, is_pre)
+    # We iterate through the tree manually, looking ahead for the "next node".
+    # We'll use `current_node` and get the next node by checking children/siblings/parents:
+    current_node = element.first_child
+    prev_node = element  # We'll track the previously processed node to know where to continue from
 
-    while node != element:
-        if node.node_type in (3, 4):  # TEXT_NODE or CDATA_SECTION_NODE
-            text_data = node.data
-            # Reduces multiple whitespaces to a single space
-            text_data = _re_sub(r"[ \r\n\t]+", " ", text_data)
+    while current_node != element:
+        if current_node.node_type in (3, 4):  # TEXT_NODE or CDATA_SECTION_NODE
+            # Reduce multiple spaces into a single space
+            new_data = re.sub(r"[ \r\n\t]+", " ", current_node.data)
 
-            # When leading whitespace should be removed
+            # Trim leading space if the previous text ended with a space
+            # (and we do not want to keep it)
             if (
-                (not prev_text or prev_text.data.endswith(" "))
-                and (not keep_leading_ws)
-                and text_data.startswith(" ")
+                (not prev_text_node or prev_text_node.data.endswith(" "))
+                and (not keep_leading_space)
+                and new_data.startswith(" ")
             ):
-                text_data = text_data[1:]
+                new_data = new_data[1:]
 
-            if not text_data:
-                # Node remove
-                node = _remove(node)
+            if not new_data:
+                # If empty after collapse, remove the node entirely
+                next_in_line = _determine_next_node(
+                    prev_node, current_node, is_pre_fn
+                )
+                current_node.remove_self()
+                current_node = next_in_line
                 continue
 
-            node.data = text_data
-            prev_text = node
+            current_node.data = new_data
+            prev_text_node = current_node
 
-        elif node.node_type == 1:  # ELEMENT_NODE
-            if is_block(node) or node.node_name == "BR":
-                if prev_text:
-                    prev_text.data = prev_text.data.rstrip()
-                prev_text = None
-                keep_leading_ws = False
-            elif is_void(node) or is_pre(node):
-                # Void-Elemente or PRE wont get trimmed
-                prev_text = None
-                keep_leading_ws = True
+        elif current_node.node_type == 1:  # ELEMENT_NODE
+            # If the element is a block or <br>, we strip trailing whitespace from the previous text node
+            if is_block_fn(current_node) or current_node.node_name == "BR":
+                if prev_text_node:
+                    prev_text_node.data = prev_text_node.data.rstrip()
+                prev_text_node = None
+                keep_leading_space = False
+            elif is_void_fn(current_node) or is_pre_fn(current_node):
+                # For void or pre/code, do not strip out spaces
+                prev_text_node = None
+                keep_leading_space = True
             else:
-                keep_leading_ws = False
+                keep_leading_space = False
         else:
-            node = _remove(node)
+            # For comment or unknown node types, remove them
+            next_in_line = _determine_next_node(
+                prev_node, current_node, is_pre_fn
+            )
+            current_node.remove_self()
+            current_node = next_in_line
             continue
 
-        next_node = _next(prev, node, is_pre)
-        prev = node
-        node = next_node
+        next_in_line = _determine_next_node(prev_node, current_node, is_pre_fn)
+        prev_node = current_node
+        current_node = next_in_line
 
-    if prev_text:
-        prev_text.data = prev_text.data.rstrip()
-        if not prev_text.data:
-            _remove(prev_text)
+    # Final trimming if there's a trailing space in the last text node
+    if prev_text_node:
+        prev_text_node.data = prev_text_node.data.rstrip()
+        if not prev_text_node.data:
+            prev_text_node.remove_self()
 
 
-def _remove(node):
+def _determine_next_node(previous_node, current_node, is_pre_fn):
     """
-    Removes the given node from its parent and returns the next node to process.
-
-    If the node has a next sibling, that sibling is returned. Otherwise, the parent node is returned.
+    Determines which node is "next" in the depth-first traversal sequence.
 
     Args:
-        node: The node to be removed.
+        previous_node (Node): The last processed node.
+        current_node (Node): The current node.
+        is_pre_fn (callable): A function(node) -> bool that checks if a node is <pre> or <code>.
 
     Returns:
-        The next node to process after the removal.
+        Node: The next node in the traversal, or the parent if we are at the end of siblings.
     """
-    next_node = node.next_sibling if node.next_sibling else node.parent
-    node.remove_self()
-    return next_node
+    # If the `previous_node` is the parent of the `current_node` or the node is <pre>/<code>,
+    # we move to the next sibling or up to the parent.
+    if (previous_node and previous_node.parent == current_node) or is_pre_fn(
+        current_node
+    ):
+        return (
+            current_node.next_sibling
+            if current_node.next_sibling
+            else current_node.parent
+        )
 
-
-def _next(prev, current, is_pre):
-    """
-    Determine the next node to process in a tree structure.
-
-    Args:
-        prev: The previous node that was processed.
-        current: The current node being processed.
-        is_pre (function): A function that takes a node and returns a boolean indicating
-                           whether the node is a preformatted text node.
-
-    Returns:
-        The next node to process. This could be the next sibling, the first child, or the parent
-        of the current node, depending on the structure and the conditions provided.
-    """
-
-    if (prev and prev.parent == current) or is_pre(current):
-        return current.next_sibling if current.next_sibling else current.parent
-    return (
-        current.first_child
-        if current.first_child
-        else (current.next_sibling if current.next_sibling else current.parent)
-    )
-
-
-def _re_sub(pattern, repl, string):
-    """
-    Replace occurrences of a pattern in a string with a replacement.
-
-    Args:
-        pattern (str): The regular expression pattern to search for.
-        repl (str): The replacement string.
-        string (str): The string to search within.
-
-    Returns:
-        str: The string with the pattern replaced by the replacement.
-    """
-    return re.sub(pattern, repl, string)
+    # Otherwise, we go down into children first, else siblings, else up
+    if current_node.first_child:
+        return current_node.first_child
+    if current_node.next_sibling:
+        return current_node.next_sibling
+    return current_node.parent
