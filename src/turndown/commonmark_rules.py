@@ -59,7 +59,7 @@ def list_item_rule(content, node, options):
     """
     content = content.lstrip("\n").rstrip("\n") + "\n"
     # indent each line by 4 spaces
-    lines = ["    " + line for line in content.split("\n")]
+    lines = [f"    {line}" for line in content.split("\n")]
     content = "\n".join(lines)
     parent = node.parent
     marker = options["bulletListMarker"] + "   "
