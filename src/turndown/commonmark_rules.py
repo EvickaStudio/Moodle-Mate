@@ -228,9 +228,7 @@ def image_rule(content, node, options):
     src = node.get_attribute("src") or ""
     title = clean_attribute(node.get_attribute("title") or "")
     title_part = f' "{title}"' if title else ""
-    if src:
-        return f"![{alt}]({src}{title_part})"
-    return ""
+    return f"![{alt}]({src}{title_part})" if src else ""
 
 
 COMMONMARK_RULES = {
