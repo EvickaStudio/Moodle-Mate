@@ -1,3 +1,4 @@
+# flake8: noqa: F841
 """
 The collapse_whitespace function is adapted from collapse-whitespace by Luc Thevenard.
 The MIT License (MIT)
@@ -34,43 +35,28 @@ def collapse_whitespace(element, is_block_fn, is_void_fn, is_pre_fn):
 
     while current_node != element:
         if current_node.node_type in (3, 4):  # TEXT_NODE or CDATA_SECTION_NODE
-            # Reduce multiple spaces into a single space
-            new_data = re.sub(r"[ \r\n\t]+", " ", current_node.data)
-
-            # Trim leading space if the previous text ended with a space
-            # (and we do not want to keep it)
-            if (
-                (not prev_text_node or prev_text_node.data.endswith(" "))
-                and (not keep_leading_space)
-                and new_data.startswith(" ")
-            ):
-                new_data = new_data[1:]
-
-            if not new_data:
-                # If empty after collapse, remove the node entirely
+            new_data, keep_leading_space = _process_text_node(
+                current_node, prev_text_node, keep_leading_space
+            )
+            if new_data is None:
                 next_in_line = _determine_next_node(
                     prev_node, current_node, is_pre_fn
                 )
                 current_node.remove_self()
                 current_node = next_in_line
                 continue
-
             current_node.data = new_data
             prev_text_node = current_node
 
         elif current_node.node_type == 1:  # ELEMENT_NODE
-            # If the element is a block or <br>, we strip trailing whitespace from the previous text node
-            if is_block_fn(current_node) or current_node.node_name == "BR":
-                if prev_text_node:
-                    prev_text_node.data = prev_text_node.data.rstrip()
-                prev_text_node = None
-                keep_leading_space = False
-            elif is_void_fn(current_node) or is_pre_fn(current_node):
-                # For void or pre/code, do not strip out spaces
-                prev_text_node = None
-                keep_leading_space = True
-            else:
-                keep_leading_space = False
+            _process_element_node(
+                current_node,
+                is_block_fn,
+                is_void_fn,
+                is_pre_fn,
+                prev_text_node,
+                keep_leading_space,
+            )
         else:
             # For comment or unknown node types, remove them
             next_in_line = _determine_next_node(
@@ -116,3 +102,36 @@ def _determine_next_node(previous_node, current_node, is_pre_fn):
     if current_node.next_sibling:
         return current_node.next_sibling
     return current_node.parent
+
+
+def _process_text_node(current_node, prev_text_node, keep_leading_space):
+    new_data = re.sub(r"[ \r\n\t]+", " ", current_node.data)
+    if (
+        (not prev_text_node or prev_text_node.data.endswith(" "))
+        and (not keep_leading_space)
+        and new_data.startswith(" ")
+    ):
+        new_data = new_data[1:]
+    if not new_data:
+        return None, keep_leading_space
+    return new_data, keep_leading_space
+
+
+def _process_element_node(
+    current_node,
+    is_block_fn,
+    is_void_fn,
+    is_pre_fn,
+    prev_text_node,
+    keep_leading_space,
+):
+    if is_block_fn(current_node) or current_node.node_name == "BR":
+        if prev_text_node:
+            prev_text_node.data = prev_text_node.data.rstrip()
+        prev_text_node = None
+        keep_leading_space = False
+    elif is_void_fn(current_node) or is_pre_fn(current_node):
+        prev_text_node = None
+        keep_leading_space = True
+    else:
+        keep_leading_space = False
