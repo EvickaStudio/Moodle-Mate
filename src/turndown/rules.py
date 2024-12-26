@@ -66,10 +66,14 @@ class RuleManager:
             fn(r, i)
 
     def _match_rule(self, rules_list, node):
-        for rule_def in rules_list:
-            if _rule_filter_matches(rule_def["filter"], node, self.options):
-                return rule_def
-        return None
+        return next(
+            (
+                rule_def
+                for rule_def in rules_list
+                if _rule_filter_matches(rule_def["filter"], node, self.options)
+            ),
+            None,
+        )
 
 
 def _rule_filter_matches(filt, node, options):
