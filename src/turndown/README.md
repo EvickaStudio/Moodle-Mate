@@ -6,7 +6,7 @@ This version has been translated to Python (with a lot of help from my friend ch
 
 ## Usage
 
-Here is an simple example of how to use the library:
+Here is a simple example of how to use the library:
 
 ```python
 from src.turndown import TurndownService
