@@ -124,7 +124,7 @@ def inline_link_rule(content, node, options):
         href = href.replace("(", r"\(").replace(")", r"\)")
     title = clean_attribute(node.get_attribute("title"))
     if title:
-        title = f" \"{title.replace('\"', '\\\\\"')}\""
+        title = f" \"{title.replace('\"', '\\\\\"')}\""  # noqa: E999
 
     return f"[{content}]({href}{title})"
 
