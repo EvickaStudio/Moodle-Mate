@@ -94,9 +94,7 @@ class Node:
         self.attributes[attr] = value
 
     def index_in_parent(self, node):
-        if not self.children:
-            return 0
-        return self.children.index(node)
+        return 0 if not self.children else self.children.index(node)
 
 
 class TurndownHTMLParser(html.parser.HTMLParser):
