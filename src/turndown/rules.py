@@ -56,7 +56,7 @@ class RuleManager:
             or self._match_rule(self._keep_rules, node)
             or self._match_rule(self._remove_rules, node)
         )
-        return rule if rule else self.defaultRule
+        return rule or self.defaultRule
 
     def for_each_rule(self, fn):
         """
