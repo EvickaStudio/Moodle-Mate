@@ -39,7 +39,7 @@ def blockquote_rule(content, node, options):
     """
     content = content.strip("\n")
     lines = content.split("\n")
-    quoted = "\n".join("> " + line for line in lines)
+    quoted = "\n".join(f"> {line}" for line in lines)
     return "\n\n" + quoted + "\n\n"
 
 
