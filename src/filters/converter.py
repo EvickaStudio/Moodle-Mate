@@ -1,40 +1,22 @@
-import os
 import re
-import subprocess
 
-# Git Path
-SCRIPT_PATH = os.path.join("assets", "convert.js")
+from src.turndown import MarkdownConverter
+
+td = MarkdownConverter({"headingStyle": "atx", "codeBlockStyle": "fenced"})
 
 
 def convert(html_content: str) -> str:
     """
-    Converts HTML content to another format using a Node.js script (turndown).
+    Converts HTML content to Markdown using TurndownService.
 
     Args:
         html_content (str): The HTML content to be converted.
 
     Returns:
         str: The converted and cleaned content.
-
-    Raises:
-        FileNotFoundError: If the Node.js script is not found.
-        RuntimeError: If the Node.js script returns a non-zero exit code.
     """
-    if not os.path.exists(SCRIPT_PATH):
-        raise FileNotFoundError(f"Script not found: {SCRIPT_PATH}")
-
-    result = subprocess.run(
-        ["node", SCRIPT_PATH],
-        input=html_content,
-        text=True,
-        capture_output=True,
-        encoding="utf-8",
-    )
-
-    if result.returncode != 0:
-        raise RuntimeError(f"Error in conversion script: {result.stderr}")
-
-    return clean_converted_text(result.stdout)
+    md_output = td.to_markdown(html_content)
+    return clean_converted_text(md_output)
 
 
 def clean_converted_text(text: str) -> str:
