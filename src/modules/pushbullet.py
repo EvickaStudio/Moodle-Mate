@@ -22,7 +22,11 @@ Github: @EvickaStudio
 
 import logging
 
-import requests
+from requests.exceptions import RequestException
+
+from src.utils.request_manager import request_manager
+
+logger = logging.getLogger(__name__)
 
 
 class Pushbullet:
@@ -38,6 +42,8 @@ class Pushbullet:
         """
         self.api_key = api_key
         self.url = "https://api.pushbullet.com/v2/pushes"
+        self.session = request_manager.session
+        request_manager.update_headers({"Access-Token": self.api_key})
 
     def send_notification(self, title: str, body: str) -> bool:
         """
@@ -50,15 +56,12 @@ class Pushbullet:
         Returns:
             bool: True if the push notification was sent successfully, False otherwise.
         """
-        headers = {"Access-Token": self.api_key}
         data = {"type": "note", "title": title, "body": body}
         try:
-            response = requests.post(
-                url=self.url, headers=headers, json=data, timeout=5
-            )
+            response = self.session.post(url=self.url, json=data, timeout=5)
             response.raise_for_status()
             return True
-        except requests.exceptions.RequestException as e:
+        except RequestException as e:
             logging.error(
                 f"Error sending pushbullet notification: {e}. Response status code: {response.status_code}, response text: {response.text}"  # noqa: E501
             )

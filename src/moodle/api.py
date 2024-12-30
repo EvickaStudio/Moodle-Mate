@@ -2,10 +2,9 @@ import logging
 import os
 from typing import Optional
 
-import requests
 from requests.exceptions import RequestException
 
-from src.utils import __version__
+from src.utils.request_manager import request_manager
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +19,12 @@ class MoodleAPI:
         Initializes the MoodleAPI object with the provided API URL.
         """
         self.url = url or os.getenv("MOODLE_URL")
-        self.session = requests.Session()
-        self.request_header = {
-            "User-Agent": f"MoodleMate/{__version__} (+https://github.com/EvickaStudio/Moodle-Mate)",
-            "Content-Type": "application/x-www-form-urlencoded",
-        }
-        self.session.headers.update(self.request_header)
+        self.session = request_manager.session
+        request_manager.update_headers(
+            {
+                "Content-Type": "application/x-www-form-urlencoded",
+            }
+        )
         self.token = None
         self.userid = None
 
@@ -45,9 +44,7 @@ class MoodleAPI:
         }
 
         try:
-            response = self.session.post(
-                f"{self.url}/login/token.php", data=login_data
-            )
+            response = self.session.post(f"{self.url}/login/token.php", data=login_data)
             response.raise_for_status()
 
             if "token" in response.json():
@@ -105,9 +102,7 @@ class MoodleAPI:
         """
         return self._post("message_popup_get_popup_notifications", user_id)
 
-    def core_user_get_users_by_field(
-        self, field: str, value: str
-    ) -> Optional[dict]:
+    def core_user_get_users_by_field(self, field: str, value: str) -> Optional[dict]:
         """
         Retrieves user info based on a specific field and value.
         """

@@ -44,9 +44,7 @@ def draw_logo(stdscr, start_row, start_col, frame, color_pairs):
             BASE_AMPLITUDE_X * amp_factor * math.sin((frame / WAVE_SPEED_X) + i)
         )
         wave_offset_y = int(
-            BASE_AMPLITUDE_Y
-            * amp_factor
-            * math.sin((frame / WAVE_SPEED_Y) + i + 1)
+            BASE_AMPLITUDE_Y * amp_factor * math.sin((frame / WAVE_SPEED_Y) + i + 1)
         )
 
         # Determine row and column with the wave offsets
@@ -71,9 +69,7 @@ def draw_logo(stdscr, start_row, start_col, frame, color_pairs):
 
             # Draw line
             if col < width and cropped_line:
-                stdscr.addstr(
-                    row, col, cropped_line, curses.color_pair(color_pair)
-                )
+                stdscr.addstr(row, col, cropped_line, curses.color_pair(color_pair))
 
 
 def main(stdscr):

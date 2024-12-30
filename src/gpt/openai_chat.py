@@ -1,319 +1,249 @@
 import logging
 import re
-from typing import Optional
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, Optional, Tuple
 
 import openai  # version 1.5
 import tiktoken
+from openai.types.chat import ChatCompletion
+
+
+class ModelType(Enum):
+    """Supported OpenAI model types."""
+
+    GPT4 = "gpt-4o"
+    GPT4_MINI = "gpt-4o-mini"
+    GPT35_TURBO = "gpt-3.5-turbo"
+    GPT4_0806 = "gpt-4o-2024-08-06"
+    GPT4_0513 = "gpt-4o-2024-05-13"
+    GPT4_MINI_0718 = "gpt-4o-mini-2024-07-18"
+
+
+@dataclass
+class ModelPricing:
+    """Pricing information for a model."""
+
+    input_cost_per_1m: float
+    output_cost_per_1m: float
+
+    def calculate_costs(
+        self, input_tokens: int, output_tokens: int
+    ) -> Tuple[float, float, float]:
+        """Calculate costs for token usage."""
+        input_cost = input_tokens * (self.input_cost_per_1m / 1_000_000)
+        output_cost = output_tokens * (self.output_cost_per_1m / 1_000_000)
+        return input_cost, output_cost, input_cost + output_cost
+
+
+class OpenAIError(Exception):
+    """Base exception for OpenAI-related errors."""
+
+    pass
+
+
+class InvalidAPIKeyError(OpenAIError):
+    """Raised when the API key is invalid."""
+
+    pass
+
+
+class TokenizationError(OpenAIError):
+    """Raised when token counting fails."""
+
+    pass
+
+
+class ChatCompletionError(OpenAIError):
+    """Raised when chat completion fails."""
+
+    pass
 
 
 class GPT:
     """
-    Interface for the OpenAI API.
+    Interface for the OpenAI API with improved error handling and type safety.
 
-    Methods:
-    __init__(...) -> None: Initialize the class.
-    api_key: str | None: The API key for OpenAI.
+    This class provides a type-safe interface to OpenAI's API with proper
+    error handling, token counting, and cost tracking.
+
+    Attributes:
+        PRICING: Mapping of model types to their pricing information
+        api_key: The OpenAI API key (property with validation)
     """
 
-    PRICING = {
-        "gpt-4o": {
-            "input": 5.00 / 1_000_000,  # $5.00 per 1M input tokens
-            "output": 15.00 / 1_000_000,  # $15.00 per 1M output tokens
-        },
-        "gpt-4o-2024-08-06": {
-            "input": 2.50 / 1_000_000,  # $2.50 per 1M input tokens
-            "output": 10.00 / 1_000_000,  # $10.00 per 1M output tokens
-        },
-        "gpt-4o-2024-05-13": {
-            "input": 5.00 / 1_000_000,  # $5.00 per 1M input tokens
-            "output": 15.00 / 1_000_000,  # $15.00 per 1M output tokens
-        },
-        "gpt-4o-mini": {
-            "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
-            "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
-        },
-        "gpt-4o-mini-2024-07-18": {
-            "input": 0.150 / 1_000_000,  # $0.150 per 1M input tokens
-            "output": 0.600 / 1_000_000,  # $0.600 per 1M output tokens
-        },
-        "gpt-3.5-turbo": {
-            "input": 3.00 / 1_000_000,  # $3.00 per 1M input tokens
-            "output": 6.00 / 1_000_000,  # $6.00 per 1M output tokens
-        },
+    PRICING: Dict[str, ModelPricing] = {
+        ModelType.GPT4.value: ModelPricing(5.00, 15.00),
+        ModelType.GPT4_0806.value: ModelPricing(2.50, 10.00),
+        ModelType.GPT4_0513.value: ModelPricing(5.00, 15.00),
+        ModelType.GPT4_MINI.value: ModelPricing(0.150, 0.600),
+        ModelType.GPT4_MINI_0718.value: ModelPricing(0.150, 0.600),
+        ModelType.GPT35_TURBO.value: ModelPricing(3.00, 6.00),
     }
 
     def __init__(self) -> None:
+        """Initialize the GPT interface."""
         self._api_key: Optional[str] = None
-        self.api_key_regex = r"^sk-[A-Za-z0-9_-]{48,}$"  # Updated regex
+        self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
     @property
-    def api_key(self) -> str | None:
-        """
-        Gets the API key for OpenAI.
-
-        Returns:
-            str | None: The API key.
-        """
+    def api_key(self) -> Optional[str]:
+        """Get the configured API key."""
         return self._api_key
 
     @api_key.setter
     def api_key(self, key: str) -> None:
         """
-        Sets the API key for OpenAI and validates it.
+        Set and validate the API key.
 
         Args:
-            key (str): The API key for OpenAI.
+            key: The OpenAI API key to use
 
         Raises:
-            ValueError: If the API key is empty or invalid.
+            InvalidAPIKeyError: If the key is empty or invalid
         """
         if not key:
-            raise ValueError("API key cannot be empty")
+            raise InvalidAPIKeyError("API key cannot be empty")
 
-        if not re.match(self.api_key_regex, key):
-            raise ValueError("API key is invalid")
+        if not self._api_key_pattern.match(key):
+            raise InvalidAPIKeyError(
+                "Invalid API key format. Expected format: 'sk-' followed by 48+ alphanumeric characters"
+            )
 
         self._api_key = key
         openai.api_key = key
 
-    def count_tokens(self, text: str, model: str = "gpt-4o-mini") -> int:
+    def count_tokens(self, text: str, model: str = ModelType.GPT4_MINI.value) -> int:
         """
-        Counts the number of tokens in the given text for the specified model.
+        Count tokens in text for a specific model.
 
         Args:
-            text (str): The text to tokenize.
-            model (str): The model name.
+            text: The text to tokenize
+            model: The model to use for tokenization
 
         Returns:
-            int: The number of tokens.
+            Number of tokens in the text
+
+        Raises:
+            TokenizationError: If token counting fails
         """
         try:
             encoder = tiktoken.encoding_for_model(model)
             return len(encoder.encode(text))
         except Exception as e:
-            logging.error(f"Error counting tokens for model {model}: {e}")
-            return 0
+            raise TokenizationError(
+                f"Failed to count tokens for model {model}: {str(e)}"
+            ) from e
 
-    def chat_completion(
-        self, model: str, system_message: str, user_message: str
-    ) -> str:
+    def _validate_model(self, model: str) -> None:
         """
-        Generates a response using the chat completion endpoint of OpenAI API.
-        Logs the pricing details based on token usage.
+        Validate that a model is supported.
 
         Args:
-            model (str): The model to use for chat completion.
-            system_message (str): The system message to provide context for the conversation.
-            user_message (str): The user message to generate a response.
+            model: The model name to validate
+
+        Raises:
+            ValueError: If the model is not supported
+        """
+        if model not in self.PRICING:
+            supported_models = ", ".join(self.PRICING.keys())
+            raise ValueError(
+                f"Model '{model}' not supported. Supported models: {supported_models}"
+            )
+
+    def chat_completion(
+        self,
+        model: str,
+        system_message: str,
+        user_message: str,
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """
+        Generate a response using OpenAI's chat completion.
+
+        This method handles the chat completion request with proper error handling
+        and cost logging.
+
+        Args:
+            model: The model to use
+            system_message: Context message for the AI
+            user_message: The user's input message
+            temperature: Controls randomness (0.0-2.0)
+            max_tokens: Optional maximum tokens in response
 
         Returns:
-            str: The generated response from the chat completion, or an empty string if an error occurs.
-        """
-        logging.info("Requesting chat completion from OpenAI")
+            The generated response text
 
-        if model not in self.PRICING:
-            logging.error(f"Model {model} not found in pricing information.")
-            return ""
+        Raises:
+            ChatCompletionError: If the completion fails
+            ValueError: If the model is not supported
+        """
+        self._validate_model(model)
+        logging.info(f"Requesting chat completion using model: {model}")
 
         messages = [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message},
         ]
 
-        # Count input tokens
-        input_tokens = sum(
-            self.count_tokens(message["content"], model=model)
-            for message in messages
-        )
-
         try:
-            response = openai.chat.completions.create(
+            # Count input tokens
+            input_tokens = sum(
+                self.count_tokens(msg["content"], model=model) for msg in messages
+            )
+
+            # Make the API call
+            response: ChatCompletion = openai.chat.completions.create(
                 model=model,
                 messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
             )
 
-            output_text = (
-                response.choices[0].message.content if response.choices else ""
-            )
+            # Extract and validate response
+            if not response.choices:
+                raise ChatCompletionError("No completion choices returned")
+
+            output_text = response.choices[0].message.content or ""
             output_tokens = self.count_tokens(output_text, model=model)
 
-            # Calculate costs
-            input_cost = input_tokens * self.PRICING[model]["input"]
-            output_cost = output_tokens * self.PRICING[model]["output"]
-            total_cost = input_cost + output_cost
+            # Calculate and log costs
+            pricing = self.PRICING[model]
+            input_cost, output_cost, total_cost = pricing.calculate_costs(
+                input_tokens, output_tokens
+            )
 
-            # Log the costs
             logging.info(
                 f"\n{'-'*40}\n"
                 f"{'Model':<15}: {model}\n"
-                f"{'Input Tokens':<15}: {input_tokens}\n"
-                f"{'Output Tokens':<15}: {output_tokens}\n"
+                f"{'Input Tokens':<15}: {input_tokens:,}\n"
+                f"{'Output Tokens':<15}: {output_tokens:,}\n"
                 f"{'Input Cost':<15}: ${input_cost:.6f}\n"
                 f"{'Output Cost':<15}: ${output_cost:.6f}\n"
                 f"{'Total Cost':<15}: ${total_cost:.6f}\n"
                 f"{'-'*40}"
             )
+
             return output_text
 
+        except TokenizationError as e:
+            raise ChatCompletionError(f"Token counting failed: {str(e)}") from e
         except Exception as e:
-            logging.error(f"An error occurred during chat completion: {e}")
-            return ""
+            raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
 
-    ### Deprecated method, not planning to use it in the future ## noqa: E266
+    def context_assistant(self, prompt: str) -> str:
+        """
+        Generate a response using the assistant API.
 
-    # def assistant(self, prompt: str, thread_id: Optional[str] = None) -> str:
-    #     """
-    #     Assistant endpoint for OpenAI API.
+        Note: This is a placeholder for future implementation.
+        Currently returns an empty string as the feature is not implemented.
 
-    #     It creates for each message/summary a different thread to keep the cost low,
-    #     also notifications don't need to be appended, as they have different context.
-    #     The greater the context, the greater the cost.
+        Args:
+            prompt: The input prompt
 
-    #     Args:
-    #         prompt (str): The prompt message for the assistant.
-    #         thread_id (str): The ID of the thread to use. If None, a new thread will be created.
-
-    #     Returns:
-    #         str: The response message from the assistant.
-    #     """
-    #     logging.info("Requesting assistant from OpenAI")
-    #     return self.assistant(prompt, thread_id)
-
-    # def context_assistant(self, prompt: str) -> str:
-    #     """
-    #     Generates a response using the assistant endpoint of OpenAI API with saved context.
-
-    #     Args:
-    #         prompt (str): The prompt message for the assistant.
-
-    #     Returns:
-    #         str: The response message from the assistant.
-    #     """
-    #     thread_id = self.resume_thread()
-    #     return self.assistant(prompt, thread_id)
-
-    # def run_assistant(self, text, thread_id):
-    #     """
-    #     Runs the assistant to generate a response.
-
-    #     Args:
-    #         text (str): The text message for the assistant.
-    #         thread_id (str): The ID of the thread to use.
-
-    #     Returns:
-    #         str: The response message from the assistant.
-    #     """
-    #     try:
-    #         if thread_id is None:
-    #             thread_id = openai.beta.threads.create().id
-
-    #         assistant_id = (
-    #             "asst_Zvg2CnDYdcv3l9BcbtyURZIN"  # --> Moodle-Mate assistant
-    #         )
-    #         message = openai.beta.threads.messages.create(
-    #             thread_id=thread_id,
-    #             role="user",
-    #             content=text,
-    #         )
-    #         run = openai.beta.threads.runs.create(
-    #             thread_id=thread_id, assistant_id=assistant_id
-    #         )
-
-    #         result = openai.beta.threads.runs.retrieve(
-    #             thread_id=thread_id, run_id=run.id
-    #         )
-
-    #         delay = 0.5
-    #         while result.status != "completed":
-    #             result = openai.beta.threads.runs.retrieve(
-    #                 thread_id=thread_id, run_id=run.id
-    #             )
-    #             sleep(delay)
-    #             delay += 0.5
-    #             delay = min(delay, 10)
-
-    #         logging.info(f"Status: {result.status}")
-
-    #         messages = openai.beta.threads.messages.list(thread_id=thread_id)
-    #         return next(
-    #             (
-    #                 message.content[0].text.value
-    #                 for message in messages.data
-    #                 if message.role == "assistant"
-    #             ),
-    #             None,
-    #         )
-    #     except Exception as e:
-    #         logging.error(f"An error occurred during assistant run: {e}")
-    #         return ""
-
-    # def create_thread(self) -> str:
-    #     """
-    #     Creates a new thread for the assistant.
-
-    #     Returns:
-    #         str: The thread ID.
-    #     """
-    #     try:
-    #         return openai.beta.threads.create().id
-    #     except Exception as e:
-    #         logging.error(f"An error occurred while creating a new thread: {e}")
-    #         return ""
-
-    # def save_thread(self, thread_id: str) -> None:
-    #     """
-    #     Saves the thread ID to a config file for resuming the conversation later.
-
-    #     Args:
-    #         thread_id (str): The thread ID to save.
-    #     """
-    #     self.save_or_update_thread(thread_id, "Thread saved")
-
-    # def update_thread(self, thread_id: str) -> None:
-    #     """
-    #     Updates the thread ID in the config file with a fresh one (clears the conversation).
-
-    #     Args:
-    #         thread_id (str): The thread ID to update.
-    #     """
-    #     self.save_or_update_thread(thread_id, "Thread updated")
-
-    # def save_or_update_thread(self, thread_id: str, message: str) -> None:
-    #     """
-    #     Saves or updates the thread ID in the config file.
-
-    #     Args:
-    #         thread_id (str): The thread ID to save or update.
-    #         message (str): The message to log after saving or updating the thread.
-    #     """
-    #     try:
-    #         config = configparser.ConfigParser()
-    #         config.read("thread.ini")
-    #         config["THREAD"] = {"thread_id": thread_id}
-    #         with open("thread.ini", "w") as configfile:
-    #             config.write(configfile)
-    #             logging.info(message)
-    #     except Exception as e:
-    #         logging.error(
-    #             f"An error occurred while saving/updating the thread: {e}"
-    #         )
-
-    # def resume_thread(self) -> str:
-    #     """
-    #     Resumes the thread from the config file or creates a new thread if not found.
-
-    #     Returns:
-    #         str: The thread ID.
-    #     """
-    #     try:
-    #         config = configparser.ConfigParser()
-    #         config.read("thread.ini")
-    #         if "THREAD" not in config or "thread_id" not in config["THREAD"]:
-    #             thread_id = self.create_thread()
-    #             self.save_thread(thread_id)
-    #         else:
-    #             thread_id = config["THREAD"]["thread_id"]
-    #         return thread_id
-    #     except Exception as e:
-    #         logging.error(f"An error occurred while resuming the thread: {e}")
-    #         return self.create_thread()
+        Returns:
+            Empty string (feature not implemented)
+        """
+        logging.warning("Assistant API support is not implemented")
+        return ""

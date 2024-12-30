@@ -39,9 +39,7 @@ def collapse_whitespace(element, is_block_fn, is_void_fn, is_pre_fn):
                 current_node, prev_text_node, keep_leading_space
             )
             if new_data is None:
-                next_in_line = _determine_next_node(
-                    prev_node, current_node, is_pre_fn
-                )
+                next_in_line = _determine_next_node(prev_node, current_node, is_pre_fn)
                 current_node.remove_self()
                 current_node = next_in_line
                 continue
@@ -59,9 +57,7 @@ def collapse_whitespace(element, is_block_fn, is_void_fn, is_pre_fn):
             )
         else:
             # For comment or unknown node types, remove them
-            next_in_line = _determine_next_node(
-                prev_node, current_node, is_pre_fn
-            )
+            next_in_line = _determine_next_node(prev_node, current_node, is_pre_fn)
             current_node.remove_self()
             current_node = next_in_line
             continue

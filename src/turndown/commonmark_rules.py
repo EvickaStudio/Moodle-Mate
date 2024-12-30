@@ -98,9 +98,7 @@ def fenced_code_block_rule(content, node, options):
     fence_size = 3
 
     # Increase fence size if code contains strings of backticks
-    longest_fence = max(
-        re.findall(r"^`{3,}", code_text, re.MULTILINE), default=""
-    )
+    longest_fence = max(re.findall(r"^`{3,}", code_text, re.MULTILINE), default="")
     if len(longest_fence) >= fence_size:
         fence_size = len(longest_fence) + 1
 

@@ -133,9 +133,7 @@ class MarkdownConverter:
             if child.node_type == 3:  # TEXT
                 # If it's code, preserve; otherwise do .escape
                 piece = (
-                    child.node_value
-                    if child.is_code
-                    else self.escape(child.node_value)
+                    child.node_value if child.is_code else self.escape(child.node_value)
                 )
             elif child.node_type == 1:  # ELEMENT
                 piece = self._replacement_for_node(child)

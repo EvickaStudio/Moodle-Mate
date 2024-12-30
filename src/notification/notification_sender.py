@@ -1,105 +1,76 @@
 import logging
 from typing import Optional
 
-from src.modules import Discord, Pushbullet
-from src.moodle import MoodleNotificationHandler
-from src.utils import Config, handle_exceptions
+from src.notification.discord_sender import DiscordSender
+from src.notification.pushbullet_sender import PushbulletSender
+from src.utils import Config
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationSender:
-    """
-    The NotificationSender class handles the sending of notifications to different platforms.
+    """Handles sending notifications to configured services."""
 
-    Args:
-        api_config (dict): The API configuration containing the Pushbullet API key and Discord webhook URL.
-
-    Attributes:
-        pushbullet_key (str): The Pushbullet API key.
-        webhook_url (str): The Discord webhook URL.
-        pushbullet_state (int): The state of Pushbullet notifications.
-        webhook_state (int): The state of Discord notifications.
-    """
-
-    @handle_exceptions
-    def __init__(self, config: Config, bot_name: str, thumbnail: str) -> None:
-        self.pushbullet_key = config.get_config(
-            "pushbullet", "PUSHBULLET_API_KEY"
-        )
-        self.pushbullet_state = int(config.get_config("pushbullet", "ENABLED"))
-        self.webhook_url = config.get_config("discord", "WEBHOOK_URL")
-        self.webhook_state = int(config.get_config("discord", "ENABLED"))
-        self.model = config.get_config("summary", "MODEL")
-        self.bot_name = bot_name
-        self.thumbnail = thumbnail
-        self.webhook_discord = Discord(
-            self.webhook_url, self.bot_name, self.thumbnail
-        )
-        self.moodle_handler = MoodleNotificationHandler(config)
-
-    # userifrom defauls to null, if you want to use your own user id, use the parameter useridfrom
-    @handle_exceptions
-    def send(
-        self,
-        subject: str,
-        text: str,
-        summary: str,
-        useridfrom: Optional[int] = None,
-    ) -> None:
-        """
-        Sends a notification to Pushbullet and Discord.
+    def __init__(self, config: Config) -> None:
+        """Initialize notification sender.
 
         Args:
-            subject (str): The subject of the notification.
-            text (str): The body of the notification.
-            summary (str): A summary of the notification.
-            useridfrom (int): The user ID of the sender.
-
-        Raises:
-            Exception: If the notification fails to send.
+            config: Application configuration
         """
-        try:
-            # If State is set to 1, send notifications
-            if self.pushbullet_state == 1:
-                logging.info("Sending notification to Pushbullet")
-                pb = Pushbullet(self.pushbullet_key)
-                pb.send_notification(subject, summary)
+        self.config = config
+        self.senders = []
 
-            if self.webhook_state == 1:
-                logging.info("Sending notification to Discord")
-                if useridfrom is not None:
-                    useridfrom_info = self.moodle_handler.user_id_from(
-                        useridfrom
+        # Initialize Discord sender if enabled
+        if config.discord.enabled:
+            try:
+                self.senders.append(
+                    DiscordSender(
+                        webhook_url=config.discord.webhook_url,
+                        bot_name=config.discord.bot_name,
+                        thumbnail_url=config.discord.thumbnail_url,
                     )
-                    fullname = useridfrom_info["fullname"]
-                    profile_url = useridfrom_info["profileimageurl"]
-                else:
-                    useridfrom_info = "69"
-                    fullname = "EvickaStudio"
-                    profile_url = (
-                        "https://avatars.githubusercontent.com/u/68477970"
-                    )
-
-                # print(data) # debug
-                self.webhook_discord(
-                    subject=subject,
-                    text=text,
-                    summary=summary,
-                    fullname=fullname,
-                    picture_url=profile_url,
                 )
+                logger.info("Discord sender initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize Discord sender: {str(e)}")
 
-            else:
-                logging.info("No notification service selected")
+        # Initialize Pushbullet sender if enabled
+        if config.pushbullet.enabled:
+            try:
+                self.senders.append(PushbulletSender(api_key=config.pushbullet.api_key))
+                logger.info("Pushbullet sender initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize Pushbullet sender: {str(e)}")
 
-        except Exception as e:
-            logging.exception("Failed to send notification")
-            raise e
+        if not self.senders:
+            logger.warning("No notification senders were initialized")
 
-    @handle_exceptions
-    def send_simple(self, subject: str, text: str) -> None:
-        try:
-            logging.info("Sending notification to Discord")
-            self.webhook_discord.send_simple(subject, text)
-        except Exception as e:
-            logging.exception("Failed to send notification")
-            raise e
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> None:
+        """Send a notification through all configured services.
+
+        Args:
+            subject: The notification subject
+            message: The notification message in Markdown format
+            summary: Optional AI-generated summary
+        """
+        if not self.senders:
+            logger.warning("No notification senders available")
+            return
+
+        for sender in self.senders:
+            try:
+                # For Discord, pass both message and summary
+                if isinstance(sender, DiscordSender):
+                    sender.send(subject, message, summary)
+                # For other senders, combine message and summary if available
+                else:
+                    full_message = message
+                    if summary:
+                        full_message += f"\n\nTLDR (AI Summary):\n{summary}"
+                    sender.send(subject, full_message)
+
+                logger.info(f"Notification sent via {sender.__class__.__name__}")
+            except Exception as e:
+                logger.error(
+                    f"Failed to send notification via {sender.__class__.__name__}: {str(e)}"
+                )

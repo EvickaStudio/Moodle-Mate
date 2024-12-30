@@ -1,73 +1,64 @@
 import logging
 
 from src.gpt import GPT
-from src.utils import Config, handle_exceptions
+from src.utils import Config
 
 
 class NotificationSummarizer:
-    """
-    A class that summarizes text using GPT-3 API.
+    """Summarizes notification content using AI."""
 
-    Attributes:
-    api_key (str): The API key for GPT-3 API.
-    system_message (str): The system message for the Moodle platform.
-
-    Methods:
-    summarize(text): Summarizes the given text using GPT-3 API.
-    """
-
-    @handle_exceptions
-    def __init__(self, config: Config) -> None:
-        self.api_key = config.get_config("summary", "OPENAI_API_KEY")
-        self.system_message = config.get_config("summary", "SYSTEM_PROMPT")
-        self.model = config.get_config("summary", "MODEL")
-        # print(f"Model = {self.model}")  # Debug line
-        self.test = False
-
-    @handle_exceptions
-    def summarize(self, text: str, use_assistant_api: bool = False) -> str:
-        # sourcery skip: remove-pass-body
-        """
-        Summarizes the given text using GPT-3 API or FGPT.
+    def __init__(self, config: Config):
+        """Initialize the summarizer.
 
         Args:
-            text (str): The text to summarize.
-            configModel (str): The GPT-3 model to use, or 'FGPT' to use FGPT.
-            use_assistant_api (bool, optional): Whether to use the chat completion or assistant API. Defaults to False.
+            config: Configuration instance
+        """
+        self.config = config.ai
+        if not self.config.enabled:
+            logging.info("AI summarization is disabled")
+            return
+
+        if not self.config.api_key:
+            raise ValueError("AI API key is required for summarization")
+
+        self.ai_provider = GPT()
+        self.ai_provider.api_key = self.config.api_key
+        if self.config.endpoint:
+            self.ai_provider.endpoint = self.config.endpoint
+
+    def summarize(self, text: str) -> str:
+        """Summarize the given text.
+
+        Args:
+            text: The text to summarize
 
         Returns:
-            str: The summarized text.
+            The summarized text
 
         Raises:
-            Exception: If summarization fails.
+            ValueError: If the input text is empty
         """
+        if not text or not text.strip():
+            raise ValueError("Input text cannot be empty")
+
+        if not self.config.enabled:
+            return text
+
         try:
-            # Test option, summarize the text using assistant and not the
-            # chat completion API, for testing ATM.
+            # First try using context_assistant
+            # summary = self.ai_provider.context_assistant(text)
+            # if summary:
+            #     return summary
 
-            if self.test:
-                ############################################################
-                # # Test with cognitivecomputations/dolphin-2.6-mixtral-8x7b
-                # ai = GPTDeepinfra(api_key=self.api_key)
-                # return ai.chat_completion(self.system_message, text or ""
-                ############################################################
-                return ""  # Added return statement
-
-            else:
-                if self.model is None or self.model == "":
-                    self.model = "gpt-3.5-turbo-1106"
-                ai = GPT()
-                ai.api_key = self.api_key
-                if not use_assistant_api:
-                    if self.model is None or self.system_message is None:
-                        raise ValueError(
-                            "Model and system message must not be None"
-                        )
-                    return ai.chat_completion(
-                        self.model, self.system_message, text or ""
-                    )
-
-                return ai.context_assistant(prompt=text)
+            # Fallback to chat_completion
+            summary = self.ai_provider.chat_completion(
+                model=self.config.model,
+                system_message=self.config.system_prompt,
+                user_message=text,
+                temperature=self.config.temperature,
+                max_tokens=self.config.max_tokens,
+            )
+            return summary
         except Exception as e:
-            logging.exception(f"Failed to summarize with {self.model}")
-            raise e
+            logging.error(f"Failed to summarize text: {str(e)}")
+            raise

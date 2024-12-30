@@ -18,7 +18,11 @@ Helper class for sending notifications.
 
 import logging
 
-import requests
+from requests.exceptions import RequestException
+
+from src.utils.request_manager import request_manager
+
+logger = logging.getLogger(__name__)
 
 
 class Ntfy:
@@ -42,10 +46,9 @@ class Ntfy:
         """
         self.server_url = None
         self.topic = None
+        self.session = request_manager.session
 
-    def send_notification(
-        self, topic, title, message, priority="urgent"
-    ) -> bool:
+    def send_notification(self, topic, title, message, priority="urgent") -> bool:
         """
         Send a notification.
 
@@ -56,15 +59,17 @@ class Ntfy:
             priority (str, optional): The priority of the notification. Defaults to "urgent".
         """
         url = self.server_url + topic
-        headers = {
-            "Title": title,
-            "Priority": priority,
-            "Tags": "email",
-        }
+        request_manager.update_headers(
+            {
+                "Title": title,
+                "Priority": priority,
+                "Tags": "email",
+            }
+        )
         try:
-            response = requests.post(url, data=message, headers=headers)
+            response = self.session.post(url, data=message)
             response.raise_for_status()  # Raise an exception if the request was not successful
             return True
-        except requests.exceptions.RequestException as e:
+        except RequestException as e:
             logging.error(f"Error sending ntfy notification: {e}")
             return False

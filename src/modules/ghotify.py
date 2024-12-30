@@ -38,9 +38,7 @@ class Gotify:
         data = {"title": title, "message": message}
 
         try:
-            response = requests.post(
-                f"{self.url}/message", headers=headers, json=data
-            )
+            response = requests.post(f"{self.url}/message", headers=headers, json=data)
             if response.status_code == 200:
                 logging.info("Notification sent to Gotify")
                 return True
