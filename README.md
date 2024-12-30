@@ -150,8 +150,8 @@ A detailed example configuration is available in the [example configuration file
 
 With the configuration complete, execute the main script to start the application:
 
-> [!TIP]
-> Moodle Mate processes only new notifications, current last notification will not be send.
+> [!NOTE]
+> Moodle Mate fetches the last notification at the start and sends it to the configured channels. This helps you to know if the configuration is correct and the application is working as expected.
 
 ```bash
 python3 main.py
