@@ -5,6 +5,8 @@ from typing import Optional
 import requests
 from requests.exceptions import RequestException
 
+from src.utils import __version__
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,11 +22,7 @@ class MoodleAPI:
         self.url = url or os.getenv("MOODLE_URL")
         self.session = requests.Session()
         self.request_header = {
-            "User-Agent": (
-                "Mozilla/5.0 (Linux; Android 7.1.1; ...) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 "
-                "Chrome/71.0.3578.99 Mobile Safari/537.36 MoodleMobile"
-            ),
+            "User-Agent": f"MoodleMate/{__version__} (+https://github.com/EvickaStudio/Moodle-Mate)",
             "Content-Type": "application/x-www-form-urlencoded",
         }
         self.session.headers.update(self.request_header)
