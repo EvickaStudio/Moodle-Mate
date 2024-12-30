@@ -1,6 +1,8 @@
 import os
 import time
 
+from src.utils import __version__
+
 # ANSI escape codes for colors and effects
 COLOR_BORDER = "\033[38;5;240m"
 COLOR_MOODLE = "\033[38;5;9m"
@@ -10,7 +12,7 @@ COLOR_FADE = "\033[2m"
 
 # Define the logo lines
 logo_lines = [
-    f"{COLOR_BORDER}╭─┐ {COLOR_RESET}{COLOR_BOLD}Moodle Mate{COLOR_RESET} {COLOR_BORDER}┌{'─'*56}╮{COLOR_RESET}",  # noqa: E501
+    f"{COLOR_BORDER}╭─┐ {COLOR_RESET}{COLOR_BOLD}Moodle Mate {COLOR_MOODLE}{__version__:>8}{COLOR_RESET} {COLOR_BORDER}┌{'─'*47}╮{COLOR_RESET}",  # noqa: E501
     f"{COLOR_BORDER}│       {COLOR_MOODLE}__  ___             ____    {COLOR_RESET}__  ___     __        ,-------,      {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
     f"{COLOR_BORDER}│      {COLOR_MOODLE}/  |/  /__  ___  ___/ / /__ {COLOR_RESET}/  |/  /__ _/ /____   /       / |     {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501
     f"{COLOR_BORDER}│     {COLOR_MOODLE}/ /|_/ / _ \\/ _ \\/ _  / / -_){COLOR_RESET} /|_/ / _ `/ __/ -_) /______ /  /     {COLOR_BORDER}│{COLOR_RESET}",  # noqa: E501

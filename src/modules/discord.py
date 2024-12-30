@@ -26,6 +26,8 @@ import random
 
 import requests
 
+from src.utils import __version__
+
 
 class Discord:
     """
@@ -98,7 +100,9 @@ class Discord:
                 embed_json["author"]["name"] = fullname
                 embed_json["author"]["icon_url"] = picture_url
 
-            embed_json["footer"]["text"] = f"{current_time} - Moodle-Mate"
+            embed_json["footer"][
+                "text"
+            ] = f"{current_time} - Moodle-Mate v{__version__}"
             embed_json["footer"][
                 "icon_url"
             ] = "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png"
