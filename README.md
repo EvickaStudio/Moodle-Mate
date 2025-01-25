@@ -15,134 +15,98 @@
   <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/EvickaStudio/Moodle-Mate">
 </p>
 
-## Overview
+## What is Moodle Mate?
 
-Moodle Mate is a modern Python application that enhances your Moodle experience by automatically managing and delivering notifications. It features AI-powered summarization, multi-platform notification delivery, and efficient resource management.
+Moodle Mate is an Python application that fetches notifications from a Moodle instance (eg. a school or university) and delivers them to a notification platform (eg. Discord). This will allow you to stay up to date with all your courses and activities without having to manually check your E-Mail or Moodle.
+
+Moodle Mate comes with an optional AI-powered summarization feature that will summarize the notifications for you and add it as an small TLDR to the notification. BYOK - Bring your own key, you can use any AI provider you want that supports the openai api structure, so if you have privacy concerns you can use an local hosted model (e.g. with [Ollama](https://ollama.ai/)).
 
 ## Key Features
 
 - **Smart Notification Management**
   - Automatic notification fetching and processing
   - AI-powered content summarization (optional)
-  - HTML to Markdown conversion for better readability
-  - Configurable update intervals
+  - HTML to Markdown notification conversion for better readability
+    - Uses a Python port of turndown for the conversion -> [turndown-python](https://github.com/EvickaStudio/turndown-python)
+  - Configurable update intervals and other settings
 
 - **Multi-Platform Support**
   - Discord (via webhooks)
-  - Support for additional notification platforms
-  - Extensible architecture for custom integrations
-
-- **Advanced Integration**
-  - Global request session management
-  - Consistent headers and User-Agent across all requests
-  - Connection pooling for improved performance
-  - Automatic retry mechanism for failed operations
-
-- **Resource Efficient**
-  - Low memory footprint (~50MB RAM)
-  - Optimized for long-running operations
-  - Suitable for resource-constrained environments (e.g., Raspberry Pi)
+  - Support for additional notification platforms (TODO)
+  - Modular architecture for easy integration of new platforms
 
 - **AI Integration**
   - Support for multiple AI providers
   - Configurable models and parameters
-  - Cost-effective operation (~$0.10/month for typical usage)
   - Optional summarization feature
 
 ## Requirements
 
 - Python 3.10 or higher
 - Internet connection
-- Moodle instance with API access
+- Moodle instance with API access/ REST API enabled
 
 ## Installation
 
 1. **Clone the Repository**
+
    ```bash
    git clone https://github.com/EvickaStudio/Moodle-Mate.git
    cd Moodle-Mate
    ```
 
 2. **Install Dependencies**
+
+   You can optionally use a virtual environment to install the dependencies:
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   # soure venv/bin/activate.fish for fish shell
+   ```
+
+   Then install the dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. **Configure the Application**
+
+   The recommended way is to use the config generator:
+
+   ```bash
+   python main.py --gen-config
+   ```
+
+   Alternatively, you can manually edit the `config.example.ini` file:
+
    ```bash
    cp config.example.ini config.ini
    # Edit config.ini with your settings
    ```
 
-## Configuration
-
-The `config.ini` file controls all aspects of Moodle Mate. Here are the key sections:
-
-### Moodle Settings
-```ini
-[moodle]
-url = https://your.moodle.instance
-username = your_username
-password = your_password
-```
-
-### AI Settings
-```ini
-[ai]
-enabled = 1
-api_key = your_api_key
-model = gpt-4
-temperature = 0.7
-max_tokens = 150
-endpoint = https://api.openai.com/v1  # Optional custom endpoint
-```
-
-### Notification Settings
-```ini
-[notification]
-max_retries = 3
-fetch_interval = 300  # seconds
-```
-
-### Discord Settings
-```ini
-[discord]
-enabled = 1
-webhook_url = your_webhook_url
-bot_name = MoodleMate
-thumbnail_url = your_thumbnail_url
-```
+   For more information on the configuration, see the [Configuration](src/core/config/README.md) documentation.
 
 ## Usage
 
 Start the application:
+
 ```bash
 python main.py
 ```
 
 The application will:
+
 1. Validate your configuration
 2. Connect to your Moodle instance
 3. Start monitoring for new notifications
 4. Process and deliver notifications according to your settings
 
-## Development
-
-The project follows modern Python best practices:
-- Type hints for better code quality
-- Comprehensive logging
-- Unit tests
-- Modular architecture
-
-Key components:
-- `src/moodle/`: Moodle API integration
-- `src/notification/`: Notification processing and delivery
-- `src/utils/`: Shared utilities and helpers
-- `src/gpt/`: AI integration
-
 ## Contributing
 
 We welcome contributions! Please:
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -155,9 +119,3 @@ Apache License 2.0 - See [LICENSE.md](LICENSE.md) for details.
 ## Author
 
 Created with ❤️ by [EvickaStudio](https://github.com/EvickaStudio)
-
----
-
-<div align="center">
-  <img src="assets/preview.png" alt="Discord Integration Preview" width="600">
-</div>
