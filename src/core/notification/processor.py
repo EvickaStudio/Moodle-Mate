@@ -44,24 +44,24 @@ class NotificationProcessor:
 
     def _get_notification_subject(self, notification: dict) -> str:
         """Extract and validate notification subject."""
-        subject = notification.get("subject", "").strip()
-        if not subject:
+        if subject := notification.get("subject", "").strip():
+            return subject
+        else:
             raise ValueError("Notification subject is empty")
-        return subject
 
     def _get_notification_message(self, notification: dict) -> str:
         """Extract and convert notification message."""
-        message = notification.get("fullmessagehtml", "").strip()
-        if not message:
+        if message := notification.get("fullmessagehtml", "").strip():
+            return convert(message)  # Convert HTML to Markdown
+        else:
             raise ValueError("Notification message is empty")
-        return convert(message)  # Convert HTML to Markdown
 
     def _generate_summary(self, message: str) -> Optional[str]:
         """Generate AI summary of message."""
         try:
-            if self.summarizer is None:
-                return None
-            return self.summarizer.summarize(message)
+            return (
+                None if self.summarizer is None else self.summarizer.summarize(message)
+            )
         except Exception as e:
             logging.error(f"Failed to generate summary: {str(e)}")
             return None

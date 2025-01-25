@@ -231,7 +231,7 @@ class MoodleNotificationHandler:
         try:
             # Validate all required fields are present
             required_fields = {"id", "useridfrom", "subject", "fullmessagehtml"}
-            if not all(field in notification for field in required_fields):
+            if any(field not in notification for field in required_fields):
                 missing = required_fields - set(notification.keys())
                 logging.error(f"Missing required notification fields: {missing}")
                 return None
@@ -252,7 +252,7 @@ class MoodleNotificationHandler:
         try:
             # Validate all required fields are present
             required_fields = {"id", "fullname", "profileimageurl"}
-            if not all(field in user_data for field in required_fields):
+            if any(field not in user_data for field in required_fields):
                 missing = required_fields - set(user_data.keys())
                 logging.error(f"Missing required user fields: {missing}")
                 return None

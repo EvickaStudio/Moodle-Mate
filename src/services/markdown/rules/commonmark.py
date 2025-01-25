@@ -25,12 +25,11 @@ def heading_rule(content, node, options):
     """
     level = int(node.node_name[1])  # e.g. 'H2' -> 2
     style = options["headingStyle"]
-    if style == "setext" and level < 3:
-        underline_char = "=" if level == 1 else "-"
-        underline = repeat(underline_char, len(content))
-        return f"\n\n{content}\n{underline}\n\n"
-    else:
+    if style != "setext" or level >= 3:
         return "\n\n" + repeat("#", level) + " " + content + "\n\n"
+    underline_char = "=" if level == 1 else "-"
+    underline = repeat(underline_char, len(content))
+    return f"\n\n{content}\n{underline}\n\n"
 
 
 def blockquote_rule(content, node, options):

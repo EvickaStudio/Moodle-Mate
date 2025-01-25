@@ -18,8 +18,7 @@ class RuleManager:
         self.defaultRule = {"replacement": options["defaultReplacement"]}
 
         self.rule_list = []
-        for rule_def in options["rules"].values():
-            self.rule_list.append(rule_def)
+        self.rule_list.extend(iter(options["rules"].values()))
 
     def add(self, key, rule):
         """

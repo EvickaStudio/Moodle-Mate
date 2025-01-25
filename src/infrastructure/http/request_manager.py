@@ -23,6 +23,7 @@ class RequestManager:
         self._session.headers.update(
             {
                 "User-Agent": f"MoodleMate/{__version__} (+https://github.com/EvickaStudio/Moodle-Mate)",
+                "Content-Type": "application/x-www-form-urlencoded",
             }
         )
 

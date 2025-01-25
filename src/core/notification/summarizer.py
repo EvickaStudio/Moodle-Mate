@@ -46,20 +46,13 @@ class NotificationSummarizer:
             return text
 
         try:
-            # First try using context_assistant
-            # summary = self.ai_provider.context_assistant(text)
-            # if summary:
-            #     return summary
-
-            # Fallback to chat_completion
-            summary = self.ai_provider.chat_completion(
+            return self.ai_provider.chat_completion(
                 model=self.config.model,
                 system_message=self.config.system_prompt,
                 user_message=text,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
             )
-            return summary
         except Exception as e:
             logging.error(f"Failed to summarize text: {str(e)}")
             raise

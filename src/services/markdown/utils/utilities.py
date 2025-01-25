@@ -152,4 +152,4 @@ def clean_attribute(attr):
     """
     Reduce multiple newlines or line breaks. Return a 'cleaned' attribute or empty string.
     """
-    return "" if not attr else re.sub(r"(\n+\s*)+", "\n", attr)
+    return re.sub(r"(\n+\s*)+", "\n", attr) if attr else ""
