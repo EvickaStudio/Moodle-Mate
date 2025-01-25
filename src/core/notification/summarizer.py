@@ -1,7 +1,8 @@
 import logging
 
 from src.core.config.loader import Config
-from src.services.ai import GPT
+from src.core.service_locator import ServiceLocator
+from src.services.ai.chat import GPT
 
 
 class NotificationSummarizer:
@@ -21,7 +22,7 @@ class NotificationSummarizer:
         if not self.config.api_key:
             raise ValueError("AI API key is required for summarization")
 
-        self.ai_provider = GPT()
+        self.ai_provider = ServiceLocator().get("gpt", GPT)
         self.ai_provider.api_key = self.config.api_key
         if self.config.endpoint:
             self.ai_provider.endpoint = self.config.endpoint

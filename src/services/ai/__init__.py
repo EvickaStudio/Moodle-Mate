@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .openai_chat import GPT
+from .chat import GPT
 
 
 class BaseGPT(ABC):

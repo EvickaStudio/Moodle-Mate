@@ -3,8 +3,10 @@ import time
 from typing import Optional, TypedDict
 
 from src.core.config import Config
+from src.core.service_locator import ServiceLocator
+from src.services.moodle.api import MoodleAPI
 
-from .api import MoodleAPI
+from .errors import MoodleAuthenticationError, MoodleConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -24,24 +26,6 @@ class UserData(TypedDict):
     id: int
     fullname: str
     profileimageurl: str
-
-
-class MoodleError(Exception):
-    """Base exception for Moodle-related errors."""
-
-    pass
-
-
-class MoodleConnectionError(MoodleError):
-    """Raised when connection to Moodle fails."""
-
-    pass
-
-
-class MoodleAuthenticationError(MoodleError):
-    """Raised when authentication to Moodle fails."""
-
-    pass
 
 
 class MoodleNotificationHandler:
@@ -65,18 +49,9 @@ class MoodleNotificationHandler:
             ValueError: If required configuration is missing
         """
         try:
-            # Access Moodle config directly from the new structure
-            self.moodle_config = config.moodle
-
-            if not self.moodle_config.url:
-                raise ValueError("Moodle URL is required")
-            if not self.moodle_config.username:
-                raise ValueError("Moodle username is required")
-            if not self.moodle_config.password:
-                raise ValueError("Moodle password is required")
-
-            self.api = MoodleAPI(self.moodle_config.url)
-            self._authenticate()
+            self.config = config
+            self.api = ServiceLocator().get("moodle_api", MoodleAPI)
+            self._login()
 
             # Get and store the authenticated user's ID
             self.moodle_user_id = self.api.get_user_id()
@@ -90,7 +65,7 @@ class MoodleNotificationHandler:
                 f"Failed to initialize Moodle connection: {str(e)}"
             ) from e
 
-    def _authenticate(self) -> None:
+    def _login(self) -> None:
         """
         Authenticate with Moodle.
 
@@ -99,10 +74,11 @@ class MoodleNotificationHandler:
         """
         try:
             if not self.api.login(
-                username=self.moodle_config.username,
-                password=self.moodle_config.password,
+                username=self.config.moodle.username,
+                password=self.config.moodle.password,
             ):
                 raise MoodleAuthenticationError("Login returned false")
+            return None
         except Exception as e:
             raise MoodleAuthenticationError(f"Authentication failed: {str(e)}") from e
 
@@ -137,12 +113,13 @@ class MoodleNotificationHandler:
 
                 # Validate notification format
                 notification = notifications[0]
-                if any(k not in notification for k in NotificationData.__annotations__):
-                    logger.error("Notification missing required fields")
+                processed = self._process_notification(notification)
+                if not processed:
+                    logger.error("Failed to process notification")
                     return None
 
-                logger.debug(f"Latest notification: {notification}")
-                return NotificationData(**notification)
+                logger.debug(f"Latest notification: {processed}")
+                return processed
 
             except Exception as e:
                 retries += 1
@@ -158,6 +135,8 @@ class MoodleNotificationHandler:
 
                 time.sleep(retry_delay)
                 retry_delay = min(retry_delay * 2, max_delay)  # Exponential backoff
+
+        return None
 
     def fetch_newest_notification(self) -> Optional[NotificationData]:
         """
@@ -195,8 +174,20 @@ class MoodleNotificationHandler:
                 f"Failed to fetch new notifications: {str(e)}"
             ) from e
 
-    def _handle_new_notification(self, arg0, current_id, notification):
-        logger.info(f"{arg0}{current_id}")
+    def _handle_new_notification(
+        self, message: str, current_id: int, notification: NotificationData
+    ) -> NotificationData:
+        """Handle processing of a new notification.
+
+        Args:
+            message: Log message prefix
+            current_id: Current notification ID
+            notification: Notification data
+
+        Returns:
+            The processed notification data
+        """
+        logger.info(f"{message}{current_id}")
         self.last_notification_id = current_id
         return notification
 
@@ -222,14 +213,56 @@ class MoodleNotificationHandler:
                 return None
 
             user_data = response[0]
-            if not all(k in user_data for k in UserData.__annotations__):
-                logger.error("User data missing required fields")
+            processed = self._process_user_data(user_data)
+            if not processed:
+                logger.error("Failed to process user data")
                 return None
 
-            logger.debug(f"User data fetched: {user_data}")
-            return UserData(**user_data)
+            logger.debug(f"User data fetched: {processed}")
+            return processed
 
         except Exception as e:
             raise MoodleConnectionError(
                 f"Failed to fetch user {user_id}: {str(e)}"
             ) from e
+
+    def _process_notification(self, notification: dict) -> Optional[NotificationData]:
+        """Process raw notification data into typed format."""
+        try:
+            # Validate all required fields are present
+            required_fields = {"id", "useridfrom", "subject", "fullmessagehtml"}
+            if not all(field in notification for field in required_fields):
+                missing = required_fields - set(notification.keys())
+                logging.error(f"Missing required notification fields: {missing}")
+                return None
+
+            # Create TypedDict with validated data
+            return NotificationData(
+                id=int(notification["id"]),
+                useridfrom=int(notification["useridfrom"]),
+                subject=str(notification["subject"]),
+                fullmessagehtml=str(notification["fullmessagehtml"]),
+            )
+        except (KeyError, ValueError) as e:
+            logging.error(f"Error processing notification data: {e}")
+            return None
+
+    def _process_user_data(self, user_data: dict) -> Optional[UserData]:
+        """Process raw user data into typed format."""
+        try:
+            # Validate all required fields are present
+            required_fields = {"id", "fullname", "profileimageurl"}
+            if not all(field in user_data for field in required_fields):
+                missing = required_fields - set(user_data.keys())
+                logging.error(f"Missing required user fields: {missing}")
+                return None
+
+            # Create TypedDict with validated data
+            return UserData(
+                id=int(user_data["id"]),
+                fullname=str(user_data["fullname"]),
+                profileimageurl=str(user_data["profileimageurl"]),
+            )
+        except (KeyError, ValueError) as e:
+            logging.error(f"Error processing user data: {e}")
+            return None

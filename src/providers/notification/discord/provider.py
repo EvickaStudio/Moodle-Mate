@@ -42,7 +42,7 @@ class DiscordProvider(NotificationProvider):
                 "thumbnail": (
                     {"url": self.thumbnail_url} if self.thumbnail_url else None
                 ),
-                "fields": [],
+                "fields": [] if summary else None,  # Initialize as None if no summary
                 "footer": {
                     "text": f"{current_time} - Moodle-Mate v{__version__}",
                     "icon_url": "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png",
@@ -50,17 +50,13 @@ class DiscordProvider(NotificationProvider):
             }
 
             if summary:
-                embed["fields"].append(
+                embed["fields"] = [  # Directly assign list instead of using append
                     {
                         "name": "TL;DR",
                         "value": summary[:1024],  # Discord limit
                         "inline": False,
                     }
-                )
-
-            # Remove empty fields
-            if not embed["fields"]:
-                del embed["fields"]
+                ]
 
             # Remove None values
             embed = {k: v for k, v in embed.items() if v is not None}

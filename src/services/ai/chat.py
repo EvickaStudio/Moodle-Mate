@@ -1,69 +1,13 @@
 import logging
 import re
-from dataclasses import dataclass
-from enum import Enum
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional
 
 import openai  # version 1.5
 import tiktoken
 from openai.types.chat import ChatCompletion
 
-
-class ModelType(Enum):
-    """Supported OpenAI model types."""
-
-    GPT4 = "gpt-4o"
-    GPT4_MINI = "gpt-4o-mini"
-    GPT35_TURBO = "gpt-3.5-turbo"
-    GPT4_0806 = "gpt-4o-2024-08-06"
-    GPT4_0513 = "gpt-4o-2024-05-13"
-    GPT4_MINI_0718 = "gpt-4o-mini-2024-07-18"
-    O1 = "o1"
-    O1_1217 = "o1-2024-12-17"
-    O1_PREVIEW = "o1-preview"
-    O1_PREVIEW_0912 = "o1-preview-2024-09-12"
-    O1_MINI = "o1-mini"
-    O1_MINI_0912 = "o1-mini-2024-09-12"
-
-
-@dataclass
-class ModelPricing:
-    """Pricing information for a model."""
-
-    input_cost_per_1m: float
-    output_cost_per_1m: float
-
-    def calculate_costs(
-        self, input_tokens: int, output_tokens: int
-    ) -> Tuple[float, float, float]:
-        """Calculate costs for token usage."""
-        input_cost = input_tokens * (self.input_cost_per_1m / 1_000_000)
-        output_cost = output_tokens * (self.output_cost_per_1m / 1_000_000)
-        return input_cost, output_cost, input_cost + output_cost
-
-
-class OpenAIError(Exception):
-    """Base exception for OpenAI-related errors."""
-
-    pass
-
-
-class InvalidAPIKeyError(OpenAIError):
-    """Raised when the API key is invalid."""
-
-    pass
-
-
-class TokenizationError(OpenAIError):
-    """Raised when token counting fails."""
-
-    pass
-
-
-class ChatCompletionError(OpenAIError):
-    """Raised when chat completion fails."""
-
-    pass
+from .calculate import ModelPricing, ModelType
+from .errors import ChatCompletionError, InvalidAPIKeyError, TokenizationError
 
 
 class GPT:
@@ -78,24 +22,32 @@ class GPT:
         api_key: The OpenAI API key (property with validation)
     """
 
-    PRICING: Dict[str, ModelPricing] = {
-        ModelType.GPT4.value: ModelPricing(2.50, 10.00),
-        ModelType.GPT4_0806.value: ModelPricing(2.50, 10.00),
-        ModelType.GPT4_0513.value: ModelPricing(5.00, 15.00),
-        ModelType.GPT4_MINI.value: ModelPricing(0.150, 0.600),
-        ModelType.GPT4_MINI_0718.value: ModelPricing(0.150, 0.600),
-        ModelType.GPT35_TURBO.value: ModelPricing(0.50, 1.50),
-        ModelType.O1.value: ModelPricing(15.00, 60.00),
-        ModelType.O1_1217.value: ModelPricing(15.00, 60.00),
-        ModelType.O1_PREVIEW.value: ModelPricing(15.00, 60.00),
-        ModelType.O1_PREVIEW_0912.value: ModelPricing(15.00, 60.00),
-        ModelType.O1_MINI.value: ModelPricing(3.00, 12.00),
-        ModelType.O1_MINI_0912.value: ModelPricing(3.00, 12.00),
-    }
+    _instance = None
 
-    def __init__(self) -> None:
-        """Initialize the GPT interface."""
-        self._api_key: Optional[str] = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(GPT, cls).__new__(cls)
+            cls._instance._init_gpt()
+        return cls._instance
+
+    def _init_gpt(self):
+        """Initialize GPT instance."""
+        self._api_key = None
+        self._endpoint = None
+        self.PRICING = {
+            ModelType.GPT4.value: ModelPricing(2.50, 10.00),
+            ModelType.GPT4_0806.value: ModelPricing(2.50, 10.00),
+            ModelType.GPT4_0513.value: ModelPricing(5.00, 15.00),
+            ModelType.GPT4_MINI.value: ModelPricing(0.150, 0.600),
+            ModelType.GPT4_MINI_0718.value: ModelPricing(0.150, 0.600),
+            ModelType.GPT35_TURBO.value: ModelPricing(0.50, 1.50),
+            ModelType.O1.value: ModelPricing(15.00, 60.00),
+            ModelType.O1_1217.value: ModelPricing(15.00, 60.00),
+            ModelType.O1_PREVIEW.value: ModelPricing(15.00, 60.00),
+            ModelType.O1_PREVIEW_0912.value: ModelPricing(15.00, 60.00),
+            ModelType.O1_MINI.value: ModelPricing(3.00, 12.00),
+            ModelType.O1_MINI_0912.value: ModelPricing(3.00, 12.00),
+        }
         self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
     @property
@@ -206,7 +158,29 @@ class GPT:
         except Exception as e:
             raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
 
-    def _chat_completion(self, messages, model, temperature, max_tokens):
+    def _chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        model: str,
+        temperature: float,
+        max_tokens: Optional[int],
+    ) -> str:
+        """
+        Internal method to handle chat completion requests.
+
+        Args:
+            messages: List of message dictionaries
+            model: Model identifier
+            temperature: Temperature parameter
+            max_tokens: Maximum tokens for response
+
+        Returns:
+            Generated response text
+
+        Raises:
+            ChatCompletionError: If completion fails
+            TokenizationError: If token counting fails
+        """
         # Count input tokens
         input_tokens = sum(
             self.count_tokens(msg["content"], model=model) for msg in messages

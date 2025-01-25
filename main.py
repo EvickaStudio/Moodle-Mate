@@ -3,8 +3,9 @@ import time
 
 from src.core.config.loader import Config
 from src.core.notification.processor import NotificationProcessor
+from src.core.service_locator import ServiceLocator
+from src.core.services import initialize_services
 from src.infrastructure.logging.setup import setup_logging
-from src.providers.notification import initialize_providers
 from src.services.moodle.notification_handler import MoodleNotificationHandler
 from src.ui.cli.screen import animate_logo, logo_lines
 
@@ -16,31 +17,27 @@ def main() -> None:
     logging.info("Starting Moodle Mate...")
 
     try:
-        # Load configuration
-        config = Config()
+        # Initialize all services
+        initialize_services()
 
-        # Initialize notification providers
-        providers = initialize_providers(config)
-
-        # Create notification processor with providers
-        notification_processor = NotificationProcessor(config, providers)
-
-        # Initialize handlers
-        moodle_handler = MoodleNotificationHandler(config)
+        # Get required services from locator
+        locator = ServiceLocator()
+        config = locator.get("config", Config)
+        notification_processor = locator.get(
+            "notification_processor", NotificationProcessor
+        )
+        moodle_handler = locator.get("moodle_handler", MoodleNotificationHandler)
 
         # Main loop
         while True:
             try:
                 if notification := moodle_handler.fetch_newest_notification():
-                    # Process and send notification
                     notification_processor.process(notification)
 
-                # Sleep for configured interval
                 time.sleep(config.notification.fetch_interval)
 
             except Exception as e:
                 logging.error(f"Error during execution: {str(e)}")
-                # Sleep for a bit before retrying
                 time.sleep(10)
 
     except KeyboardInterrupt:

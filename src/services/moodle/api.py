@@ -14,10 +14,16 @@ class MoodleAPI:
     A simple Moodle API wrapper for Python.
     """
 
-    def __init__(self, url: Optional[str] = None) -> None:
-        """
-        Initializes the MoodleAPI object with the provided API URL.
-        """
+    _instance = None
+
+    def __new__(cls, url: Optional[str] = None):
+        if cls._instance is None:
+            cls._instance = super(MoodleAPI, cls).__new__(cls)
+            cls._instance._init_api(url)
+        return cls._instance
+
+    def _init_api(self, url: Optional[str] = None):
+        """Initialize the API with URL and session."""
         self.url = url or os.getenv("MOODLE_URL")
         self.session = request_manager.session
         request_manager.update_headers(

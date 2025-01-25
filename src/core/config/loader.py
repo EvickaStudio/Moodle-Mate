@@ -14,12 +14,16 @@ from .schema import (
 class Config:
     """Configuration manager for MoodleMate."""
 
-    def __init__(self, config_path: str = "config.ini"):
-        """Initialize configuration from file.
+    _instance = None
 
-        Args:
-            config_path: Path to configuration file
-        """
+    def __new__(cls, config_path: str = "config.ini"):
+        if cls._instance is None:
+            cls._instance = super(Config, cls).__new__(cls)
+            cls._instance._init_config(config_path)
+        return cls._instance
+
+    def _init_config(self, config_path: str):
+        """Initialize configuration from file."""
         self.config = configparser.ConfigParser()
         if not Path(config_path).exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
