@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.notification.notification_processor import NotificationProcessor
+from core.notification.processor import NotificationProcessor
 
 
 @pytest.fixture

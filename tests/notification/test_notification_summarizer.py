@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.notification.notification_summarizer import NotificationSummarizer
+from core.notification.summarizer import NotificationSummarizer
 
 
 @pytest.fixture

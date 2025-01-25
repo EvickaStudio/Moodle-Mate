@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.notification.notification_sender import NotificationSender
+from services.notification.sender import NotificationSender
 
 
 @pytest.fixture

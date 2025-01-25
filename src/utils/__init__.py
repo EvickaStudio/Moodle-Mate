@@ -1,13 +1,13 @@
-from .config_schema import (
+from ..core.config.schema import (
     AIConfig,
     DiscordConfig,
     MoodleConfig,
     NotificationConfig,
     PushbulletConfig,
 )
-from .load_config import Config
-from .logging_setup import setup_logging
-from .version import __version__
+from ..core.config.loader import Config
+from ..infrastructure.logging.setup import setup_logging
+from ..core.version import __version__
 
 __all__ = [
     "Config",

@@ -1,10 +1,12 @@
 import logging
 import time
 
-from src.moodle import MoodleNotificationHandler
-from src.notification import NotificationProcessor
-from src.ui import animate_logo, logo_lines, setup_logging
-from src.utils import Config
+from src.services.moodle.notification_handler import MoodleNotificationHandler
+from src.core.notification.processor import NotificationProcessor
+from src.ui.cli.screen import animate_logo, logo_lines
+from src.core.config.loader import Config
+from src.infrastructure.logging.setup import setup_logging
+from src.providers.notification import initialize_providers
 
 
 def main() -> None:
@@ -17,9 +19,14 @@ def main() -> None:
         # Load configuration
         config = Config()
 
+        # Initialize notification providers
+        providers = initialize_providers(config)
+
+        # Create notification processor with providers
+        notification_processor = NotificationProcessor(config, providers)
+
         # Initialize handlers
         moodle_handler = MoodleNotificationHandler(config)
-        notification_processor = NotificationProcessor(config)
 
         # Main loop
         while True:
@@ -28,7 +35,7 @@ def main() -> None:
                 notification = moodle_handler.fetch_newest_notification()
                 if notification:
                     # Process and send notification
-                    notification_processor.process_notification(notification)
+                    notification_processor.process(notification)
 
                 # Sleep for configured interval
                 time.sleep(config.notification.fetch_interval)

@@ -2,7 +2,7 @@ from configparser import ConfigParser
 
 import pytest
 
-from src.utils.load_config import Config
+from core.config.loader import Config
 
 
 @pytest.fixture
