@@ -2,7 +2,7 @@ from typing import Optional
 
 import requests
 
-from src.utils import __version__
+from src.core.version import __version__
 
 
 class RequestManager:

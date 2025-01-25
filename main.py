@@ -1,12 +1,12 @@
 import logging
 import time
 
-from src.services.moodle.notification_handler import MoodleNotificationHandler
-from src.core.notification.processor import NotificationProcessor
-from src.ui.cli.screen import animate_logo, logo_lines
 from src.core.config.loader import Config
+from src.core.notification.processor import NotificationProcessor
 from src.infrastructure.logging.setup import setup_logging
 from src.providers.notification import initialize_providers
+from src.services.moodle.notification_handler import MoodleNotificationHandler
+from src.ui.cli.screen import animate_logo, logo_lines
 
 
 def main() -> None:
@@ -31,9 +31,7 @@ def main() -> None:
         # Main loop
         while True:
             try:
-                # Fetch latest notification
-                notification = moodle_handler.fetch_newest_notification()
-                if notification:
+                if notification := moodle_handler.fetch_newest_notification():
                     # Process and send notification
                     notification_processor.process(notification)
 

@@ -1,9 +1,9 @@
 import functools
 
 from .rules.commonmark import COMMONMARK_RULES
+from .rules.manager import RuleManager
 from .utils.node import enhance_node
 from .utils.root_node import build_root_node
-from .rules.manager import RuleManager
 from .utils.utilities import extend, trim_leading_newlines, trim_trailing_newlines
 
 

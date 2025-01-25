@@ -1,10 +1,10 @@
 import logging
 from typing import List
 
+from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
 from src.core.notification.summarizer import NotificationSummarizer
 from src.services.markdown import convert
-from src.core.config.loader import Config
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class NotificationProcessor:
         """
         self.config = config
         self.providers = providers
-        self.summarizer = NotificationSummarizer(config)
+        self.summarizer = NotificationSummarizer(config) if config.ai.enabled else None
 
     def process(self, notification: dict) -> None:
         """Process and send a notification."""
@@ -30,30 +30,69 @@ class NotificationProcessor:
             subject = notification.get("subject", "No subject")
 
             if not html_content:
-                logger.warning("Empty notification content received")
+                logger.warning(
+                    "[NotificationProcessor] Empty notification content received"
+                )
                 return
 
             # Convert HTML to Markdown
-            markdown_content = convert(html_content)
+            try:
+                markdown_content = convert(html_content)
+                logger.debug("[NotificationProcessor] Converted HTML to Markdown")
+            except Exception as e:
+                logger.error(
+                    "[NotificationProcessor] Failed to convert HTML to Markdown: %s",
+                    str(e),
+                    exc_info=True,
+                )
+                return
 
             # Get AI summary if enabled
             summary = None
-            if self.config.ai.enabled:
+            if self.config.ai.enabled and self.summarizer:
                 try:
                     summary = self.summarizer.summarize(markdown_content)
+                    logger.debug(
+                        "[NotificationProcessor] Generated AI summary: %s",
+                        summary[:100],
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to summarize: {str(e)}")
+                    logger.error(
+                        "[NotificationProcessor] Failed to generate summary: %s",
+                        str(e),
+                        exc_info=True,
+                    )
 
             # Send via all providers
             for provider in self.providers:
                 try:
-                    success = provider.send(subject, markdown_content, summary)
+                    # Pass both content and summary to provider
+                    success = provider.send(
+                        subject=subject,
+                        content=markdown_content,
+                        summary=summary if summary else None,
+                    )
                     if success:
-                        logger.info(f"Sent via {provider.__class__.__name__}")
+                        logger.info(
+                            "[NotificationProcessor] Sent via %s",
+                            provider.__class__.__name__,
+                        )
                     else:
-                        logger.error(f"Failed to send via {provider.__class__.__name__}")
+                        logger.error(
+                            "[NotificationProcessor] Failed to send via %s",
+                            provider.__class__.__name__,
+                        )
                 except Exception as e:
-                    logger.error(f"Error with {provider.__class__.__name__}: {str(e)}")
+                    logger.error(
+                        "[NotificationProcessor] Error with %s: %s",
+                        provider.__class__.__name__,
+                        str(e),
+                        exc_info=True,
+                    )
 
         except Exception as e:
-            logger.error(f"Failed to process notification: {str(e)}")
+            logger.error(
+                "[NotificationProcessor] Failed to process notification: %s",
+                str(e),
+                exc_info=True,
+            )

@@ -1,11 +1,13 @@
 from typing import List
-from src.core.notification.base import NotificationProvider
+
 from src.core.config.loader import Config
+from src.core.notification.base import NotificationProvider
 
 from .discord.provider import DiscordProvider
+from .ntfy.provider import NtfyProvider
 from .pushbullet.provider import PushbulletProvider
 from .slack.provider import SlackProvider
-from .ntfy.provider import NtfyProvider
+
 
 def initialize_providers(config: Config) -> List[NotificationProvider]:
     """Initialize enabled notification providers from config."""
@@ -16,25 +18,22 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
             DiscordProvider(
                 webhook_url=config.discord.webhook_url,
                 bot_name=config.discord.bot_name,
-                thumbnail_url=config.discord.thumbnail_url
+                thumbnail_url=config.discord.thumbnail_url,
             )
         )
 
     if config.pushbullet.enabled:
-        providers.append(
-            PushbulletProvider(
-                api_key=config.pushbullet.api_key
-            )
-        )
+        providers.append(PushbulletProvider(api_key=config.pushbullet.api_key))
 
     # Add other providers as needed...
 
     return providers
 
+
 __all__ = [
     "DiscordProvider",
-    "PushbulletProvider", 
+    "PushbulletProvider",
     "SlackProvider",
     "NtfyProvider",
-    "initialize_providers"
-] 
+    "initialize_providers",
+]

@@ -1,8 +1,11 @@
 import copy
+import logging
 
-from .whitespace import collapse_whitespace
 from .html_parser import parse_from_string
 from .utilities import is_block, is_void
+from .whitespace import collapse_whitespace
+
+logger = logging.getLogger(__name__)
 
 
 def build_root_node(input_obj, options):

@@ -15,6 +15,14 @@ def handle_exceptions(func):
     """
 
     def wrapper(*args, **kwargs):
+        """
+        Wrapper function to execute the decorated function and handle exceptions.
+        Logs exceptions and returns None in case of an error.
+
+        :param args: Arguments passed to the decorated function.
+        :param kwargs: Keyword arguments passed to the decorated function.
+        :return: The result of the decorated function or None if an exception occurred.
+        """
         try:
             result = func(*args, **kwargs)
         except BaseException as e:

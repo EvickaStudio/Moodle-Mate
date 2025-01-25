@@ -1,1 +1,0 @@
-from .markdown.converter import convert

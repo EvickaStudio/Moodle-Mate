@@ -200,49 +200,51 @@ class GPT:
         ]
 
         try:
-            # Count input tokens
-            input_tokens = sum(
-                self.count_tokens(msg["content"], model=model) for msg in messages
-            )
-
-            # Make the API call
-            response: ChatCompletion = openai.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-
-            # Extract and validate response
-            if not response.choices:
-                raise ChatCompletionError("No completion choices returned")
-
-            output_text = response.choices[0].message.content or ""
-            output_tokens = self.count_tokens(output_text, model=model)
-
-            # Calculate and log costs
-            pricing = self.PRICING[model]
-            input_cost, output_cost, total_cost = pricing.calculate_costs(
-                input_tokens, output_tokens
-            )
-
-            logging.info(
-                f"\n{'-'*40}\n"
-                f"{'Model':<15}: {model}\n"
-                f"{'Input Tokens':<15}: {input_tokens:,}\n"
-                f"{'Output Tokens':<15}: {output_tokens:,}\n"
-                f"{'Input Cost':<15}: ${input_cost:.6f}\n"
-                f"{'Output Cost':<15}: ${output_cost:.6f}\n"
-                f"{'Total Cost':<15}: ${total_cost:.6f}\n"
-                f"{'-'*40}"
-            )
-
-            return output_text
-
+            return self._chat_completion(messages, model, temperature, max_tokens)
         except TokenizationError as e:
             raise ChatCompletionError(f"Token counting failed: {str(e)}") from e
         except Exception as e:
             raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
+
+    def _chat_completion(self, messages, model, temperature, max_tokens):
+        # Count input tokens
+        input_tokens = sum(
+            self.count_tokens(msg["content"], model=model) for msg in messages
+        )
+
+        # Make the API call
+        response: ChatCompletion = openai.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+        # Extract and validate response
+        if not response.choices:
+            raise ChatCompletionError("No completion choices returned")
+
+        output_text = response.choices[0].message.content or ""
+        output_tokens = self.count_tokens(output_text, model=model)
+
+        # Calculate and log costs
+        pricing = self.PRICING[model]
+        input_cost, output_cost, total_cost = pricing.calculate_costs(
+            input_tokens, output_tokens
+        )
+
+        logging.info(
+            f"\n{'-'*40}\n"
+            f"{'Model':<15}: {model}\n"
+            f"{'Input Tokens':<15}: {input_tokens:,}\n"
+            f"{'Output Tokens':<15}: {output_tokens:,}\n"
+            f"{'Input Cost':<15}: ${input_cost:.6f}\n"
+            f"{'Output Cost':<15}: ${output_cost:.6f}\n"
+            f"{'Total Cost':<15}: ${total_cost:.6f}\n"
+            f"{'-'*40}"
+        )
+
+        return output_text
 
     def context_assistant(self, prompt: str) -> str:
         """

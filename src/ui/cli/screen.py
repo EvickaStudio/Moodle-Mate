@@ -1,7 +1,7 @@
 import os
 import time
 
-from src.utils import __version__
+from src.core.version import __version__
 
 # ANSI escape codes for colors and effects
 COLOR_BORDER = "\033[38;5;240m"

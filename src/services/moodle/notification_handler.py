@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Optional, TypedDict
 
-from src.utils import Config
+from src.core.config import Config
 
 from .api import MoodleAPI
 
@@ -137,7 +137,7 @@ class MoodleNotificationHandler:
 
                 # Validate notification format
                 notification = notifications[0]
-                if not all(k in notification for k in NotificationData.__annotations__):
+                if any(k not in notification for k in NotificationData.__annotations__):
                     logger.error("Notification missing required fields")
                     return None
 
@@ -178,15 +178,13 @@ class MoodleNotificationHandler:
 
             # First run or new notification
             if self.last_notification_id is None:
-                logger.info(f"First notification fetched: ID {current_id}")
-                self.last_notification_id = current_id
-                return notification
-
+                return self._handle_new_notification(
+                    "First notification fetched: ID ", current_id, notification
+                )
             if current_id > self.last_notification_id:
-                logger.info(f"New notification found: ID {current_id}")
-                self.last_notification_id = current_id
-                return notification
-
+                return self._handle_new_notification(
+                    "New notification found: ID ", current_id, notification
+                )
             logger.debug(
                 f"No new notifications. Current ID: {current_id}, Last ID: {self.last_notification_id}"
             )
@@ -196,6 +194,11 @@ class MoodleNotificationHandler:
             raise MoodleConnectionError(
                 f"Failed to fetch new notifications: {str(e)}"
             ) from e
+
+    def _handle_new_notification(self, arg0, current_id, notification):
+        logger.info(f"{arg0}{current_id}")
+        self.last_notification_id = current_id
+        return notification
 
     def user_id_from(self, user_id: int) -> Optional[UserData]:
         """

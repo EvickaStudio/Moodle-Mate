@@ -12,8 +12,10 @@ def setup_logging(log_level: str = "INFO") -> None:
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
 
-    # Configure logging format
-    log_format = "%(asctime)s [%(levelname)s] %(message)s"
+    # Configure logging format with more context
+    log_format = (
+        "%(asctime)s [%(levelname)s] [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
+    )
     date_format = "%Y-%m-%d %H:%M:%S"
 
     # Set up logging to both file and console
@@ -24,7 +26,7 @@ def setup_logging(log_level: str = "INFO") -> None:
         handlers=[
             logging.StreamHandler(),  # Console handler
             logging.FileHandler(  # File handler
-                filename=log_dir / "moodlemate.log", encoding="utf-8"
+                filename=log_dir / "moodlemate.log", encoding="utf-8", mode="a"
             ),
         ],
     )

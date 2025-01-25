@@ -1,62 +1,91 @@
-import json
 import logging
+import random
+from datetime import datetime
 from typing import Optional
 
-from requests.exceptions import RequestException
 from src.core.notification.base import NotificationProvider
+from src.core.version import __version__
 from src.infrastructure.http.request_manager import request_manager
 
 logger = logging.getLogger(__name__)
 
 
 class DiscordProvider(NotificationProvider):
-    """Discord notification provider implementation."""
+    """Discord notification provider with rich embed support."""
 
-    def __init__(
-        self,
-        webhook_url: str,
-        bot_name: str = "MoodleMate",
-        thumbnail_url: Optional[str] = None,
-    ):
-        if not webhook_url:
-            raise ValueError("Discord webhook URL is required")
-
+    def __init__(self, webhook_url: str, bot_name: str, thumbnail_url: str) -> None:
         self.webhook_url = webhook_url
         self.bot_name = bot_name
         self.thumbnail_url = thumbnail_url
         self.session = request_manager.session
-        request_manager.update_headers({"Content-Type": "application/json"})
 
-    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    @staticmethod
+    def random_color() -> int:
+        return int(
+            "#{:02x}{:02x}{:02x}".format(
+                random.randint(0, 255),
+                random.randint(0, 255),
+                random.randint(0, 255),
+            )[1:],
+            16,
+        )
+
+    def send(self, subject: str, content: str, summary: Optional[str] = None) -> bool:
+        """Send a notification via Discord webhook."""
         try:
-            description = ""
-            if summary:
-                description = "**TLDR (AI Summary):**\n" + summary + "\n\n"
-            description += "**Message Content:**\n" + message
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             embed = {
                 "title": subject,
-                "description": description,
-                "color": 3447003,
-                "footer": {"text": "MoodleMate | Made with ❤️ by EvickaStudio"},
+                "description": content[:2000],  # Discord limit
+                "color": self.random_color(),
+                "thumbnail": (
+                    {"url": self.thumbnail_url} if self.thumbnail_url else None
+                ),
+                "fields": [],
+                "footer": {
+                    "text": f"{current_time} - Moodle-Mate v{__version__}",
+                    "icon_url": "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png",
+                },
             }
 
-            if self.thumbnail_url:
-                embed["thumbnail"] = {"url": self.thumbnail_url}
+            if summary:
+                embed["fields"].append(
+                    {
+                        "name": "TL;DR",
+                        "value": summary[:1024],  # Discord limit
+                        "inline": False,
+                    }
+                )
+
+            # Remove empty fields
+            if not embed["fields"]:
+                del embed["fields"]
+
+            # Remove None values
+            embed = {k: v for k, v in embed.items() if v is not None}
 
             payload = {
                 "username": self.bot_name,
+                "avatar_url": "https://raw.githubusercontent.com/EvickaStudio/Moodle-Mate/main/assets/logo.png",
                 "embeds": [embed],
-                "avatar_url": self.thumbnail_url,
             }
 
-            response = self.session.post(
-                self.webhook_url,
-                data=json.dumps(payload),
-            )
-            response.raise_for_status()
-            return True
+            request_manager.update_headers({"Content-Type": "application/json"})
+            response = self.session.post(self.webhook_url, json=payload)
 
-        except RequestException as e:
-            logger.error(f"Failed to send Discord message: {str(e)}")
-            return False 
+            if response.status_code == 204:
+                logger.info("Successfully sent Discord notification")
+                return True
+
+            response.raise_for_status()
+            logger.error(
+                "Discord API returned unexpected status code: %d, Response: %s",
+                response.status_code,
+                response.text,
+            )
+            return False
+
+        except Exception as e:
+            logger.error("Failed to send Discord message: %s", str(e))
+            return False

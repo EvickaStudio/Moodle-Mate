@@ -1,7 +1,7 @@
 import logging
 
-from src.services.ai import GPT
 from src.core.config.loader import Config
+from src.services.ai import GPT
 
 
 class NotificationSummarizer:
