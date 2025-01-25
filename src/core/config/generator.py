@@ -138,7 +138,7 @@ class ConfigGenerator:
                     "api_key": self._get_input(
                         "Enter your OpenAI API key", validator=self._validate_api_key
                     ),
-                    "model": self._get_input("Enter AI model name", "gpt-4"),
+                    "model": self._get_input("Enter AI model name", "gpt-4o-mini"),
                     "temperature": self._get_input(
                         "Enter temperature (0.0-1.0)", "0.7"
                     ),
