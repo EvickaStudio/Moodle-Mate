@@ -16,7 +16,7 @@ class PushbulletProvider(NotificationProvider):
         # if not api_key:
         #     raise ValueError("Pushbullet API key is required")
         # self.pb = Pushbullet(api_key)
-        pass
+        return
 
     def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
         # try:
@@ -28,4 +28,4 @@ class PushbulletProvider(NotificationProvider):
         # except Exception as e:
         #     logger.error(f"Failed to send Pushbullet notification: {str(e)}")
         #     return False
-        pass
+        return True

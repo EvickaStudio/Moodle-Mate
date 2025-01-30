@@ -17,3 +17,6 @@ find . -type f -name "*.pyo" -exec rm -f {} \;
 
 # remove all .pyc files recursively from the current directory
 find . -type f -name "*.pyc" -exec rm -f {} \;
+
+# For Windows
+# Get-ChildItem -Path . -Include "__pycache__" -Recurse -Directory | Remove-Item -Recurse -Force
