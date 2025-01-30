@@ -8,6 +8,7 @@ from src.core.config.loader import Config
 from src.core.notification.processor import NotificationProcessor
 from src.core.service_locator import ServiceLocator
 from src.core.services import initialize_services
+from src.core.utils.retry import with_retry
 from src.infrastructure.logging.setup import setup_logging
 from src.services.moodle.notification_handler import MoodleNotificationHandler
 from src.ui.cli.screen import animate_logo, logo_lines
@@ -21,7 +22,16 @@ def parse_args():
     parser.add_argument(
         "--gen-config", action="store_true", help="Generate a new configuration file"
     )
+    parser.add_argument("--config", default="config.ini", help="Path to config file")
     return parser.parse_args()
+
+
+@with_retry(max_retries=3, base_delay=5.0, max_delay=30.0)
+def fetch_and_process(moodle_handler, notification_processor):
+    """Fetch and process notifications with retry logic."""
+    if notification := moodle_handler.fetch_newest_notification():
+        notification_processor.process(notification)
+    return True
 
 
 def main() -> None:
@@ -53,17 +63,37 @@ def main() -> None:
         )
         moodle_handler = locator.get("moodle_handler", MoodleNotificationHandler)
 
+        consecutive_errors = 0
         # Main loop
         while True:
             try:
-                if notification := moodle_handler.fetch_newest_notification():
-                    notification_processor.process(notification)
+                success = fetch_and_process(moodle_handler, notification_processor)
+                if success:
+                    consecutive_errors = 0  # Reset error counter on success
 
-                time.sleep(config.notification.fetch_interval)
+                # Adaptive sleep based on error state
+                sleep_time = config.notification.fetch_interval
+                if consecutive_errors > 0:
+                    # Increase sleep time when experiencing errors
+                    sleep_time = min(sleep_time * (2**consecutive_errors), 300)
+                time.sleep(sleep_time)
 
             except Exception as e:
-                logging.error(f"Error during execution: {str(e)}")
-                time.sleep(10)
+                consecutive_errors += 1
+                logging.error(
+                    f"Error during execution (attempt {consecutive_errors}): {str(e)}"
+                )
+
+                if consecutive_errors >= config.notification.max_retries:
+                    logging.critical(
+                        "Too many consecutive errors. Restarting main loop..."
+                    )
+                    consecutive_errors = 0  # Reset counter and continue
+
+                # Exponential backoff sleep on error
+                error_sleep = min(30 * (2 ** (consecutive_errors - 1)), 300)
+                logging.info(f"Waiting {error_sleep} seconds before retry...")
+                time.sleep(error_sleep)
 
     except KeyboardInterrupt:
         logging.info("Shutting down gracefully...")
