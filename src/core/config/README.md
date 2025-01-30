@@ -17,19 +17,27 @@ password = your_password
 [ai]
 enabled = 1
 api_key = your_api_key
-model = gpt-4
-temperature = 0.7 # The temperature and max_tokens have an default value
+model = gpt-4o-mini
+temperature = 0.7
 max_tokens = 150
-system_prompt = Summarize the message concisely with appropriate emojis, excluding links. # An example system prompt that should be finetuned for your use case
-endpoint = https://api.openai.com/v1  # Optional custom endpoint
+system_prompt = Summarize the message concisely with appropriate emojis, excluding links.
+endpoint = https://api.openai.com/v1/chat/completions
 ```
 
 ## Notification Settings
 
 ```ini
 [notification]
-max_retries = 5 
+max_retries = 5
 fetch_interval = 60  # seconds
+```
+
+## Pushbullet Settings
+
+```ini
+[pushbullet]
+enabled = 0
+api_key = your_pushbullet_key  # Required if enabled
 ```
 
 ## Discord Settings
@@ -39,5 +47,10 @@ fetch_interval = 60  # seconds
 enabled = 1
 webhook_url = your_webhook_url
 bot_name = MoodleMate
-thumbnail_url = your_thumbnail_url # A optional thumbnail url for the webhook
+thumbnail_url = your_thumbnail_url  # Optional thumbnail URL for webhook
+```
+
+You can generate a new configuration file using the `--gen-config` flag when running MoodleMate:
+```bash
+python main.py --gen-config
 ```
