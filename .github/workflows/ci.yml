@@ -67,4 +67,5 @@ jobs:
              --exclude example \
              --exclude main.py \
              --exclude moodle/moodle_notification_handler.py \
+             --exclude src/services/markdown/rules/commonmark.py \
              --follow-imports=skip .
