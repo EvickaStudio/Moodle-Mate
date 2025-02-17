@@ -34,67 +34,92 @@ def fetch_and_process(moodle_handler, notification_processor):
     return True
 
 
+def handle_config_generation(generator: ConfigGenerator) -> None:
+    """Handle configuration file generation."""
+    if generator.generate_config():
+        logging.info("Configuration file generated successfully!")
+        sys.exit(0)
+    else:
+        logging.error("Failed to generate configuration file.")
+        sys.exit(1)
+
+
+def initialize_app_services() -> tuple:
+    """Initialize and return required services."""
+    initialize_services()
+    locator = ServiceLocator()
+
+    config = locator.get("config", Config)
+    notification_processor = locator.get(
+        "notification_processor", NotificationProcessor
+    )
+    moodle_handler = locator.get("moodle_handler", MoodleNotificationHandler)
+
+    return config, notification_processor, moodle_handler
+
+
+def handle_error(
+    consecutive_errors: int, error: Exception, config
+) -> tuple[int, float]:
+    """Handle error and return updated error count and sleep time."""
+    consecutive_errors += 1
+    logging.error(
+        f"Error during execution (attempt {consecutive_errors}): {str(error)}"
+    )
+
+    if consecutive_errors >= config.notification.max_retries:
+        logging.critical("Too many consecutive errors. Restarting main loop...")
+        consecutive_errors = 0
+
+    error_sleep = min(30 * (2 ** (consecutive_errors - 1)), 300)
+    logging.info(f"Waiting {error_sleep} seconds before retry...")
+
+    return consecutive_errors, error_sleep
+
+
+def calculate_sleep_time(consecutive_errors: int, base_interval: int) -> float:
+    """Calculate adaptive sleep time based on error state."""
+    if consecutive_errors > 0:
+        return min(base_interval * (2**consecutive_errors), 300)
+    return base_interval
+
+
+def run_main_loop(config, moodle_handler, notification_processor) -> None:
+    """Run the main application loop."""
+    consecutive_errors = 0
+
+    while True:
+        try:
+            success = fetch_and_process(moodle_handler, notification_processor)
+            if success:
+                consecutive_errors = 0
+
+            sleep_time = calculate_sleep_time(
+                consecutive_errors, config.notification.fetch_interval
+            )
+            time.sleep(sleep_time)
+
+        except Exception as e:
+            consecutive_errors, error_sleep = handle_error(
+                consecutive_errors, e, config
+            )
+            time.sleep(error_sleep)
+
+
 def main() -> None:
     """Main entry point of the application."""
     setup_logging()
     args = parse_args()
 
     if args.gen_config:
-        generator = ConfigGenerator()
-        if generator.generate_config():
-            logging.info("Configuration file generated successfully!")
-            sys.exit(0)
-        else:
-            logging.error("Failed to generate configuration file.")
-            sys.exit(1)
+        handle_config_generation(ConfigGenerator())
 
     animate_logo(logo_lines)
     logging.info("Starting Moodle Mate...")
 
     try:
-        # Initialize all services
-        initialize_services()
-
-        # Get required services from locator
-        locator = ServiceLocator()
-        config = locator.get("config", Config)
-        notification_processor = locator.get(
-            "notification_processor", NotificationProcessor
-        )
-        moodle_handler = locator.get("moodle_handler", MoodleNotificationHandler)
-
-        consecutive_errors = 0
-        # Main loop
-        while True:
-            try:
-                success = fetch_and_process(moodle_handler, notification_processor)
-                if success:
-                    consecutive_errors = 0  # Reset error counter on success
-
-                # Adaptive sleep based on error state
-                sleep_time = config.notification.fetch_interval
-                if consecutive_errors > 0:
-                    # Increase sleep time when experiencing errors
-                    sleep_time = min(sleep_time * (2**consecutive_errors), 300)
-                time.sleep(sleep_time)
-
-            except Exception as e:
-                consecutive_errors += 1
-                logging.error(
-                    f"Error during execution (attempt {consecutive_errors}): {str(e)}"
-                )
-
-                if consecutive_errors >= config.notification.max_retries:
-                    logging.critical(
-                        "Too many consecutive errors. Restarting main loop..."
-                    )
-                    consecutive_errors = 0  # Reset counter and continue
-
-                # Exponential backoff sleep on error
-                error_sleep = min(30 * (2 ** (consecutive_errors - 1)), 300)
-                logging.info(f"Waiting {error_sleep} seconds before retry...")
-                time.sleep(error_sleep)
-
+        config, notification_processor, moodle_handler = initialize_app_services()
+        run_main_loop(config, moodle_handler, notification_processor)
     except KeyboardInterrupt:
         logging.info("Shutting down gracefully...")
     except Exception as e:
