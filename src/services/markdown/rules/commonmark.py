@@ -214,6 +214,11 @@ def code_rule(content, node, options):
     while delimiter in matches:
         delimiter += "`"
 
+    # Use string concatenation instead of f-string for the escaped quote
+    title = clean_attribute(node.get_attribute("title"))
+    if title:
+        title = ' "' + title.replace('"', '\\"') + '"'
+
     return delimiter + extra_space + content + extra_space + delimiter
 
 
