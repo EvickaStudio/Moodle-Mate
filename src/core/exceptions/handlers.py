@@ -27,8 +27,8 @@ def handle_exceptions(func):
             result = func(*args, **kwargs)
         except BaseException as e:
             logger.exception(f"Exception occurred in {func.__name__}: {str(e)}")
-            _, err, tb = sys.exc_info()
-            logger.debug(traceback.format_tb(err.__traceback__)[-1])
+            tb = traceback.extract_tb(e.__traceback__)
+            logger.debug(tb[-1])
             return None
         else:
             return result
