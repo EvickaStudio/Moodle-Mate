@@ -1,5 +1,9 @@
+
+# Personal
 bun.lockb
 ./test.py
+describe-commit
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
