@@ -36,7 +36,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
   - Modular architecture for easy integration of new platforms
 
 - **AI Integration**
-  - Support for multiple AI providers
+  - Support for multiple AI providers (OpenAI API like)
   - Configurable models and parameters
   - Optional summarization feature
 

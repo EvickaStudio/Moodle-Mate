@@ -77,6 +77,24 @@ class GPT:
         self._api_key = key
         openai.api_key = key
 
+    @property
+    def endpoint(self) -> Optional[str]:
+        """Get the configured API endpoint."""
+        return self._endpoint
+
+    @endpoint.setter
+    def endpoint(self, url: str) -> None:
+        """
+        Set the API endpoint URL.
+        This can be useful for using a custom endpoint
+        like ollama or other services like openrouter
+
+        Args:
+            url: The OpenAI API endpoint URL
+        """
+        self._endpoint = url
+        openai.base_url = url
+
     def count_tokens(self, text: str, model: str = ModelType.GPT4_MINI.value) -> int:
         """
         Count tokens in text for a specific model.
@@ -101,18 +119,14 @@ class GPT:
 
     def _validate_model(self, model: str) -> None:
         """
-        Validate that a model is supported.
+        Validate model and log warning if pricing info is unavailable.
 
         Args:
             model: The model name to validate
-
-        Raises:
-            ValueError: If the model is not supported
         """
         if model not in self.PRICING:
-            supported_models = ", ".join(self.PRICING.keys())
-            raise ValueError(
-                f"Model '{model}' not supported. Supported models: {supported_models}"
+            logging.warning(
+                f"Model '{model}' not in pricing database. Cost tracking will be disabled."
             )
 
     def chat_completion(
@@ -165,60 +179,56 @@ class GPT:
         temperature: float,
         max_tokens: Optional[int],
     ) -> str:
-        """
-        Internal method to handle chat completion requests.
+        """Internal method to handle chat completion requests."""
+        try:
+            # Make the API call first since token counting might fail for unknown models
+            response: ChatCompletion = openai.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
 
-        Args:
-            messages: List of message dictionaries
-            model: Model identifier
-            temperature: Temperature parameter
-            max_tokens: Maximum tokens for response
+            # Extract and validate response
+            if not response.choices:
+                raise ChatCompletionError("No completion choices returned")
 
-        Returns:
-            Generated response text
+            output_text = response.choices[0].message.content or ""
 
-        Raises:
-            ChatCompletionError: If completion fails
-            TokenizationError: If token counting fails
-        """
-        # Count input tokens
-        input_tokens = sum(
-            self.count_tokens(msg["content"], model=model) for msg in messages
-        )
+            # Only calculate and log costs for known models
+            if model in self.PRICING:
+                input_tokens = sum(
+                    self.count_tokens(msg["content"], model=model) for msg in messages
+                )
+                output_tokens = self.count_tokens(output_text, model=model)
 
-        # Make the API call
-        response: ChatCompletion = openai.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
+                pricing = self.PRICING[model]
+                input_cost, output_cost, total_cost = pricing.calculate_costs(
+                    input_tokens, output_tokens
+                )
 
-        # Extract and validate response
-        if not response.choices:
-            raise ChatCompletionError("No completion choices returned")
+                logging.info(
+                    f"\n{'-'*40}\n"
+                    f"{'Model':<15}: {model}\n"
+                    f"{'Input Tokens':<15}: {input_tokens:,}\n"
+                    f"{'Output Tokens':<15}: {output_tokens:,}\n"
+                    f"{'Input Cost':<15}: ${input_cost:.6f}\n"
+                    f"{'Output Cost':<15}: ${output_cost:.6f}\n"
+                    f"{'Total Cost':<15}: ${total_cost:.6f}\n"
+                    f"{'-'*40}"
+                )
+            else:
+                logging.info(
+                    f"\n{'-'*40}\n"
+                    f"{'Model':<15}: {model}\n"
+                    f"{'Cost Tracking':<15}: Disabled (unknown model)\n"
+                    f"{'-'*40}"
+                )
 
-        output_text = response.choices[0].message.content or ""
-        output_tokens = self.count_tokens(output_text, model=model)
+            return output_text
 
-        # Calculate and log costs
-        pricing = self.PRICING[model]
-        input_cost, output_cost, total_cost = pricing.calculate_costs(
-            input_tokens, output_tokens
-        )
-
-        logging.info(
-            f"\n{'-'*40}\n"
-            f"{'Model':<15}: {model}\n"
-            f"{'Input Tokens':<15}: {input_tokens:,}\n"
-            f"{'Output Tokens':<15}: {output_tokens:,}\n"
-            f"{'Input Cost':<15}: ${input_cost:.6f}\n"
-            f"{'Output Cost':<15}: ${output_cost:.6f}\n"
-            f"{'Total Cost':<15}: ${total_cost:.6f}\n"
-            f"{'-'*40}"
-        )
-
-        return output_text
+        except Exception as e:
+            raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
 
     def context_assistant(self, prompt: str) -> str:
         """

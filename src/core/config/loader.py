@@ -69,7 +69,9 @@ class Config:
                 "system_prompt",
                 "Summarize the message concisely with appropriate emojis, excluding links.",
             ),
-            endpoint=self._get_config("ai", "endpoint", None),
+            endpoint=self._get_config(
+                "ai", "endpoint", None
+            ),  # uses openai as fallback
         )
 
     def _load_notification_config(self) -> NotificationConfig:

@@ -18,10 +18,14 @@ password = your_password
 enabled = 1
 api_key = your_api_key
 model = gpt-4o-mini
+# Or models from eg. openrouter:
+# model = google/gemini-2.0-flash-001
 temperature = 0.7
 max_tokens = 150
 system_prompt = Summarize the message concisely with appropriate emojis, excluding links.
-endpoint = https://api.openai.com/v1/chat/completions
+endpoint = https://api.openai.com/v1/
+# for a custom endpoint like openrouter, you can use:
+# endpoint = https://openrouter.ai/api/v1/
 ```
 
 ## Notification Settings
@@ -51,6 +55,7 @@ thumbnail_url = your_thumbnail_url  # Optional thumbnail URL for webhook
 ```
 
 You can generate a new configuration file using the `--gen-config` flag when running MoodleMate:
+
 ```bash
 python main.py --gen-config
 ```
