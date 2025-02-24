@@ -35,18 +35,11 @@ class GPT:
         self._api_key = None
         self._endpoint = None
         self.PRICING = {
-            ModelType.GPT4.value: ModelPricing(2.50, 10.00),
-            ModelType.GPT4_0806.value: ModelPricing(2.50, 10.00),
-            ModelType.GPT4_0513.value: ModelPricing(5.00, 15.00),
-            ModelType.GPT4_MINI.value: ModelPricing(0.150, 0.600),
-            ModelType.GPT4_MINI_0718.value: ModelPricing(0.150, 0.600),
-            ModelType.GPT35_TURBO.value: ModelPricing(0.50, 1.50),
+            ModelType.GPT4O.value: ModelPricing(2.50, 10.00),
+            ModelType.GPT4O_MINI.value: ModelPricing(0.15, 0.60),
             ModelType.O1.value: ModelPricing(15.00, 60.00),
-            ModelType.O1_1217.value: ModelPricing(15.00, 60.00),
-            ModelType.O1_PREVIEW.value: ModelPricing(15.00, 60.00),
-            ModelType.O1_PREVIEW_0912.value: ModelPricing(15.00, 60.00),
-            ModelType.O1_MINI.value: ModelPricing(3.00, 12.00),
-            ModelType.O1_MINI_0912.value: ModelPricing(3.00, 12.00),
+            ModelType.O1_MINI.value: ModelPricing(1.10, 4.40),
+            ModelType.O3_MINI.value: ModelPricing(1.10, 4.40),
         }
         self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
