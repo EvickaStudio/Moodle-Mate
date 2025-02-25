@@ -32,7 +32,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 - **Multi-Platform Support**
   - Discord (via webhooks)
-  - Support for additional notification platforms (TODO)
+  - Plugin system for custom notification providers
   - Modular architecture for easy integration of new platforms
 
 - **AI Integration**
@@ -102,6 +102,19 @@ The application will:
 2. Connect to your Moodle instance
 3. Start monitoring for new notifications
 4. Process and deliver notifications according to your settings
+
+## Creating Custom Notification Providers
+
+MoodleMate now supports a plugin system that allows you to easily create and add your own notification providers without modifying the core code.
+
+### Quick Start
+
+1. Copy the template from `src/templates/notification_service_template.py` to `src/providers/notification/your_service_name/provider.py`
+2. Rename the class to match your service (e.g., `YourServiceNameProvider`)
+3. Implement the `send()` method with your service's API
+4. Add your service's configuration to `config.ini`
+
+For more detailed information, see the [Creating Custom Notification Providers](docs/CUSTOM_PROVIDERS.md) documentation.
 
 ## Contributing
 

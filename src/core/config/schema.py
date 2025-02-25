@@ -29,14 +29,29 @@ class NotificationConfig:
 
 
 @dataclass
-class PushbulletConfig:
-    enabled: bool = False
-    api_key: str = ""
-
-
-@dataclass
 class DiscordConfig:
     enabled: bool = False
     webhook_url: str = ""
     bot_name: str = "MoodleMate"
     thumbnail_url: str = ""
+
+
+@dataclass
+class WebhookSiteConfig:
+    """Configuration for Webhook.site notification provider."""
+
+    enabled: bool = False
+    webhook_url: str = ""
+    include_summary: bool = True
+
+
+@dataclass
+class ProviderConfig:
+    """Dynamic configuration for notification providers.
+
+    This class is used for dynamically loaded providers that don't have
+    a predefined configuration structure.
+    """
+
+    enabled: bool = False
+    # Additional attributes will be added dynamically

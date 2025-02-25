@@ -1,4 +1,5 @@
 import configparser
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -7,7 +8,8 @@ from .schema import (
     DiscordConfig,
     MoodleConfig,
     NotificationConfig,
-    PushbulletConfig,
+    ProviderConfig,
+    WebhookSiteConfig,
 )
 
 
@@ -33,8 +35,13 @@ class Config:
         self.moodle = self._load_moodle_config()
         self.ai = self._load_ai_config()
         self.notification = self._load_notification_config()
-        self.pushbullet = self._load_pushbullet_config()
+
+        # Load built-in providers
         self.discord = self._load_discord_config()
+        self.webhook_site = self._load_webhook_site_config()
+
+        # Load dynamic provider configurations
+        self._load_provider_configs()
 
     def _get_config(self, section: str, key: str, default: Any = None) -> Any:
         """Get configuration value with fallback to default."""
@@ -83,13 +90,6 @@ class Config:
             ),
         )
 
-    def _load_pushbullet_config(self) -> PushbulletConfig:
-        """Load Pushbullet configuration."""
-        return PushbulletConfig(
-            enabled=self._get_bool("pushbullet", "enabled", False),
-            api_key=self._get_config("pushbullet", "api_key", ""),
-        )
-
     def _load_discord_config(self) -> DiscordConfig:
         """Load Discord configuration."""
         return DiscordConfig(
@@ -98,3 +98,46 @@ class Config:
             bot_name=self._get_config("discord", "bot_name", "MoodleMate"),
             thumbnail_url=self._get_config("discord", "thumbnail_url", ""),
         )
+
+    def _load_webhook_site_config(self) -> WebhookSiteConfig:
+        """Load Webhook.site configuration."""
+        return WebhookSiteConfig(
+            enabled=self._get_bool("webhook_site", "enabled", False),
+            webhook_url=self._get_config("webhook_site", "webhook_url", ""),
+            include_summary=self._get_bool("webhook_site", "include_summary", True),
+        )
+
+    def _load_provider_configs(self):
+        """Dynamically load configuration for all providers."""
+        # Get all sections that might be providers
+        for section in self.config.sections():
+            # Skip known non-provider sections
+            if section in [
+                "moodle",
+                "ai",
+                "notification",
+                "discord",
+                "webhook_site",
+            ]:
+                continue
+
+            # Check if this section has an 'enabled' option
+            if self.config.has_option(section, "enabled"):
+                # Create a dynamic provider config
+                provider_config = ProviderConfig(
+                    enabled=self._get_bool(section, "enabled", False)
+                )
+
+                # Add all other options from this section
+                for option in self.config.options(section):
+                    if option != "enabled":
+                        setattr(
+                            provider_config,
+                            option,
+                            self._get_config(section, option, ""),
+                        )
+
+                # Set the config on the main config object
+                setattr(self, section, provider_config)
+                # logging.info(f"Loaded dynamic provider config: {section}")
+                logging.info(f"Found provider config for {section} in config.ini")

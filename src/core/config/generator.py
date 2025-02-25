@@ -1,8 +1,13 @@
 import configparser
+import importlib
+import inspect
 import logging
 import os
+import pkgutil
 import re
-from typing import Callable, Optional
+from typing import Callable, Dict, Optional, Type
+
+from src.core.notification.base import NotificationProvider
 
 
 class ConfigGenerator:
@@ -14,6 +19,68 @@ class ConfigGenerator:
             r"https://discord\.com/api/webhooks/\d+/[\w-]+"
         )
         self.api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
+
+    def _discover_providers(
+        self,
+    ) -> Dict[str, Type[NotificationProvider]]:
+        """Discover available notification providers."""
+        providers: Dict[str, Type[NotificationProvider]] = {}
+
+        try:
+            # Import the notification package
+            from src.providers import notification
+
+            # Get built-in providers
+            self._load_builtin_providers(providers)
+
+            # Discover additional providers using the plugin system
+            self._load_plugin_providers(providers, notification.__path__)
+
+        except Exception as e:
+            logging.error(f"Error discovering providers: {str(e)}")
+
+        return providers
+
+    def _load_builtin_providers(
+        self, providers: Dict[str, Type[NotificationProvider]]
+    ) -> None:
+        """Load built-in notification providers."""
+        for provider_name in ["discord", "pushbullet", "slack", "ntfy"]:
+            try:
+                module = importlib.import_module(
+                    f"src.providers.notification.{provider_name}.provider"
+                )
+                self._extract_provider_classes(module, provider_name, providers)
+            except ImportError:
+                continue
+
+    def _load_plugin_providers(
+        self, providers: Dict[str, Type[NotificationProvider]], package_path
+    ) -> None:
+        """Load plugin notification providers."""
+        for _, name, is_pkg in pkgutil.iter_modules(package_path):
+            if is_pkg and name not in providers:
+                try:
+                    module = importlib.import_module(
+                        f"src.providers.notification.{name}.provider"
+                    )
+                    self._extract_provider_classes(module, name, providers)
+                except ImportError:
+                    continue
+
+    def _extract_provider_classes(
+        self,
+        module,
+        provider_name: str,
+        providers: Dict[str, Type[NotificationProvider]],
+    ) -> None:
+        """Extract notification provider classes from a module."""
+        for item_name, item in inspect.getmembers(module, inspect.isclass):
+            if (
+                issubclass(item, NotificationProvider)
+                and item is not NotificationProvider
+            ):
+                providers[provider_name] = item
 
     def generate_config(self) -> bool:
         """Generate configuration file interactively."""
@@ -30,11 +97,12 @@ class ConfigGenerator:
             # Notification Configuration
             self._configure_notification()
 
-            # Discord Configuration
+            # Built-in provider configurations
             self._configure_discord()
-
-            # Pushbullet Configuration
             self._configure_pushbullet()
+
+            # Discover and configure additional providers
+            self._configure_additional_providers()
 
             return self._save_config()
 
@@ -197,6 +265,66 @@ class ConfigGenerator:
             self.config["pushbullet"].update(
                 {"api_key": self._get_input("Enter Pushbullet API key")}
             )
+
+    def _configure_additional_providers(self):
+        """Discover and configure additional notification providers."""
+        providers = self._discover_providers()
+
+        # Skip built-in providers that are already configured
+        for provider_name in ["discord", "pushbullet"]:
+            if provider_name in providers:
+                del providers[provider_name]
+
+        if not providers:
+            return
+
+        print("\n🔌 Additional Notification Providers")
+        print("-" * 50)
+        print(f"Found {len(providers)} additional notification providers.")
+
+        for name, provider_class in providers.items():
+            print(f"\n📱 {name.capitalize()} Configuration")
+            print("-" * 50)
+
+            # Get provider description from docstring
+            description = (
+                provider_class.__doc__ or f"{name.capitalize()} notification provider"
+            )
+            print(f"{description}\n")
+
+            enabled = self._get_bool_input(
+                f"Enable {name.capitalize()} notifications?", False
+            )
+            self.config[name] = {"enabled": "1" if enabled else "0"}
+
+            if enabled:
+                # Get init parameters for the provider
+                try:
+                    init_params = inspect.signature(provider_class.__init__).parameters
+
+                    # Skip self parameter
+                    param_names = [p for p in init_params if p != "self"]
+
+                    for param_name in param_names:
+                        param = init_params[param_name]
+                        # Check if parameter has a default value
+                        has_default = param.default is not param.empty
+                        default_value = param.default if has_default else ""
+
+                        # Make parameter optional if it has a default value
+                        value = self._get_input(
+                            f"Enter {param_name.replace('_', ' ')}",
+                            default_value if has_default else None,
+                            optional=has_default,
+                        )
+
+                        if value or not has_default:
+                            self.config[name][param_name] = value
+                except Exception as e:
+                    logging.error(f"Error configuring {name}: {str(e)}")
+                    print(
+                        f"Could not automatically configure {name}. Please check the documentation."
+                    )
 
     def _save_config(self) -> bool:
         """Save configuration to file."""

@@ -88,7 +88,7 @@ class GPT:
         self._endpoint = url
         openai.base_url = url
 
-    def count_tokens(self, text: str, model: str = ModelType.GPT4_MINI.value) -> int:
+    def count_tokens(self, text: str, model: str = ModelType.GPT4O_MINI.value) -> int:
         """
         Count tokens in text for a specific model.
 

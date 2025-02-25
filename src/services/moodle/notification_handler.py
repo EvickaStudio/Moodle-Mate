@@ -57,6 +57,7 @@ class MoodleNotificationHandler:
             self.moodle_user_id = self.api.get_user_id()
             if not self.moodle_user_id:
                 raise MoodleAuthenticationError("Failed to get user ID after login")
+            self.moodle_user_id = int(self.moodle_user_id)  # Cast to int
 
             self.last_notification_id: Optional[int] = None
 
@@ -100,6 +101,10 @@ class MoodleNotificationHandler:
         while retries < max_retries:
             try:
                 logger.info("Fetching notifications from Moodle")
+                # Ensure moodle_user_id is not None before passing it
+                if self.moodle_user_id is None:
+                    raise MoodleAuthenticationError("User ID is not available")
+
                 response = self.api.get_popup_notifications(self.moodle_user_id)
 
                 if not isinstance(response, dict):
@@ -114,13 +119,11 @@ class MoodleNotificationHandler:
                 # Validate notification format
                 notification = notifications[0]
                 processed = self._process_notification(notification)
-                if not processed:
-                    logger.error("Failed to process notification")
-                    return None
-
-                logger.debug(f"Latest notification: {processed}")
-                return processed
-
+                return self._log_and_return(
+                    processed,
+                    "Failed to process notification",
+                    "Latest notification: ",
+                )
             except Exception as e:
                 retries += 1
                 if retries >= max_retries:
@@ -214,17 +217,20 @@ class MoodleNotificationHandler:
 
             user_data = response[0]
             processed = self._process_user_data(user_data)
-            if not processed:
-                logger.error("Failed to process user data")
-                return None
-
-            logger.debug(f"User data fetched: {processed}")
-            return processed
-
+            return self._log_and_return(
+                processed, "Failed to process user data", "User data fetched: "
+            )
         except Exception as e:
             raise MoodleConnectionError(
                 f"Failed to fetch user {user_id}: {str(e)}"
             ) from e
+
+    def _log_and_return(self, processed, error_message, debug_message_prefix):
+        if not processed:
+            logger.error(error_message)
+            return None
+        logger.debug(f"{debug_message_prefix}{processed}")
+        return processed
 
     def _process_notification(self, notification: dict) -> Optional[NotificationData]:
         """Process raw notification data into typed format."""

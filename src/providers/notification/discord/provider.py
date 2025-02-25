@@ -123,12 +123,12 @@ class DiscordProvider(NotificationProvider):
 
         return embed
 
-    def send(self, subject: str, content: str, summary: Optional[str] = None) -> bool:
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
         """Send a notification via Discord webhook.
 
         Args:
             subject: Notification subject/title
-            content: Main notification content
+            message: Main notification content
             summary: Optional summary text
 
         Returns:
@@ -140,7 +140,7 @@ class DiscordProvider(NotificationProvider):
                 "username": self.bot_name,
                 "avatar_url": self.LOGO_URL,
                 "embeds": [
-                    self.create_notification_embed(subject, content, summary).to_dict()
+                    self.create_notification_embed(subject, message, summary).to_dict()
                 ],
             }
 
