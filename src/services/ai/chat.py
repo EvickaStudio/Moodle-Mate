@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Dict, List, Optional, Any, cast
+from typing import Dict, List, Optional
 
 import openai  # version 1.5
 import tiktoken
@@ -197,11 +197,17 @@ class GPT:
                 typed_messages: List[ChatCompletionMessageParam] = []
                 for msg in messages:
                     if msg["role"] == "system":
-                        typed_messages.append({"role": "system", "content": msg["content"]})
+                        typed_messages.append(
+                            {"role": "system", "content": msg["content"]}
+                        )
                     elif msg["role"] == "user":
-                        typed_messages.append({"role": "user", "content": msg["content"]})
+                        typed_messages.append(
+                            {"role": "user", "content": msg["content"]}
+                        )
                     elif msg["role"] == "assistant":
-                        typed_messages.append({"role": "assistant", "content": msg["content"]})
+                        typed_messages.append(
+                            {"role": "assistant", "content": msg["content"]}
+                        )
                     # Add other roles as needed
 
                 # Make the API call first since token counting might fail for unknown models
