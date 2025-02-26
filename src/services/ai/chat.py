@@ -7,7 +7,16 @@ import tiktoken
 from openai.types.chat import ChatCompletion
 
 from .calculate import ModelPricing, ModelType
-from .errors import ChatCompletionError, InvalidAPIKeyError, TokenizationError, RateLimitExceededError, APITimeoutError, APIConnectionError, ServerError, ClientError
+from .errors import (
+    APIConnectionError,
+    APITimeoutError,
+    ChatCompletionError,
+    ClientError,
+    InvalidAPIKeyError,
+    RateLimitExceededError,
+    ServerError,
+    TokenizationError,
+)
 
 
 class GPT:
@@ -170,7 +179,7 @@ class GPT:
         except Exception as e:
             raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
 
-    def _chat_completion(
+    def _chat_completion(  # noqa: C901
         self,
         messages: List[Dict[str, str]],
         model: str,
@@ -180,7 +189,7 @@ class GPT:
         """Internal method to handle chat completion requests."""
         max_retries = 3
         retry_delay = 2  # seconds
-        
+
         for attempt in range(1, max_retries + 1):
             try:
                 # Make the API call first since token counting might fail for unknown models
@@ -200,7 +209,8 @@ class GPT:
                 # Only calculate and log costs for known models
                 if model in self.PRICING:
                     input_tokens = sum(
-                        self.count_tokens(msg["content"], model=model) for msg in messages
+                        self.count_tokens(msg["content"], model=model)
+                        for msg in messages
                     )
                     output_tokens = self.count_tokens(output_text, model=model)
 
@@ -231,47 +241,74 @@ class GPT:
 
             except openai.RateLimitError as e:
                 if attempt < max_retries:
-                    wait_time = retry_delay * (2 ** (attempt - 1))  # Exponential backoff
-                    logging.warning(f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})")
+                    wait_time = retry_delay * (
+                        2 ** (attempt - 1)
+                    )  # Exponential backoff
+                    logging.warning(
+                        f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
                     import time
+
                     time.sleep(wait_time)
                 else:
-                    raise RateLimitExceededError(f"Rate limit exceeded after {max_retries} attempts: {str(e)}") from e
-                
+                    raise RateLimitExceededError(
+                        f"Rate limit exceeded after {max_retries} attempts: {str(e)}"
+                    ) from e
+
             except openai.APITimeoutError as e:
                 if attempt < max_retries:
                     wait_time = retry_delay * (2 ** (attempt - 1))
-                    logging.warning(f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})")
+                    logging.warning(
+                        f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
                     import time
+
                     time.sleep(wait_time)
                 else:
-                    raise APITimeoutError(f"API request timed out after {max_retries} attempts: {str(e)}") from e
-                
+                    raise APITimeoutError(
+                        f"API request timed out after {max_retries} attempts: {str(e)}"
+                    ) from e
+
             except openai.APIConnectionError as e:
                 if attempt < max_retries:
                     wait_time = retry_delay * (2 ** (attempt - 1))
-                    logging.warning(f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})")
+                    logging.warning(
+                        f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
                     import time
+
                     time.sleep(wait_time)
                 else:
-                    raise APIConnectionError(f"API connection failed after {max_retries} attempts: {str(e)}") from e
-                
+                    raise APIConnectionError(
+                        f"API connection failed after {max_retries} attempts: {str(e)}"
+                    ) from e
+
             except openai.APIError as e:
                 if 500 <= getattr(e, "status_code", 0) < 600:
                     if attempt < max_retries:
                         wait_time = retry_delay * (2 ** (attempt - 1))
-                        logging.warning(f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})")
+                        logging.warning(
+                            f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                        )
                         import time
+
                         time.sleep(wait_time)
                     else:
-                        raise ServerError(f"OpenAI server error after {max_retries} attempts: {str(e)}") from e
+                        raise ServerError(
+                            f"OpenAI server error after {max_retries} attempts: {str(e)}"
+                        ) from e
                 elif 400 <= getattr(e, "status_code", 0) < 500:
                     raise ClientError(f"Client error: {str(e)}") from e
                 else:
                     raise ChatCompletionError(f"API error: {str(e)}") from e
-                
+
             except Exception as e:
                 raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
+
+        # Add this line to handle the case when all retries fail but no exception is raised
+        raise ChatCompletionError(
+            f"Chat completion failed after {max_retries} attempts"
+        )
 
     def context_assistant(self, prompt: str) -> str:
         """
