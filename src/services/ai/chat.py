@@ -1,10 +1,11 @@
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, cast
 
 import openai  # version 1.5
 import tiktoken
 from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
 from .calculate import ModelPricing, ModelType
 from .errors import (
@@ -192,10 +193,21 @@ class GPT:
 
         for attempt in range(1, max_retries + 1):
             try:
+                # Convert messages to the expected type
+                typed_messages: List[ChatCompletionMessageParam] = []
+                for msg in messages:
+                    if msg["role"] == "system":
+                        typed_messages.append({"role": "system", "content": msg["content"]})
+                    elif msg["role"] == "user":
+                        typed_messages.append({"role": "user", "content": msg["content"]})
+                    elif msg["role"] == "assistant":
+                        typed_messages.append({"role": "assistant", "content": msg["content"]})
+                    # Add other roles as needed
+
                 # Make the API call first since token counting might fail for unknown models
                 response: ChatCompletion = openai.chat.completions.create(
                     model=model,
-                    messages=messages,
+                    messages=typed_messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )
