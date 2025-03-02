@@ -6,6 +6,7 @@ from src.core.notification.base import NotificationProvider
 from src.core.plugin_manager import PluginManager
 
 from .discord.provider import DiscordProvider
+from .pushbullet.provider import PushbulletProvider
 from .webhook_site.provider import WebhookSiteProvider
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,17 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
             )
         )
         already_loaded_providers.add("discord")
+
+    # Initialize Pushbullet provider if enabled
+    if hasattr(config, "pushbullet") and config.pushbullet.enabled:
+        logger.info("Initializing Pushbullet provider")
+        providers.append(
+            PushbulletProvider(
+                api_key=config.pushbullet.api_key,
+                include_summary=config.pushbullet.include_summary,
+            )
+        )
+        already_loaded_providers.add("pushbullet")
 
     # Initialize Webhook.site provider if enabled
     if hasattr(config, "webhook_site") and config.webhook_site.enabled:
@@ -91,6 +103,7 @@ def get_configured_provider_names(config: Config) -> List[str]:
 
 __all__ = [
     "DiscordProvider",
+    "PushbulletProvider",
     "WebhookSiteProvider",
     "initialize_providers",
 ]
