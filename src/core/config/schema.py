@@ -55,6 +55,18 @@ class PushbulletConfig:
 
 
 @dataclass
+class GotifyConfig:
+    """Configuration for Gotify notification provider."""
+
+    enabled: bool = False
+    server_url: str = ""
+    app_token: str = ""
+    priority: int = 5
+    include_summary: bool = True
+    use_markdown: bool = True
+
+
+@dataclass
 class ProviderConfig:
     """Dynamic configuration for notification providers.
 

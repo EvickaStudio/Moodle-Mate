@@ -42,16 +42,25 @@ fetch_interval = 60  # seconds
 [pushbullet]
 enabled = 0
 api_key = your_pushbullet_key  # Required if enabled
+include_summary = 1
 ```
 
-## Discord Settings
+## Gotify Settings
 
 ```ini
-[discord]
-enabled = 1
+[gotify]
+enabled = 0
+server_url = https://gotify.your-domain.com
+app_token = your_gotify_app_token
+priority = 5
+include_summary = 1
+use_markdown = 1
+```
+
 webhook_url = your_webhook_url
 bot_name = MoodleMate
 thumbnail_url = your_thumbnail_url  # Optional thumbnail URL for webhook
+
 ```
 
 You can generate a new configuration file using the `--gen-config` flag when running MoodleMate:

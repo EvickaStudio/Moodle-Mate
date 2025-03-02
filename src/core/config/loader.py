@@ -6,6 +6,7 @@ from typing import Any
 from .schema import (
     AIConfig,
     DiscordConfig,
+    GotifyConfig,
     MoodleConfig,
     NotificationConfig,
     ProviderConfig,
@@ -41,6 +42,7 @@ class Config:
         self.discord = self._load_discord_config()
         self.webhook_site = self._load_webhook_site_config()
         self.pushbullet = self._load_pushbullet_config()
+        self.gotify = self._load_gotify_config()
 
         # Load dynamic provider configurations
         self._load_provider_configs()
@@ -117,6 +119,17 @@ class Config:
             include_summary=self._get_bool("pushbullet", "include_summary", True),
         )
 
+    def _load_gotify_config(self) -> GotifyConfig:
+        """Load Gotify configuration."""
+        return GotifyConfig(
+            enabled=self._get_bool("gotify", "enabled", False),
+            server_url=self._get_config("gotify", "server_url", ""),
+            app_token=self._get_config("gotify", "app_token", ""),
+            priority=int(self._get_config("gotify", "priority", "5")),
+            include_summary=self._get_bool("gotify", "include_summary", True),
+            use_markdown=self._get_bool("gotify", "use_markdown", True),
+        )
+
     def _load_provider_configs(self):
         """Dynamically load configuration for all providers."""
         # Get all sections that might be providers
@@ -129,6 +142,7 @@ class Config:
                 "discord",
                 "webhook_site",
                 "pushbullet",
+                "gotify",
             ]:
                 continue
 

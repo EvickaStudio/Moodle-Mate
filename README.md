@@ -31,8 +31,9 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 - **Multi-Platform Support**
   - Discord (via webhooks)
   - Pushbullet (send to all your devices)
-  - Plugin system for custom notification providers
-  - Modular architecture for easy integration of new platforms
+  - Gotify (self-hosted push service)
+  - Plugin like system for custom notification providers
+    - Modular architecture for easy integration of new platforms
 
 - **AI Integration**
   - Support for multiple AI providers (OpenAI API like)

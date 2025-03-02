@@ -6,6 +6,7 @@ from src.core.notification.base import NotificationProvider
 from src.core.plugin_manager import PluginManager
 
 from .discord.provider import DiscordProvider
+from .gotify.provider import GotifyProvider
 from .pushbullet.provider import PushbulletProvider
 from .webhook_site.provider import WebhookSiteProvider
 
@@ -39,17 +40,6 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
         )
         already_loaded_providers.add("discord")
 
-    # Initialize Pushbullet provider if enabled
-    if hasattr(config, "pushbullet") and config.pushbullet.enabled:
-        logger.info("Initializing Pushbullet provider")
-        providers.append(
-            PushbulletProvider(
-                api_key=config.pushbullet.api_key,
-                include_summary=config.pushbullet.include_summary,
-            )
-        )
-        already_loaded_providers.add("pushbullet")
-
     # Initialize Webhook.site provider if enabled
     if hasattr(config, "webhook_site") and config.webhook_site.enabled:
         logger.info("Initializing Webhook.site provider")
@@ -61,22 +51,51 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
         )
         already_loaded_providers.add("webhook_site")
 
-    # Load dynamically discovered providers
-    try:
-        # Pass the set of already loaded providers to avoid duplicates
-        dynamic_providers = PluginManager.load_enabled_providers(
-            config, already_loaded=already_loaded_providers
-        )
-        providers.extend(dynamic_providers)
-    except Exception as e:
-        logger.error(f"Error loading dynamic providers: {str(e)}")
-
-    # Log warning for configured but missing providers
-    for provider_name in get_configured_provider_names(config):
-        if provider_name not in already_loaded_providers and provider_name != "discord":
-            logger.warning(
-                f"Provider '{provider_name}' is configured but not implemented or found"
+    # Initialize Pushbullet provider if enabled
+    if hasattr(config, "pushbullet") and config.pushbullet.enabled:
+        logger.info("Initializing Pushbullet provider")
+        providers.append(
+            PushbulletProvider(
+                api_key=config.pushbullet.api_key,
+                include_summary=config.pushbullet.include_summary,
             )
+        )
+        already_loaded_providers.add("pushbullet")
+
+    # Initialize Gotify provider if enabled
+    if hasattr(config, "gotify") and config.gotify.enabled:
+        logger.info("Initializing Gotify provider")
+        providers.append(
+            GotifyProvider(
+                server_url=config.gotify.server_url,
+                app_token=config.gotify.app_token,
+                priority=config.gotify.priority,
+                include_summary=config.gotify.include_summary,
+                use_markdown=config.gotify.use_markdown,
+            )
+        )
+        already_loaded_providers.add("gotify")
+
+    # Initialize dynamic providers from plugins
+    plugin_manager = PluginManager()
+    plugin_providers = plugin_manager.get_notification_providers()
+
+    for provider_name, provider_class in plugin_providers.items():
+        if provider_name in already_loaded_providers:
+            logger.warning(
+                f"Skipping plugin provider '{provider_name}' as it conflicts with a built-in provider"
+            )
+            continue
+
+        if hasattr(config, provider_name) and getattr(config, provider_name).enabled:
+            logger.info(f"Initializing plugin provider: {provider_name}")
+            provider_config = getattr(config, provider_name)
+            # Convert provider_config to dict and remove 'enabled' key
+            config_dict = {
+                k: v for k, v in provider_config.__dict__.items() if k != "enabled"
+            }
+            providers.append(provider_class(**config_dict))
+            already_loaded_providers.add(provider_name)
 
     logger.info(
         f"Initialized {len(providers)} notification providers: {[p.__class__.__name__ for p in providers]}"
@@ -103,6 +122,7 @@ def get_configured_provider_names(config: Config) -> List[str]:
 
 __all__ = [
     "DiscordProvider",
+    "GotifyProvider",
     "PushbulletProvider",
     "WebhookSiteProvider",
     "initialize_providers",
