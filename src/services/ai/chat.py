@@ -5,9 +5,19 @@ from typing import Dict, List, Optional
 import openai  # version 1.5
 import tiktoken
 from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
 from .calculate import ModelPricing, ModelType
-from .errors import ChatCompletionError, InvalidAPIKeyError, TokenizationError
+from .errors import (
+    APIConnectionError,
+    APITimeoutError,
+    ChatCompletionError,
+    ClientError,
+    InvalidAPIKeyError,
+    RateLimitExceededError,
+    ServerError,
+    TokenizationError,
+)
 
 
 class GPT:
@@ -134,7 +144,7 @@ class GPT:
         Generate a response using OpenAI's chat completion.
 
         This method handles the chat completion request with proper error handling
-        and cost logging.
+        and cost logging. It includes automatic retries for transient errors.
 
         Args:
             model: The model to use
@@ -147,7 +157,12 @@ class GPT:
             The generated response text
 
         Raises:
-            ChatCompletionError: If the completion fails
+            ChatCompletionError: If the completion fails after retries
+            RateLimitExceededError: If rate limits are exceeded after retries
+            APITimeoutError: If requests time out after retries
+            APIConnectionError: If connection issues persist after retries
+            ServerError: If server errors persist after retries
+            ClientError: If there's a client-side error
             ValueError: If the model is not supported
         """
         self._validate_model(model)
@@ -165,7 +180,7 @@ class GPT:
         except Exception as e:
             raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
 
-    def _chat_completion(
+    def _chat_completion(  # noqa: C901
         self,
         messages: List[Dict[str, str]],
         model: str,
@@ -173,55 +188,145 @@ class GPT:
         max_tokens: Optional[int],
     ) -> str:
         """Internal method to handle chat completion requests."""
-        try:
-            # Make the API call first since token counting might fail for unknown models
-            response: ChatCompletion = openai.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+        max_retries = 3
+        retry_delay = 2  # seconds
 
-            # Extract and validate response
-            if not response.choices:
-                raise ChatCompletionError("No completion choices returned")
+        for attempt in range(1, max_retries + 1):
+            try:
+                # Convert messages to the expected type
+                typed_messages: List[ChatCompletionMessageParam] = []
+                for msg in messages:
+                    if msg["role"] == "system":
+                        typed_messages.append(
+                            {"role": "system", "content": msg["content"]}
+                        )
+                    elif msg["role"] == "user":
+                        typed_messages.append(
+                            {"role": "user", "content": msg["content"]}
+                        )
+                    elif msg["role"] == "assistant":
+                        typed_messages.append(
+                            {"role": "assistant", "content": msg["content"]}
+                        )
+                    # Add other roles as needed
 
-            output_text = response.choices[0].message.content or ""
-
-            # Only calculate and log costs for known models
-            if model in self.PRICING:
-                input_tokens = sum(
-                    self.count_tokens(msg["content"], model=model) for msg in messages
-                )
-                output_tokens = self.count_tokens(output_text, model=model)
-
-                pricing = self.PRICING[model]
-                input_cost, output_cost, total_cost = pricing.calculate_costs(
-                    input_tokens, output_tokens
-                )
-
-                logging.info(
-                    f"\n{'-'*40}\n"
-                    f"{'Model':<15}: {model}\n"
-                    f"{'Input Tokens':<15}: {input_tokens:,}\n"
-                    f"{'Output Tokens':<15}: {output_tokens:,}\n"
-                    f"{'Input Cost':<15}: ${input_cost:.6f}\n"
-                    f"{'Output Cost':<15}: ${output_cost:.6f}\n"
-                    f"{'Total Cost':<15}: ${total_cost:.6f}\n"
-                    f"{'-'*40}"
-                )
-            else:
-                logging.info(
-                    f"\n{'-'*40}\n"
-                    f"{'Model':<15}: {model}\n"
-                    f"{'Cost Tracking':<15}: Disabled (unknown model)\n"
-                    f"{'-'*40}"
+                # Make the API call first since token counting might fail for unknown models
+                response: ChatCompletion = openai.chat.completions.create(
+                    model=model,
+                    messages=typed_messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
                 )
 
-            return output_text
+                # Extract and validate response
+                if not response.choices:
+                    raise ChatCompletionError("No completion choices returned")
 
-        except Exception as e:
-            raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
+                output_text = response.choices[0].message.content or ""
+
+                # Only calculate and log costs for known models
+                if model in self.PRICING:
+                    input_tokens = sum(
+                        self.count_tokens(msg["content"], model=model)
+                        for msg in messages
+                    )
+                    output_tokens = self.count_tokens(output_text, model=model)
+
+                    pricing = self.PRICING[model]
+                    input_cost, output_cost, total_cost = pricing.calculate_costs(
+                        input_tokens, output_tokens
+                    )
+
+                    logging.info(
+                        f"\n{'-'*40}\n"
+                        f"{'Model':<15}: {model}\n"
+                        f"{'Input Tokens':<15}: {input_tokens:,}\n"
+                        f"{'Output Tokens':<15}: {output_tokens:,}\n"
+                        f"{'Input Cost':<15}: ${input_cost:.6f}\n"
+                        f"{'Output Cost':<15}: ${output_cost:.6f}\n"
+                        f"{'Total Cost':<15}: ${total_cost:.6f}\n"
+                        f"{'-'*40}"
+                    )
+                else:
+                    logging.info(
+                        f"\n{'-'*40}\n"
+                        f"{'Model':<15}: {model}\n"
+                        f"{'Cost Tracking':<15}: Disabled (unknown model)\n"
+                        f"{'-'*40}"
+                    )
+
+                return output_text
+
+            except openai.RateLimitError as e:
+                if attempt < max_retries:
+                    wait_time = retry_delay * (
+                        2 ** (attempt - 1)
+                    )  # Exponential backoff
+                    logging.warning(
+                        f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
+                    import time
+
+                    time.sleep(wait_time)
+                else:
+                    raise RateLimitExceededError(
+                        f"Rate limit exceeded after {max_retries} attempts: {str(e)}"
+                    ) from e
+
+            except openai.APITimeoutError as e:
+                if attempt < max_retries:
+                    wait_time = retry_delay * (2 ** (attempt - 1))
+                    logging.warning(
+                        f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
+                    import time
+
+                    time.sleep(wait_time)
+                else:
+                    raise APITimeoutError(
+                        f"API request timed out after {max_retries} attempts: {str(e)}"
+                    ) from e
+
+            except openai.APIConnectionError as e:
+                if attempt < max_retries:
+                    wait_time = retry_delay * (2 ** (attempt - 1))
+                    logging.warning(
+                        f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
+                    import time
+
+                    time.sleep(wait_time)
+                else:
+                    raise APIConnectionError(
+                        f"API connection failed after {max_retries} attempts: {str(e)}"
+                    ) from e
+
+            except openai.APIError as e:
+                if 500 <= getattr(e, "status_code", 0) < 600:
+                    if attempt < max_retries:
+                        wait_time = retry_delay * (2 ** (attempt - 1))
+                        logging.warning(
+                            f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                        )
+                        import time
+
+                        time.sleep(wait_time)
+                    else:
+                        raise ServerError(
+                            f"OpenAI server error after {max_retries} attempts: {str(e)}"
+                        ) from e
+                elif 400 <= getattr(e, "status_code", 0) < 500:
+                    raise ClientError(f"Client error: {str(e)}") from e
+                else:
+                    raise ChatCompletionError(f"API error: {str(e)}") from e
+
+            except Exception as e:
+                raise ChatCompletionError(f"Chat completion failed: {str(e)}") from e
+
+        # Add this line to handle the case when all retries fail but no exception is raised
+        raise ChatCompletionError(
+            f"Chat completion failed after {max_retries} attempts"
+        )
 
     def context_assistant(self, prompt: str) -> str:
         """

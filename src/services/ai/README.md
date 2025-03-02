@@ -1,15 +1,15 @@
-# OpenAI Chat/ Assistant Module
+# OpenAI Chat/Assistant Module
 
 ## Overview
 
-This module, `openai_chat.py`, provides an interface to OpenAI's API for integrating chat or assistant functionalities using GPT-3.5 and GPT-4 models.
+This module provides a robust interface to OpenAI's API for integrating chat or assistant functionalities using GPT models.
 
 ## Installation
 
 Install and update the OpenAI Python library:
 
 ```bash
-pip install -U openai
+pip install -U openai tiktoken
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ pip install -U openai
 Create a `GPT` class instance:
 
 ```python
-from openai_chat import GPT
+from services.ai import GPT
 
 gpt = GPT()
 ```
@@ -32,76 +32,83 @@ Set your OpenAI API key:
 gpt.api_key = "your_openai_api_key"
 ```
 
+### Set Custom Endpoint (Optional)
+
+Set a custom API endpoint if needed:
+
+```python
+gpt.endpoint = "https://your-custom-endpoint.com/v1/"
+```
+
 ### Chat Completion
 
 Generate a response using a model, system message, and user message:
 
 ```python
 response = gpt.chat_completion(
-    model="gpt-3.5-turbo",
-    systemMessage="Your system message",
-    userMessage="Your user message"
+    model="gpt-4o-mini",
+    system_message="Your system message",
+    user_message="Your user message",
+    temperature=0.7,
+    max_tokens=None  # Optional limit
 )
 print(response)
 ```
 
-### Standalone Assistant
+<!-- ### Context Assistant
 
-Use the assistant to generate a response. The assistant will have no context of prior conversation:
-
-```python
-response = gpt.assistant(prompt="Your prompt message")
-print(response)
-```
-
-### Context Assistant
-
-Use the assistant with saving and keeping context, like a chatbot for your notifications:
+Use the assistant with context awareness (placeholder for future implementation):
 
 ```python
 response = gpt.context_assistant(prompt="Your prompt message")
 print(response)
-```
+``` -->
+
+## Error Handling
+
+The module includes robust error handling with automatic retries for transient errors:
+
+- Rate limit errors: Automatically retries with exponential backoff
+- API timeouts: Automatically retries with exponential backoff
+- Connection errors: Automatically retries with exponential backoff
+- Server errors (5xx): Automatically retries with exponential backoff
+- Client errors (4xx): Raises appropriate exceptions
+
+This makes the module suitable for 24/7 operation without manual intervention.
+
+## Supported Models
+
+The module supports various OpenAI models with built-in cost tracking:
+
+- GPT-4o (`gpt-4o`)
+- GPT-4o-mini (`gpt-4o-mini`)
+- O1 (`o1`)
+- O1-mini (`o1-mini`)
+- O3-mini (`o3-mini`)
 
 ## Function Descriptions
 
 ### `api_key(self, key: str) -> None:`
 
-Set the API key, ensuring it is not empty and validating it with a regex pattern.
+Set and validate the API key, ensuring it is not empty and matches the expected format.
 
-### `chat_completion(self, model: str, system_message: str, user_message: str) -> str:`
+### `endpoint(self, url: str) -> None:`
 
-Generate a response from the chat API using the specified model and prompts.
+Set a custom API endpoint URL for using services like Ollama or OpenRouter.
 
-### `assistant(self, prompt: str, thread_id: str = None) -> str:`
+### `chat_completion(self, model: str, system_message: str, user_message: str, temperature: float = 0.7, max_tokens: Optional[int] = None) -> str:`
 
-Manages individual threads for each message/summary, optimizing costs. Context from prior notifications is not used.
+Generate a response from the chat API using the specified model and prompts. Includes automatic retries for transient errors.
+
+### `count_tokens(self, text: str, model: str = "gpt-4o-mini") -> int:`
+
+Count the number of tokens in the given text for the specified model.
 
 ### `context_assistant(self, prompt: str) -> str:`
 
-A context-aware assistant, like a chatbot that can remember and use information from previous notification to have a better understanding of the current context.
-
-### `def run_assistant(self, prompt, thread_id):`
-
-Run the assistant to generate a response for the given assistant and textwith or without a thread token.
-
-### `create_thread(self) -> str:`
-
-Generates a new thread for the assistant and returns the thread ID.
-
-### `save_thread(self, thread_id: str) -> None:`
-
-Stores the thread ID in a .ini file for later retrieval.
-
-### `update_thread(self, thread_id: str) -> None:`
-
-Refreshes the thread ID in the config, clearing previous conversation context.
-
-### `resume_thread(self) -> str:`
-
-Retrieves the thread ID from the thread.ini file.
+A context-aware assistant (placeholder for future implementation).
 
 ## Dependencies
 
-- `openai` (i am using v1.6)
-- `configparser`
+- `openai` (version 1.5+)
+- `tiktoken`

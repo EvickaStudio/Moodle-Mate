@@ -24,11 +24,9 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 ## Key Features
 
 - **Smart Notification Management**
-  - Automatic notification fetching and processing
-  - AI-powered content summarization (optional)
-  - HTML to Markdown notification conversion for better readability
-    - Uses a Python port of turndown for the conversion -> [turndown-python](https://github.com/EvickaStudio/turndown-python)
-  - Configurable update intervals and other settings
+  - Automatically fetch and process notifications from Moodle.
+  - Optional AI-based content summarization that creates quick TLDRs.
+  - Converts HTML notifications to Markdown for improved readability using [turndown-python](https://github.com/EvickaStudio/turndown-python).
 
 - **Multi-Platform Support**
   - Discord (via webhooks)
@@ -44,7 +42,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 - Python 3.10 or higher
 - Internet connection
-- Moodle instance with API access/ REST API enabled
+- Moodle instance with REST API access enabled
 
 ## Installation
 
@@ -90,18 +88,17 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 ## Usage
 
-Start the application:
+To start Moodle Mate, simply run:
 
 ```bash
 python main.py
 ```
 
-The application will:
-
-1. Validate your configuration
-2. Connect to your Moodle instance
-3. Start monitoring for new notifications
-4. Process and deliver notifications according to your settings
+When running, the application will:
+1. Validate your configuration.
+2. Connect to your Moodle instance.
+3. Continuously monitor for new notifications.
+4. Process and deliver notifications according to your settings.
 
 ## Creating Custom Notification Providers
 
@@ -127,7 +124,7 @@ We welcome contributions! Please:
 
 ## License
 
-Apache License 2.0 - See [LICENSE.md](LICENSE.md) for details.
+Moodle Mate is licensed under the Apache License 2.0. See [LICENSE.md](LICENSE.md) for more details.
 
 ## Author
 
