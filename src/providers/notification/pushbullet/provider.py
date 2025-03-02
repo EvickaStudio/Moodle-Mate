@@ -12,7 +12,7 @@ class PushbulletProvider(NotificationProvider):
     Pushbullet notification provider for sending notifications to devices.
 
     This provider sends the notification formatted as Markdown, this is a byproduct
-    of the html to markdown conversion for Moodle. The Markdown could be theoritically
+    of the html to markdown conversion for Moodle. The Markdown could be theoretically
     be converted to a more readable format like plain text for the Pushbullet notification,
     but in my testing, it looked more unreadable than the Markdown.
     """
