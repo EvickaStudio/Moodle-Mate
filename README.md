@@ -30,6 +30,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 - **Multi-Platform Support**
   - Discord (via webhooks)
+  - Pushbullet (send to all your devices)
   - Plugin system for custom notification providers
   - Modular architecture for easy integration of new platforms
 
@@ -95,6 +96,7 @@ python main.py
 ```
 
 When running, the application will:
+
 1. Validate your configuration.
 2. Connect to your Moodle instance.
 3. Continuously monitor for new notifications.
