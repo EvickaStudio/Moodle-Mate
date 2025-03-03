@@ -170,6 +170,22 @@ When running, the application will:
 3. Continuously monitor for new notifications.
 4. Process and deliver notifications according to your settings.
 
+## Screenshots
+
+*Colors between the screenshots are different because of different themes in Termius.*
+
+### v2.0.2 (Docker)
+
+![v2.0.2](assets/running_v2.0.2.png)
+
+Running as Docker daemon, to see the logs run `docker compose logs -f`
+
+### v2.0.1
+
+![v2.0.1](assets/running_v2.0.1.webp)
+
+Running as standard python application, you will automatically see the logs in the terminal you ran the command in. For KVMs running MoodleMate in the background, docker is the recommended way to run it, but you can also use tmux, screen or tmuxinator to run it in the background.
+
 ## Creating Custom Notification Providers
 
 MoodleMate now supports a plugin system that allows you to easily create and add your own notification providers without modifying the core code.
