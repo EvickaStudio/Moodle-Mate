@@ -178,7 +178,7 @@ When running, the application will:
 
 ![v2.0.2](assets/running_v2.0.2.png)
 
-Running as Docker deamon, to see the logs run `docker compose logs -f`
+Running as Docker daemon, to see the logs run `docker compose logs -f`
 
 ### v2.0.1
 
