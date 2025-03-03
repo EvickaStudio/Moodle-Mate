@@ -87,7 +87,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    # Edit config.ini with your settings
    ```
 
-   For more information on the configuration, see the [Configuration](src/core/config/README.md) documentation. (might be not up to date with example_config.ini)
+   Ensure your config.ini settings align with the latest [Configuration documentation](src/core/config/README.md), as example_config.ini may be more recent.
 
 ### Option 2: Docker Installation
 
