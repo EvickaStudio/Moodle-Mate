@@ -120,10 +120,14 @@ def inline_link_rule(content, node, options):
     if href:
         href = href.replace("(", r"\(").replace(")", r"\)")
     title = clean_attribute(node.get_attribute("title"))
-    if title:
-        title = f" \"{title.replace('\"', '\\\\\"')}\""  # noqa: E999
 
-    return f"[{content}]({href}{title})"
+    # Replace problematic f-string with string concatenation
+    title_part = ""
+    if title:
+        escaped_title = title.replace('"', '\\"')
+        title_part = f' "{escaped_title}"'
+
+    return f"[{content}]({href}{title_part})"
 
 
 class ReferenceLinkStore:
