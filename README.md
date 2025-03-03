@@ -47,6 +47,8 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 ## Installation
 
+### Option 1: Standard Installation
+
 1. **Clone the Repository**
 
    ```bash
@@ -85,14 +87,80 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    # Edit config.ini with your settings
    ```
 
-   For more information on the configuration, see the [Configuration](src/core/config/README.md) documentation.
+   For more information on the configuration, see the [Configuration](src/core/config/README.md) documentation. (might be not up to date with example_config.ini)
+
+### Option 2: Docker Installation
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/EvickaStudio/Moodle-Mate.git
+   cd Moodle-Mate
+   ```
+
+2. **Configuration**
+
+   First, generate a configuration file:
+
+   ```bash
+   # Using Python directly
+   python main.py --gen-config
+   
+   # Or using Docker (this will install required dependencies first)
+   docker run --rm -it -v $(pwd):/app python:3.12-slim-bookworm bash -c "pip install -r /app/requirements.txt && python /app/main.py --gen-config"
+   ```
+
+   Alternatively, you can manually edit the `config.example.ini` file:
+
+   ```bash
+   cp config.example.ini config.ini
+   # Edit config.ini with your settings
+   ```
+
+   For more information on the configuration, see the [Configuration](src/core/config/README.md) documentation. (might be not up to date with example_config.ini)
+
+3. **Edit the Configuration**
+
+   Edit the generated `config.ini` file with your settings.
+
+4. **Build and Run with Docker**
+
+   ```bash
+   # Build the Docker image
+   docker compose build
+   
+   # Run the container
+   docker compose up -d
+   ```
+
+5. **View Logs**
+
+   ```bash
+   docker compose logs -f
+   ```
 
 ## Usage
+
+### Standard Usage
 
 To start Moodle Mate, simply run:
 
 ```bash
 python main.py
+```
+
+### Docker Usage
+
+When using Docker, the application starts automatically when you run:
+
+```bash
+docker compose up -d
+```
+
+To stop the application:
+
+```bash
+docker compose down
 ```
 
 When running, the application will:
