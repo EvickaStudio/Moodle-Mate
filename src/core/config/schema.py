@@ -46,6 +46,15 @@ class WebhookSiteConfig:
 
 
 @dataclass
+class PushbulletConfig:
+    """Configuration for Pushbullet notification provider."""
+
+    enabled: bool = False
+    api_key: str = ""
+    include_summary: bool = True
+
+
+@dataclass
 class ProviderConfig:
     """Dynamic configuration for notification providers.
 

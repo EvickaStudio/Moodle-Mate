@@ -9,6 +9,7 @@ from .schema import (
     MoodleConfig,
     NotificationConfig,
     ProviderConfig,
+    PushbulletConfig,
     WebhookSiteConfig,
 )
 
@@ -39,6 +40,7 @@ class Config:
         # Load built-in providers
         self.discord = self._load_discord_config()
         self.webhook_site = self._load_webhook_site_config()
+        self.pushbullet = self._load_pushbullet_config()
 
         # Load dynamic provider configurations
         self._load_provider_configs()
@@ -107,6 +109,14 @@ class Config:
             include_summary=self._get_bool("webhook_site", "include_summary", True),
         )
 
+    def _load_pushbullet_config(self) -> PushbulletConfig:
+        """Load Pushbullet configuration."""
+        return PushbulletConfig(
+            enabled=self._get_bool("pushbullet", "enabled", False),
+            api_key=self._get_config("pushbullet", "api_key", ""),
+            include_summary=self._get_bool("pushbullet", "include_summary", True),
+        )
+
     def _load_provider_configs(self):
         """Dynamically load configuration for all providers."""
         # Get all sections that might be providers
@@ -118,6 +128,7 @@ class Config:
                 "notification",
                 "discord",
                 "webhook_site",
+                "pushbullet",
             ]:
                 continue
 
