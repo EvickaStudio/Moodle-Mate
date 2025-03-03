@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodle Mate Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Moodle Mate Dashboard</h1>
+        </header>
+        
+        <div class="dashboard">
+            <div class="sidebar">
+                <div class="stats-card">
+                    <h3>Notification Stats</h3>
+                    <div id="notification-count">Loading...</div>
+                </div>
+                <div class="chart-container">
+                    <h3>Timeline</h3>
+                    <div id="timeline-chart"></div>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <h2>Notification History</h2>
+                <div class="notification-list" id="notification-list">
+                    <div class="loading">Loading notifications...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title"></h2>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="html">HTML</button>
+                <button class="tab-btn" data-tab="markdown">Markdown</button>
+                <button class="tab-btn" data-tab="summary">AI Summary</button>
+            </div>
+            <div class="tab-content">
+                <div id="html-content" class="tab-pane active"></div>
+                <div id="markdown-content" class="tab-pane"></div>
+                <div id="summary-content" class="tab-pane"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 

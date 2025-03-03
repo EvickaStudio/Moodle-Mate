@@ -4,7 +4,9 @@ from typing import List, Optional
 from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
 from src.core.notification.summarizer import NotificationSummarizer
+from src.core.service_locator import ServiceLocator
 from src.services.markdown import convert
+from src.services.notification.storage import NotificationStorage
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +15,7 @@ class NotificationProcessor:
     """Processes and sends notifications."""
 
     _instance = None
+    _flask_app = None  # Add a class variable to store the Flask app
 
     def __new__(cls, config: Config, providers: List[NotificationProvider]):
         if cls._instance is None:
@@ -26,6 +29,23 @@ class NotificationProcessor:
         self.providers = providers
         self.summarizer = NotificationSummarizer(config) if config.ai.enabled else None
 
+        # Initialize storage service
+        try:
+            self.storage = ServiceLocator().get(
+                "notification_storage", NotificationStorage
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize notification storage: {str(e)}")
+            self.storage = None
+
+    def set_flask_app(self, app):
+        """Set the Flask app for database operations."""
+        NotificationProcessor._flask_app = app
+        # Update the storage service if it exists
+        if self.storage:
+            self.storage.set_app(app)
+            logger.info("Flask app set in notification storage service")
+
     def process(self, notification: dict) -> None:
         """Process and send a notification through all enabled providers."""
         try:
@@ -35,6 +55,18 @@ class NotificationProcessor:
 
             # Generate summary if enabled
             summary = self._generate_summary(message) if self.summarizer else None
+
+            # Store notification in database if storage is available
+            if self.storage:
+                success = self.storage.store_notification(
+                    notification, message, summary
+                )
+                if success:
+                    logger.info(f"Notification {notification['id']} stored in database")
+                else:
+                    logger.warning(
+                        f"Failed to store notification {notification['id']} in database"
+                    )
 
             # Send through providers
             self._send_to_providers(subject, message, summary)

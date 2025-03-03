@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+import threading
 import time
 
 from src.core.config.generator import ConfigGenerator
@@ -12,6 +13,7 @@ from src.core.utils.retry import with_retry
 from src.infrastructure.logging.setup import setup_logging
 from src.services.moodle.notification_handler import MoodleNotificationHandler
 from src.ui.cli.screen import animate_logo, logo_lines
+from src.ui.web.app import create_app, run_webui
 
 
 def parse_args():
@@ -23,6 +25,9 @@ def parse_args():
         "--gen-config", action="store_true", help="Generate a new configuration file"
     )
     parser.add_argument("--config", default="config.ini", help="Path to config file")
+    parser.add_argument("--no-webui", action="store_true", help="Disable web UI")
+    parser.add_argument("--webui-port", type=int, default=5000, help="Web UI port")
+    parser.add_argument("--webui-host", default="0.0.0.0", help="Web UI host")
     return parser.parse_args()
 
 
@@ -106,6 +111,12 @@ def run_main_loop(config, moodle_handler, notification_processor) -> None:
             time.sleep(error_sleep)
 
 
+def start_webui(host, port, flask_app):
+    """Start the web UI in a separate thread."""
+    logging.info(f"Starting Web UI on http://{host}:{port}")
+    run_webui(host=host, port=port, app=flask_app)
+
+
 def main() -> None:
     """Main entry point of the application."""
     setup_logging()
@@ -118,7 +129,29 @@ def main() -> None:
     logging.info("Starting Moodle Mate...")
 
     try:
+        # Initialize services first
         config, notification_processor, moodle_handler = initialize_app_services()
+
+        # Initialize Flask app if web UI is enabled
+        flask_app = None
+        if not args.no_webui:
+            # Create the Flask app first to ensure it's available for the storage service
+            flask_app = create_app()
+
+            # Set the Flask app in the notification processor
+            notification_processor.set_flask_app(flask_app)
+
+            # Start web UI in a separate thread
+            webui_thread = threading.Thread(
+                target=start_webui,
+                args=(args.webui_host, args.webui_port, flask_app),
+                daemon=True,
+            )
+            webui_thread.start()
+            logging.info(
+                f"Web UI available at http://{args.webui_host}:{args.webui_port}"
+            )
+
         run_main_loop(config, moodle_handler, notification_processor)
     except KeyboardInterrupt:
         logging.info("Shutting down gracefully...")

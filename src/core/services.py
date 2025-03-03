@@ -5,6 +5,7 @@ from src.providers.notification import initialize_providers
 from src.services.ai.chat import GPT
 from src.services.moodle.api import MoodleAPI
 from src.services.moodle.notification_handler import MoodleNotificationHandler
+from src.services.notification.storage import NotificationStorage
 
 
 def initialize_services() -> None:
@@ -27,6 +28,10 @@ def initialize_services() -> None:
         if config.ai.endpoint:
             gpt.endpoint = config.ai.endpoint
         locator.register("gpt", gpt)
+
+    # Initialize notification storage
+    notification_storage = NotificationStorage()
+    locator.register("notification_storage", notification_storage)
 
     # Initialize notification providers and processor
     providers = initialize_providers(config)
