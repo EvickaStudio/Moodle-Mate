@@ -1,7 +1,7 @@
 # Moodle Mate
 
 <div align="center">
-  <img src="assets/logo.svg" alt="Moodle Mate Logo" width="160">
+  <img src="assets/moodlematev_gh_preview.png" alt="Moodle Mate Logo">
   <h1>Moodle Mate</h1>
   <p><strong>Your Smart Moodle Notification Assistant</strong></p>
 </div>
