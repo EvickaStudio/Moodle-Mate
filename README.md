@@ -186,6 +186,10 @@ Running as Docker daemon, to see the logs run `docker compose logs -f`
 
 Running as standard python application, you will automatically see the logs in the terminal you ran the command in. For KVMs running MoodleMate in the background, docker is the recommended way to run it, but you can also use tmux, screen or tmuxinator to run it in the background.
 
+### Discord notification
+
+![v2.0.2](assets/preview.png)
+
 ## Creating Custom Notification Providers
 
 MoodleMate now supports a plugin system that allows you to easily create and add your own notification providers without modifying the core code.
