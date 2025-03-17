@@ -9,7 +9,9 @@ from src.core.notification.processor import NotificationProcessor
 from src.core.service_locator import ServiceLocator
 from src.core.services import initialize_services
 from src.core.utils.retry import with_retry
+from src.infrastructure.http.request_manager import request_manager
 from src.infrastructure.logging.setup import setup_logging
+from src.services.moodle.api import MoodleAPI
 from src.services.moodle.notification_handler import MoodleNotificationHandler
 from src.ui.cli.screen import animate_logo, logo_lines
 
@@ -87,9 +89,27 @@ def calculate_sleep_time(consecutive_errors: int, base_interval: int) -> float:
 def run_main_loop(config, moodle_handler, notification_processor) -> None:
     """Run the main application loop."""
     consecutive_errors = 0
+    # Session refresh interval in hours
+    session_refresh_interval = 24.0
+
+    # Get Moodle API instance from service locator
+    locator = ServiceLocator()
+    moodle_api = locator.get("moodle_api", MoodleAPI)
 
     while True:
         try:
+            # Check if session needs to be refreshed (older than 24 hours)
+            if request_manager.session_age_hours >= session_refresh_interval:
+                logging.info(
+                    f"Session is {request_manager.session_age_hours:.2f} hours old. Refreshing..."
+                )
+                if moodle_api.refresh_session():
+                    logging.info("Session successfully refreshed")
+                else:
+                    logging.error(
+                        "Failed to refresh session. Continuing with existing session."
+                    )
+
             success = fetch_and_process(moodle_handler, notification_processor)
             if success:
                 consecutive_errors = 0
