@@ -87,7 +87,7 @@ class MoodleAPI:
 
         # Update our session reference
         self.session = request_manager.session
-        
+
         # Re-login with stored credentials
         self.token = None
         return self.login(self._username, self._password)
