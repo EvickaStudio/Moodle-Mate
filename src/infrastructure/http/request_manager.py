@@ -24,7 +24,7 @@ class RequestManager:
         # Close existing session if it exists
         if self._session is not None:
             self._session.close()
-            
+
         self._session = requests.Session()
         self._session.headers.update(
             {
@@ -48,11 +48,11 @@ class RequestManager:
             self._setup_session()
         assert self._session is not None
         self._session.headers.update(headers)
-        
+
     def reset_session(self) -> None:
         """Reset the session completely, creating a new one."""
         self._setup_session()
-        
+
     @property
     def session_age_hours(self) -> float:
         """Return the age of the current session in hours."""

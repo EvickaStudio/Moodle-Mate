@@ -31,15 +31,15 @@ class MoodleAPI:
                 "Content-Type": "application/x-www-form-urlencoded",
             }
         )
-        self.token = None
-        self.userid = None
-        self._username = None
-        self._password = None
+        self.token: Optional[str] = None
+        self.userid: Optional[int] = None
+        self._username: Optional[str] = None
+        self._password: Optional[str] = None
 
     def login(self, username: str, password: str) -> bool:
         """
         Logs in to the Moodle instance using the provided username and password.
-        
+
         Stores credentials securely for session refresh if successful.
         """
         if not username:
@@ -79,12 +79,12 @@ class MoodleAPI:
         if not self._username or not self._password:
             logger.error("Cannot refresh session: No stored credentials")
             return False
-            
+
         logger.info("Refreshing Moodle session...")
-        
+
         # Reset the request manager's session
         request_manager.reset_session()
-        
+
         # Update our session reference
         self.session = request_manager.session
         request_manager.update_headers(
@@ -92,7 +92,7 @@ class MoodleAPI:
                 "Content-Type": "application/x-www-form-urlencoded",
             }
         )
-        
+
         # Re-login with stored credentials
         self.token = None
         return self.login(self._username, self._password)

@@ -91,7 +91,7 @@ def run_main_loop(config, moodle_handler, notification_processor) -> None:
     consecutive_errors = 0
     # Session refresh interval in hours
     session_refresh_interval = 24.0
-    
+
     # Get Moodle API instance from service locator
     locator = ServiceLocator()
     moodle_api = locator.get("moodle_api", MoodleAPI)
@@ -100,12 +100,16 @@ def run_main_loop(config, moodle_handler, notification_processor) -> None:
         try:
             # Check if session needs to be refreshed (older than 24 hours)
             if request_manager.session_age_hours >= session_refresh_interval:
-                logging.info(f"Session is {request_manager.session_age_hours:.2f} hours old. Refreshing...")
+                logging.info(
+                    f"Session is {request_manager.session_age_hours:.2f} hours old. Refreshing..."
+                )
                 if moodle_api.refresh_session():
                     logging.info("Session successfully refreshed")
                 else:
-                    logging.error("Failed to refresh session. Continuing with existing session.")
-            
+                    logging.error(
+                        "Failed to refresh session. Continuing with existing session."
+                    )
+
             success = fetch_and_process(moodle_handler, notification_processor)
             if success:
                 consecutive_errors = 0
