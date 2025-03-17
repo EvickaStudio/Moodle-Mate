@@ -1,47 +1,39 @@
 # syntax=docker/dockerfile:1.4
 
 # Build stage
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-alpine AS builder
 
 WORKDIR /app
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache gcc python3-dev musl-dev
 
 # Create and activate virtual environment
 RUN python -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 
-# Copy requirements files
-COPY requirements.txt requirements-dev.txt ./
-
-# Install dependencies
+# Copy requirements files separately for better caching
+COPY requirements.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r requirements.txt
 
-# Production stage
-FROM python:3.12-slim-bookworm
+# Production stage with minimal Alpine base
+FROM python:3.12-alpine
 
 WORKDIR /app
 
-# Create non-privileged user
-RUN groupadd -r moodlemate && useradd -r -g moodlemate moodlemate
+# Create non-privileged user and prepare directories in one layer
+RUN addgroup -S moodlemate && \
+    adduser -S -G moodlemate moodlemate && \
+    mkdir -p /app/logs && \
+    chown -R moodlemate:moodlemate /app
 
 # Copy virtual environment
 COPY --from=builder /venv /venv
 ENV PATH="/venv/bin:$PATH"
 
-# Create logs directory and set permissions
-RUN mkdir -p /app/logs && chown -R moodlemate:moodlemate /app
-
 # Copy application code
-COPY . .
-
-# Set proper permissions
-RUN chown -R moodlemate:moodlemate /app
+COPY --chown=moodlemate:moodlemate . .
 
 # Switch to non-privileged user
 USER moodlemate

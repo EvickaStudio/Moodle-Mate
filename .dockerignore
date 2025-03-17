@@ -1,6 +1,7 @@
 # Git
 .git
 .gitignore
+.github/
 
 # Python
 __pycache__/
@@ -8,6 +9,21 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 venv/
 .venv/
 env/
@@ -18,12 +34,16 @@ venv.bak/
 .coverage
 htmlcov/
 .mypy_cache/
+.tox/
 
-# IDEs
+# IDEs and editors
 .idea/
 .vscode/
 *.swp
 *.swo
+*~
+.DS_Store
+Thumbs.db
 
 # Logs
 logs/
@@ -31,9 +51,22 @@ logs/
 
 # Configuration
 config.ini
+*.env
+*.local
 
-# Misc
+# Docker
+Dockerfile
+docker-compose*.yml
+
+# Documentation
 README.md
 LICENSE.md
 docs/
-.github/
+*.rst
+*.md
+
+# Test artifacts
+.coverage
+.pytest_cache/
+coverage.xml
+pytest-report.xml
