@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 
 import requests
@@ -10,6 +11,7 @@ class RequestManager:
 
     _instance: Optional["RequestManager"] = None
     _session: Optional[requests.Session] = None
+    _session_created_at: float = 0
 
     def __new__(cls) -> "RequestManager":
         if cls._instance is None:
@@ -19,6 +21,10 @@ class RequestManager:
 
     def _setup_session(self) -> None:
         """Setup the global session with default headers."""
+        # Close existing session if it exists
+        if self._session is not None:
+            self._session.close()
+
         self._session = requests.Session()
         self._session.headers.update(
             {
@@ -26,6 +32,7 @@ class RequestManager:
                 "Content-Type": "application/x-www-form-urlencoded",
             }
         )
+        self._session_created_at = time.time()
 
     @property
     def session(self) -> requests.Session:
@@ -41,6 +48,17 @@ class RequestManager:
             self._setup_session()
         assert self._session is not None
         self._session.headers.update(headers)
+
+    def reset_session(self) -> None:
+        """Reset the session completely, creating a new one."""
+        self._setup_session()
+
+    @property
+    def session_age_hours(self) -> float:
+        """Return the age of the current session in hours."""
+        if self._session_created_at == 0:
+            return 0
+        return (time.time() - self._session_created_at) / 3600
 
 
 # Global instance
