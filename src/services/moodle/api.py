@@ -87,12 +87,7 @@ class MoodleAPI:
 
         # Update our session reference
         self.session = request_manager.session
-        request_manager.update_headers(
-            {
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-        )
-
+        
         # Re-login with stored credentials
         self.token = None
         return self.login(self._username, self._password)
