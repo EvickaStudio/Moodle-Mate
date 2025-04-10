@@ -1,0 +1,22 @@
+[project]
+name = "moodle-mate"
+version = "2.1.0"
+description = "Moodle Mate is an Python application that fetches notifications from a Moodle instance (eg. a school or university) and delivers them to a notification platform (eg. Discord). This will allow you to stay up to date with all your courses and activities without having to manually check your E-Mail or Moodle."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anyio>=4.4.0",
+    "black>=25.1.0",
+    "configparser>=7.2.0",
+    "coverage>=7.8.0",
+    "flake8>=7.2.0",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+    "openai>=1.72.0",
+    "pytest>=8.3.5",
+    "requests>=2.32.2",
+    "ruff>=0.11.5",
+    "tiktoken>=0.9.0",
+    "types-requests>=2.32.0.20250328",
+    "urllib3>=2.2.2",
+]
