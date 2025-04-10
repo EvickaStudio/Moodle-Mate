@@ -64,7 +64,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    ```bash
    python -m venv venv
    source venv/bin/activate
-   # soure venv/bin/activate.fish for fish shell
+   # source venv/bin/activate.fish for fish shell
    ```
 
    Then install the dependencies:
