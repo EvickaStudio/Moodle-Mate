@@ -25,7 +25,7 @@ def build_root_node(input_obj, options):
     """
     if isinstance(input_obj, str):
         doc = parse_from_string(
-            f"<x-turndown id='turndown-root'>{input_obj}</x-turndown>"
+            f"<x-turndown id='turndown-root'>{input_obj}</x-turndown>",
         )
         root = _find_turndown_root(doc)
     else:
@@ -36,11 +36,7 @@ def build_root_node(input_obj, options):
         element=root,
         is_block_fn=is_block,
         is_void_fn=is_void,
-        is_pre_fn=(
-            (lambda n: _is_pre_or_code(n, options))
-            if options.get("preformattedCode")
-            else _is_pre_or_code
-        ),
+        is_pre_fn=((lambda n: _is_pre_or_code(n, options)) if options.get("preformattedCode") else _is_pre_or_code),
     )
     return root
 

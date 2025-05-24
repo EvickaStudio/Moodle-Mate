@@ -18,9 +18,7 @@ def enhance_node(node, options):
     - node.flanking_whitespace: dict(leading, trailing)
     """
     node.is_block = is_block(node)
-    node.is_code = (node.node_name == "CODE") or (
-        node.parent and getattr(node.parent, "is_code", False)
-    )
+    node.is_code = (node.node_name == "CODE") or (node.parent and getattr(node.parent, "is_code", False))
     node.is_blank = _is_blank(node)
     node.flanking_whitespace = _compute_flanking_whitespace(node, options)
     return node

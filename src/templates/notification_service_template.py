@@ -1,7 +1,9 @@
-from typing import Optional
+import logging
 
 from src.core.notification.base import NotificationProvider
 from src.infrastructure.http.request_manager import request_manager
+
+logger = logging.getLogger(__name__)
 
 
 class TemplateNotificationProvider(NotificationProvider):
@@ -22,7 +24,10 @@ class TemplateNotificationProvider(NotificationProvider):
     """
 
     def __init__(
-        self, api_key: str, endpoint: str = "https://api.example.com", **kwargs
+        self,
+        api_key: str,
+        endpoint: str = "https://api.example.com",
+        **kwargs,  # noqa: ANN003
     ):
         """Initialize the provider with configuration.
 
@@ -34,11 +39,9 @@ class TemplateNotificationProvider(NotificationProvider):
         self.api_key = api_key
         self.endpoint = endpoint.rstrip("/")
         self.session = request_manager.session
-
-        # Store any additional configuration parameters
         self.config = kwargs
 
-    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """Send a notification through your service.
 
         Args:
@@ -50,31 +53,25 @@ class TemplateNotificationProvider(NotificationProvider):
             bool: True if sent successfully, False otherwise
         """
         try:
-            # Implement your service-specific logic here
-            # Example:
-            # headers = {
-            #     "Authorization": f"Bearer {self.api_key}",
-            #     "Content-Type": "application/json"
-            # }
-            #
-            # payload = {
-            #     "title": subject,
-            #     "body": message,
-            #     "summary": summary
-            # }
-            #
-            # response = self.session.post(
-            #     f"{self.endpoint}/send",
-            #     json=payload,
-            #     headers=headers
-            # )
-            #
-            # return response.status_code == 200
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
 
-            # For template, just log and return success
-            print(f"Would send notification via template provider: {subject}")
-            return True
+            payload = {
+                "title": subject,
+                "body": message,
+                "summary": summary,
+            }
 
-        except Exception as e:
-            print(f"Error sending notification: {str(e)}")
+            response = self.session.post(
+                f"{self.endpoint}/send",
+                json=payload,
+                headers=headers,
+            )
+
+            return response.status_code == 200
+
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"Error sending notification: {e!s}")
             return False

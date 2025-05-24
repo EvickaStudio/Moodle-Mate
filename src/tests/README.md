@@ -68,10 +68,10 @@ def test_specific_scenario(mock_dependency):
     # Arrange
     expected_result = "expected"
     mock_dependency.return_value = expected_result
-    
+
     # Act
     result = function_under_test()
-    
+
     # Assert
     assert result == expected_result
 ```
@@ -102,4 +102,4 @@ Tests are run automatically on:
 - Main branch commits
 - Release tags
 
-See the GitHub Actions workflow for details. 
+See the GitHub Actions workflow for details.

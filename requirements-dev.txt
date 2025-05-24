@@ -1,7 +1,5 @@
-flake8 
-pytest 
-coverage 
-mypy 
-black 
-isort 
+pytest
+coverage
+ruff
 types-requests
+pre-commit

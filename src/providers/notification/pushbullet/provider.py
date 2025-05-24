@@ -1,5 +1,6 @@
 import logging
-from typing import Optional
+
+import requests
 
 from src.core.notification.base import NotificationProvider
 from src.infrastructure.http.request_manager import request_manager
@@ -29,7 +30,7 @@ class PushbulletProvider(NotificationProvider):
         self.base_url = "https://api.pushbullet.com/v2"
         self.session = request_manager.session
 
-    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """Send a notification via Pushbullet.
 
         Args:
@@ -69,6 +70,9 @@ class PushbulletProvider(NotificationProvider):
             )
             return False
 
+        except requests.exceptions.RequestException as req_e:
+            logger.error(f"Failed to send Pushbullet notification (network error): {req_e!s}")
+            return False
         except Exception as e:
-            logger.error("Failed to send Pushbullet notification: %s", str(e))
+            logger.error(f"Failed to send Pushbullet notification (unexpected error): {e!s}", exc_info=True)
             return False

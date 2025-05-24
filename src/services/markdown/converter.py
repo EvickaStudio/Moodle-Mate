@@ -62,7 +62,10 @@ def clean_converted_text(text: str) -> str:
     # Remove forum management links at the bottom
     text = re.sub(r"\[Forum abbestellen\].*$", "", text, flags=re.MULTILINE | re.DOTALL)
     text = re.sub(
-        r"\[Diskussion im Forum zeigen\].*$", "", text, flags=re.MULTILINE | re.DOTALL
+        r"\[Diskussion im Forum zeigen\].*$",
+        "",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
     )
 
     # Clean up multiple newlines, spaces and underscores

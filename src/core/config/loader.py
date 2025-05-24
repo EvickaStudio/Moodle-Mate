@@ -15,18 +15,61 @@ from .schema import (
 
 
 class Config:
-    """Configuration manager for MoodleMate."""
+    """
+    Manages the application's configuration settings, loaded from a `config.ini` file.
+
+    This class implements a singleton pattern to ensure that configuration is loaded
+    only once. It parses the `config.ini` file and maps its sections and keys to
+    strongly-typed dataclass objects (e.g., `MoodleConfig`, `AIConfig`).
+
+    The configuration includes settings for Moodle connectivity, AI summarization,
+    general notification behavior, and specific settings for various notification
+    providers (both built-in and dynamically discovered plugins).
+
+    Access to configuration values is typically done through attributes named after
+    the sections in the .ini file, for example:
+    `config.moodle.url`, `config.ai.api_key`, `config.discord.webhook_url`.
+
+    Attributes:
+        config (configparser.ConfigParser): The raw ConfigParser object holding all data.
+        moodle (MoodleConfig): Configuration for Moodle connection.
+        ai (AIConfig): Configuration for AI features (e.g., OpenAI).
+        notification (NotificationConfig): General notification settings.
+        discord (DiscordConfig): Configuration for Discord notifications.
+        webhook_site (WebhookSiteConfig): Configuration for Webhook.site notifications.
+        pushbullet (PushbulletConfig): Configuration for Pushbullet notifications.
+        Additionally, attributes for dynamically loaded provider configurations are
+        set (e.g., `self.slack`, `self.ntfy` if configured).
+
+    Raises:
+        FileNotFoundError: If the specified `config_path` (default `config.ini`)
+                           does not exist during initialization.
+
+    Example:
+        >>> try:
+        ...     app_config = Config() # Loads from 'config.ini' by default
+        ...     print(f"Moodle URL: {app_config.moodle.url}")
+        ...     if app_config.discord.enabled:
+        ...         print(f"Discord Webhook: {app_config.discord.webhook_url}")
+        ... except FileNotFoundError:
+        ...     print("Config file not found. Please generate one.")
+    """
 
     _instance = None
 
-    def __new__(cls, config_path: str = "config.ini"):
+    def __new__(cls, config_path: str = "config.ini") -> "Config":
         if cls._instance is None:
-            cls._instance = super(Config, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._init_config(config_path)
         return cls._instance
 
     def _init_config(self, config_path: str):
         """Initialize configuration from file."""
+        if not isinstance(config_path, str):
+            raise TypeError("config_path must be a string.")
+        if not config_path:
+            raise ValueError("config_path must not be empty.")
+
         self.config = configparser.ConfigParser()
         if not Path(config_path).exists():
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -79,7 +122,9 @@ class Config:
                 "Summarize the message concisely with appropriate emojis, excluding links.",
             ),
             endpoint=self._get_config(
-                "ai", "endpoint", None
+                "ai",
+                "endpoint",
+                None,
             ),  # uses openai as fallback
         )
 
@@ -88,7 +133,7 @@ class Config:
         return NotificationConfig(
             max_retries=int(self._get_config("notification", "max_retries", "5")),
             fetch_interval=int(
-                self._get_config("notification", "fetch_interval", "60")
+                self._get_config("notification", "fetch_interval", "60"),
             ),
         )
 
@@ -136,7 +181,7 @@ class Config:
             if self.config.has_option(section, "enabled"):
                 # Create a dynamic provider config
                 provider_config = ProviderConfig(
-                    enabled=self._get_bool(section, "enabled", False)
+                    enabled=self._get_bool(section, "enabled", False),
                 )
 
                 # Add all other options from this section

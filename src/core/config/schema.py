@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -16,10 +15,8 @@ class AIConfig:
     model: str = "gpt-4"
     temperature: float = 0.7
     max_tokens: int = 150
-    system_prompt: str = (
-        "Summarize the message concisely with appropriate emojis, excluding links."
-    )
-    endpoint: Optional[str] = None
+    system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links."
+    endpoint: str | None = None
 
 
 @dataclass

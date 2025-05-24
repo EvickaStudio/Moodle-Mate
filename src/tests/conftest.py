@@ -1,7 +1,7 @@
 """Shared test fixtures and configuration."""
 
+from collections.abc import Generator
 import logging
-from typing import Generator
 from unittest.mock import Mock
 
 import pytest

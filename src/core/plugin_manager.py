@@ -2,7 +2,6 @@ import importlib
 import inspect
 import logging
 import pkgutil
-from typing import Dict, List, Optional, Type
 
 from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
@@ -14,7 +13,7 @@ class PluginManager:
     """Manages discovery and loading of notification provider plugins."""
 
     @classmethod
-    def discover_providers(cls) -> Dict[str, Type[NotificationProvider]]:
+    def discover_providers(cls) -> dict[str, type[NotificationProvider]]:
         """Discover all available notification provider classes.
 
         Returns:
@@ -30,26 +29,29 @@ class PluginManager:
                 try:
                     # Import the provider module
                     module = importlib.import_module(
-                        f"src.providers.notification.{name}.provider"
+                        f"src.providers.notification.{name}.provider",
                     )
 
                     # Find provider classes in the module
-                    for item_name, item in inspect.getmembers(module, inspect.isclass):
-                        if (
-                            issubclass(item, NotificationProvider)
-                            and item is not NotificationProvider
-                        ):
+                    for _item_name, item in inspect.getmembers(module, inspect.isclass):
+                        if issubclass(item, NotificationProvider) and item is not NotificationProvider:
                             providers[name] = item
                             logger.info(f"Discovered provider: {name}")
-                except Exception as e:
-                    logger.error(f"Error loading provider {name}: {str(e)}")
+                except ImportError as e:
+                    logger.error(f"Error importing provider module {name}: {e!s}")
+                except AttributeError as e:
+                    logger.error(f"Error inspecting provider module {name}: {e!s}")
+                except Exception as e:  # Fallback for other unexpected errors during discovery
+                    logger.error(f"Unexpected error loading provider {name}: {e!s}", exc_info=True)
 
         return providers
 
     @classmethod
     def load_enabled_providers(
-        cls, config: Config, already_loaded: Optional[set] = None
-    ) -> List[NotificationProvider]:
+        cls,
+        config: Config,
+        already_loaded: set | None = None,
+    ) -> list[NotificationProvider]:
         """Load all enabled notification providers from configuration.
 
         Args:
@@ -88,7 +90,9 @@ class PluginManager:
                     providers.append(provider)
                     already_loaded.add(name)  # Add to already loaded set
                     logger.info(f"Loaded enabled provider: {name}")
-            except Exception as e:
-                logger.error(f"Error initializing provider {name}: {str(e)}")
+            except (TypeError, AttributeError) as e:  # Common errors during instantiation or config access
+                logger.error(f"Configuration error for provider {name}: {e!s}")
+            except Exception as e:  # Fallback for other unexpected errors during initialization
+                logger.error(f"Unexpected error initializing provider {name}: {e!s}", exc_info=True)
 
         return providers

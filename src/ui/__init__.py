@@ -1,3 +1,3 @@
-from .cli.screen import animate_logo, clear_screen, logo_lines
+from .cli.screen import LOGO_LINES, animate_logo, clear_screen
 
-__all__ = ["animate_logo", "clear_screen", "logo_lines"]
+__all__ = ["LOGO_LINES", "animate_logo", "clear_screen"]

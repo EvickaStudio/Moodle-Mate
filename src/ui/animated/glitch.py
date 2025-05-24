@@ -10,7 +10,7 @@ LOGO_LINES = [
     r"│      /  |/  /__  ___  ___/ / /__ /  |/  /__ _/ /____   /       / |     │",
     r"│     / /|_/ / _ \/ _ \/ _  / / -_) /|_/ / _ `/ __/ -_) /______ /  /     │",
     r"│    /_/  /_/\___/\___/\_,_/_/\__/_/  /_/\_,_/\__/\__/ |___/___/  /      │",
-    r"│     -—--–=¤=—--–-- - -  EvickaStudio  - - --–--—=¤=--|__..___|.'- -    │",
+    r"│     -—---=¤=—----- - -  EvickaStudio  - - -----—=¤=--|__..___|.'- -    │",
     r"│                                                        //              │",
     r"╰────────────────────────────────────────────────────────────────────────╯",
 ]
@@ -41,10 +41,10 @@ def draw_logo(stdscr, start_row, start_col, frame, color_pairs):
         amp_factor = RANDOM_AMPLITUDES[i]
 
         wave_offset_x = int(
-            BASE_AMPLITUDE_X * amp_factor * math.sin((frame / WAVE_SPEED_X) + i)
+            BASE_AMPLITUDE_X * amp_factor * math.sin((frame / WAVE_SPEED_X) + i),
         )
         wave_offset_y = int(
-            BASE_AMPLITUDE_Y * amp_factor * math.sin((frame / WAVE_SPEED_Y) + i + 1)
+            BASE_AMPLITUDE_Y * amp_factor * math.sin((frame / WAVE_SPEED_Y) + i + 1),
         )
 
         # Determine row and column with the wave offsets

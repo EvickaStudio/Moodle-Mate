@@ -10,12 +10,12 @@ class RequestManager:
     """Global request session manager with consistent headers."""
 
     _instance: Optional["RequestManager"] = None
-    _session: Optional[requests.Session] = None
+    _session: requests.Session | None = None
     _session_created_at: float = 0
 
     def __new__(cls) -> "RequestManager":
         if cls._instance is None:
-            cls._instance = super(RequestManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._setup_session()
         return cls._instance
 
@@ -30,7 +30,7 @@ class RequestManager:
             {
                 "User-Agent": f"MoodleMate/{__version__} (+https://github.com/EvickaStudio/Moodle-Mate)",
                 "Content-Type": "application/x-www-form-urlencoded",
-            }
+            },
         )
         self._session_created_at = time.time()
 
@@ -39,14 +39,16 @@ class RequestManager:
         """Get the global session instance."""
         if self._session is None:
             self._setup_session()
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Session not initialized after setup.")
         return self._session
 
     def update_headers(self, headers: dict) -> None:
         """Update session headers with new values."""
         if self._session is None:
             self._setup_session()
-        assert self._session is not None
+        if self._session is None:
+            raise RuntimeError("Session not initialized after setup.")
         self._session.headers.update(headers)
 
     def reset_session(self) -> None:

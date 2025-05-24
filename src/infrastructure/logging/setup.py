@@ -16,13 +16,11 @@ COLORS = {
 class ColoredFormatter(logging.Formatter):
     """Custom formatter to add colors to log messages."""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         # Save original levelname
         orig_levelname = record.levelname
         # Add color to levelname
-        record.levelname = (
-            f"{COLORS.get(record.levelname, '')}{record.levelname}{COLORS['RESET']}"
-        )
+        record.levelname = f"{COLORS.get(record.levelname, '')}{record.levelname}{COLORS['RESET']}"
 
         # Color the logger name/component
         if record.name != "root":
@@ -47,9 +45,7 @@ def setup_logging(log_level: str = "INFO") -> None:
     log_dir.mkdir(exist_ok=True)
 
     # Configure logging format with more context
-    log_format = (
-        "%(asctime)s [%(levelname)s] [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
-    )
+    log_format = "%(asctime)s [%(levelname)s] [%(name)s.%(funcName)s:%(lineno)d] %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
 
     # Create colored formatter for console output

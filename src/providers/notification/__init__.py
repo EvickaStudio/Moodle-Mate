@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
@@ -12,7 +11,7 @@ from .webhook_site.provider import WebhookSiteProvider
 logger = logging.getLogger(__name__)
 
 
-def initialize_providers(config: Config) -> List[NotificationProvider]:
+def initialize_providers(config: Config) -> list[NotificationProvider]:
     """Initialize enabled notification providers from config.
 
     This function initializes both built-in providers and dynamically
@@ -35,7 +34,7 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
                 webhook_url=config.discord.webhook_url,
                 bot_name=config.discord.bot_name,
                 thumbnail_url=config.discord.thumbnail_url,
-            )
+            ),
         )
         already_loaded_providers.add("discord")
 
@@ -46,7 +45,7 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
             PushbulletProvider(
                 api_key=config.pushbullet.api_key,
                 include_summary=config.pushbullet.include_summary,
-            )
+            ),
         )
         already_loaded_providers.add("pushbullet")
 
@@ -57,7 +56,7 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
             WebhookSiteProvider(
                 webhook_url=config.webhook_site.webhook_url,
                 include_summary=config.webhook_site.include_summary,
-            )
+            ),
         )
         already_loaded_providers.add("webhook_site")
 
@@ -65,26 +64,27 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
     try:
         # Pass the set of already loaded providers to avoid duplicates
         dynamic_providers = PluginManager.load_enabled_providers(
-            config, already_loaded=already_loaded_providers
+            config,
+            already_loaded=already_loaded_providers,
         )
         providers.extend(dynamic_providers)
-    except Exception as e:
-        logger.error(f"Error loading dynamic providers: {str(e)}")
+    except Exception as e:  # General errors from plugin loading system
+        logger.error(f"Error loading dynamic providers: {e!s}", exc_info=True)
 
     # Log warning for configured but missing providers
     for provider_name in get_configured_provider_names(config):
         if provider_name not in already_loaded_providers and provider_name != "discord":
             logger.warning(
-                f"Provider '{provider_name}' is configured but not implemented or found"
+                f"Provider '{provider_name}' is configured but not implemented or found",
             )
 
     logger.info(
-        f"Initialized {len(providers)} notification providers: {[p.__class__.__name__ for p in providers]}"
+        f"Initialized {len(providers)} notification providers: {[p.__class__.__name__ for p in providers]}",
     )
     return providers
 
 
-def get_configured_provider_names(config: Config) -> List[str]:
+def get_configured_provider_names(config: Config) -> list[str]:
     """Get names of all providers configured in config.ini."""
     provider_names = []
 

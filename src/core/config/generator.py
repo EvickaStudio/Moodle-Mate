@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import configparser
 import importlib
 import inspect
@@ -5,26 +6,53 @@ import logging
 import os
 import pkgutil
 import re
-from typing import Callable, Dict, Optional, Type
+from typing import Any
 
 from src.core.notification.base import NotificationProvider
 
 
 class ConfigGenerator:
-    """Interactive configuration generator for MoodleMate."""
+    """
+    Handles the interactive generation of the `config.ini` file for MoodleMate.
+
+    This class guides the user through a series of prompts to configure various
+    aspects of the application, including Moodle credentials, AI summarization
+    settings, and notification provider details. It discovers available notification
+    providers (both built-in and plugin-based) and allows the user to enable and
+    configure them.
+
+    The main public method is `generate_config()`, which orchestrates the entire
+    interactive process and saves the resulting configuration.
+
+    Attributes:
+        config (configparser.ConfigParser): An instance of ConfigParser used to build
+            the configuration data.
+        webhook_pattern (re.Pattern): A compiled regular expression for validating
+            Discord webhook URLs.
+        api_key_pattern (re.Pattern): A compiled regular expression for validating
+            OpenAI API keys (basic format check).
+
+    Example:
+        >>> generator = ConfigGenerator()
+        >>> success = generator.generate_config() # Starts interactive session
+        >>> if success:
+        ...     print("Config generated!")
+        ... else:
+        ...     print("Config generation failed or was cancelled.")
+    """
 
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.webhook_pattern = re.compile(
-            r"https://discord\.com/api/webhooks/\d+/[\w-]+"
+            r"https://discord\.com/api/webhooks/\d+/[\w-]+",
         )
         self.api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
     def _discover_providers(
         self,
-    ) -> Dict[str, Type[NotificationProvider]]:
+    ) -> dict[str, type[NotificationProvider]]:
         """Discover available notification providers."""
-        providers: Dict[str, Type[NotificationProvider]] = {}
+        providers: dict[str, type[NotificationProvider]] = {}
 
         try:
             # Import the notification package
@@ -36,33 +64,40 @@ class ConfigGenerator:
             # Discover additional providers using the plugin system
             self._load_plugin_providers(providers, notification.__path__)
 
-        except Exception as e:
-            logging.error(f"Error discovering providers: {str(e)}")
+        except ImportError as e:
+            logging.error(f"Error importing providers module: {e!s}")
+        except AttributeError as e:
+            logging.error(f"Error accessing provider path: {e!s}")
+        except (TypeError, ValueError) as e:
+            logging.error(f"Unexpected error discovering providers: {e!s}")
 
         return providers
 
     def _load_builtin_providers(
-        self, providers: Dict[str, Type[NotificationProvider]]
+        self,
+        providers: dict[str, type[NotificationProvider]],
     ) -> None:
         """Load built-in notification providers."""
         for provider_name in ["discord", "pushbullet", "slack", "ntfy"]:
             try:
                 module = importlib.import_module(
-                    f"src.providers.notification.{provider_name}.provider"
+                    f"src.providers.notification.{provider_name}.provider",
                 )
                 self._extract_provider_classes(module, provider_name, providers)
             except ImportError:
                 continue
 
     def _load_plugin_providers(
-        self, providers: Dict[str, Type[NotificationProvider]], package_path
+        self,
+        providers: dict[str, type[NotificationProvider]],
+        package_path: Any,
     ) -> None:
         """Load plugin notification providers."""
         for _, name, is_pkg in pkgutil.iter_modules(package_path):
             if is_pkg and name not in providers:
                 try:
                     module = importlib.import_module(
-                        f"src.providers.notification.{name}.provider"
+                        f"src.providers.notification.{name}.provider",
                     )
                     self._extract_provider_classes(module, name, providers)
                 except ImportError:
@@ -70,20 +105,39 @@ class ConfigGenerator:
 
     def _extract_provider_classes(
         self,
-        module,
+        module: object,
         provider_name: str,
-        providers: Dict[str, Type[NotificationProvider]],
+        providers: dict[str, type[NotificationProvider]],
     ) -> None:
         """Extract notification provider classes from a module."""
-        for item_name, item in inspect.getmembers(module, inspect.isclass):
-            if (
-                issubclass(item, NotificationProvider)
-                and item is not NotificationProvider
-            ):
+        for _item_name, item in inspect.getmembers(module, inspect.isclass):
+            if issubclass(item, NotificationProvider) and item is not NotificationProvider:
                 providers[provider_name] = item
 
     def generate_config(self) -> bool:
-        """Generate configuration file interactively."""
+        """
+        Orchestrate the interactive configuration file generation process.
+
+        This method walks the user through configuring Moodle, AI, general
+        notifications, and specific notification providers (Discord, Pushbullet,
+        and any discovered plugins).
+
+        It handles `KeyboardInterrupt` for graceful cancellation by the user.
+        If the configuration is successfully generated and saved, it backs up any
+        existing `config.ini` file to `config.ini.backup`.
+
+        Returns:
+            bool: True if the configuration was successfully generated and saved,
+                  False if the process was cancelled by the user or an error occurred.
+
+        Side Effects:
+            - Prints prompts and messages to the console for user interaction.
+            - Modifies `self.config` by adding sections and key-value pairs based
+              on user input.
+            - Calls `_save_config()` which attempts to write to `config.ini` and may
+              create `config.ini.backup`.
+            - Logs errors if issues occur during generation or saving.
+        """
         try:
             print("\n🔧 Welcome to MoodleMate Configuration Generator!")
             print("Let's set up your configuration step by step.\n")
@@ -109,15 +163,18 @@ class ConfigGenerator:
         except KeyboardInterrupt:
             print("\n\nConfiguration cancelled by user.")
             return False
-        except Exception as e:
-            logging.error(f"Error generating configuration: {e}")
+        except OSError as e:  # For file system errors during _save_config or other os issues
+            logging.error(f"Error saving configuration file: {e}")
+            return False
+        except (ValueError, TypeError, AttributeError) as e:  # For issues during individual _configure steps
+            logging.error(f"Error during configuration generation: {e!s}")
             return False
 
     def _get_input(
         self,
         prompt: str,
-        default: Optional[str] = None,
-        validator: Optional[Callable[[str], bool]] = None,
+        default: str | None = None,
+        validator: Callable[[str], bool] | None = None,
         optional: bool = False,
     ) -> str:
         """Get user input with validation.
@@ -186,7 +243,8 @@ class ConfigGenerator:
 
         self.config["moodle"] = {
             "url": self._get_input(
-                "Enter your Moodle URL", validator=self._validate_url
+                "Enter your Moodle URL",
+                validator=self._validate_url,
             ),
             "username": self._get_input("Enter your Moodle username"),
             "password": self._get_input("Enter your Moodle password"),
@@ -204,11 +262,13 @@ class ConfigGenerator:
             self.config["ai"].update(
                 {
                     "api_key": self._get_input(
-                        "Enter your OpenAI API key", validator=self._validate_api_key
+                        "Enter your OpenAI API key",
+                        validator=self._validate_api_key,
                     ),
                     "model": self._get_input("Enter AI model name", "gpt-4o-mini"),
                     "temperature": self._get_input(
-                        "Enter temperature (0.0-1.0)", "0.7"
+                        "Enter temperature (0.0-1.0)",
+                        "0.7",
                     ),
                     "max_tokens": self._get_input("Enter max tokens", "150"),
                     "system_prompt": self._get_input(
@@ -219,7 +279,7 @@ class ConfigGenerator:
                         "Enter API endpoint (optional)",
                         "https://api.openai.com/v1/chat/completions",
                     ),
-                }
+                },
             )
 
     def _configure_notification(self):
@@ -244,13 +304,15 @@ class ConfigGenerator:
             self.config["discord"].update(
                 {
                     "webhook_url": self._get_input(
-                        "Enter Discord webhook URL", validator=self._validate_webhook
+                        "Enter Discord webhook URL",
+                        validator=self._validate_webhook,
                     ),
                     "bot_name": self._get_input("Enter bot name", "MoodleMate"),
                     "thumbnail_url": self._get_input(
-                        "Enter thumbnail URL (optional)", optional=True
+                        "Enter thumbnail URL (optional)",
+                        optional=True,
                     ),
-                }
+                },
             )
 
     def _configure_pushbullet(self):
@@ -263,7 +325,7 @@ class ConfigGenerator:
 
         if enabled:
             self.config["pushbullet"].update(
-                {"api_key": self._get_input("Enter Pushbullet API key")}
+                {"api_key": self._get_input("Enter Pushbullet API key")},
             )
 
     def _configure_additional_providers(self):
@@ -287,13 +349,12 @@ class ConfigGenerator:
             print("-" * 50)
 
             # Get provider description from docstring
-            description = (
-                provider_class.__doc__ or f"{name.capitalize()} notification provider"
-            )
+            description = provider_class.__doc__ or f"{name.capitalize()} notification provider"
             print(f"{description}\n")
 
             enabled = self._get_bool_input(
-                f"Enable {name.capitalize()} notifications?", False
+                f"Enable {name.capitalize()} notifications?",
+                False,
             )
             self.config[name] = {"enabled": "1" if enabled else "0"}
 
@@ -320,10 +381,10 @@ class ConfigGenerator:
 
                         if value or not has_default:
                             self.config[name][param_name] = value
-                except Exception as e:
-                    logging.error(f"Error configuring {name}: {str(e)}")
+                except (AttributeError, TypeError, ValueError) as e:
+                    logging.error(f"Error processing configuration for {name}: {e!s}")
                     print(
-                        f"Could not automatically configure {name}. Please check the documentation."
+                        f"Could not automatically configure {name}. Please check the documentation.",
                     )
 
     def _save_config(self) -> bool:
@@ -341,6 +402,10 @@ class ConfigGenerator:
             print(f"\n✅ Configuration saved to {config_path}")
             return True
 
+        except OSError as e:  # Specific to I/O errors like file not found, permissions
+            logging.error(f"Failed to save configuration (IOError): {e}")
+            return False
+        # Fallback for truly unexpected issues during save, though IOError should cover most.
         except Exception as e:
-            logging.error(f"Failed to save configuration: {e}")
+            logging.error(f"Unexpected error saving configuration: {e!s}", exc_info=True)
             return False

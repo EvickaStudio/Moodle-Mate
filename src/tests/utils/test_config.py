@@ -1,3 +1,4 @@
+# ruff: noqa: S101
 from configparser import ConfigParser
 
 import pytest
@@ -6,7 +7,7 @@ from core.config.loader import Config
 
 
 @pytest.fixture
-def config_parser():
+def config_parser() -> ConfigParser:
     """Create a mock config parser."""
     parser = ConfigParser()
     parser.add_section("test")

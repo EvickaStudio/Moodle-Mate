@@ -36,7 +36,9 @@ def collapse_whitespace(element, is_block_fn, is_void_fn, is_pre_fn):
     while current_node != element:
         if current_node.node_type in (3, 4):  # TEXT_NODE or CDATA_SECTION_NODE
             new_data, keep_leading_space = _process_text_node(
-                current_node, prev_text_node, keep_leading_space
+                current_node,
+                prev_text_node,
+                keep_leading_space,
             )
             if new_data is None:
                 next_in_line = _determine_next_node(prev_node, current_node, is_pre_fn)
@@ -88,7 +90,7 @@ def _determine_next_node(previous_node, current_node, is_pre_fn):
     # If the `previous_node` is the parent of the `current_node` or the node is <pre>/<code>,
     # we move to the next sibling or up to the parent.
     if (previous_node and previous_node.parent == current_node) or is_pre_fn(
-        current_node
+        current_node,
     ):
         return current_node.next_sibling or current_node.parent
 

@@ -1,5 +1,6 @@
 import logging
-from typing import Optional
+
+import requests
 
 from src.core.notification.base import NotificationProvider
 from src.infrastructure.http.request_manager import request_manager
@@ -21,7 +22,7 @@ class WebhookSiteProvider(NotificationProvider):
         self.include_summary = include_summary
         self.session = request_manager.session
 
-    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """Send a notification to Webhook.site.
 
         Args:
@@ -58,6 +59,9 @@ class WebhookSiteProvider(NotificationProvider):
             )
             return False
 
+        except requests.exceptions.RequestException as req_e:
+            logger.error(f"Failed to send Webhook.site message: {req_e!s}")
+            return False
         except Exception as e:
-            logger.error("Failed to send Webhook.site message: %s", str(e))
+            logger.error(f"Failed to send Webhook.site message: {e!s}", exc_info=True)
             return False

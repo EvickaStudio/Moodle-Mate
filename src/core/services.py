@@ -8,7 +8,37 @@ from src.services.moodle.notification_handler import MoodleNotificationHandler
 
 
 def initialize_services() -> None:
-    """Initialize and register all application services."""
+    """
+    Initializes and registers all core application services with the ServiceLocator.
+
+    This function is a crucial part of the application's startup sequence. It ensures
+    that all necessary services are instantiated and made available globally via the
+    `ServiceLocator`. The order of initialization matters for services that have
+    dependencies on others (e.g., `Config` is needed by many services).
+
+    Services initialized and registered:
+    - `Config`: Application configuration, loaded from `config.ini`.
+    - `MoodleAPI`: Client for interacting with the Moodle Web Services API.
+    - `GPT`: Client for OpenAI GPT (if AI is enabled in the config).
+    - `NotificationProcessor`: Service for processing and dispatching notifications.
+      This itself depends on initialized notification providers.
+    - `MoodleNotificationHandler`: Service for fetching and managing Moodle notifications.
+
+    Side Effects:
+        - Creates instances of all core services.
+        - Registers these instances with the `ServiceLocator`.
+        - Calls `initialize_providers(config)` which discovers and instantiates
+          notification provider plugins.
+        - May access the file system (to load `config.ini` via `Config()`)
+        - May make network calls if service initializers do so (though currently,
+          most defer network activity until methods are called).
+
+    Raises:
+        FileNotFoundError: If `config.ini` is not found during `Config()` initialization.
+        KeyError/TypeError: Potentially, if there are issues with how services access
+                          each other during their own initialization, though this
+                          function primarily focuses on registration.
+    """
     # Initialize service locator
     locator = ServiceLocator()
 

@@ -31,7 +31,8 @@ class RuleManager:
         Keep a node "as-is" if filter_func(node) is True.
         """
         self._keep_rules.insert(
-            0, {"filter": filter_func, "replacement": self.keepReplacement}
+            0,
+            {"filter": filter_func, "replacement": self.keepReplacement},
         )
 
     def remove(self, filter_func):
@@ -39,7 +40,8 @@ class RuleManager:
         Remove a node if filter_func(node) is True (emits empty string).
         """
         self._remove_rules.insert(
-            0, {"filter": filter_func, "replacement": lambda c, n, o: ""}
+            0,
+            {"filter": filter_func, "replacement": lambda c, n, o: ""},
         )
 
     def for_node(self, node):
@@ -66,11 +68,7 @@ class RuleManager:
 
     def _match_rule(self, rules_list, node):
         return next(
-            (
-                rule_def
-                for rule_def in rules_list
-                if _rule_filter_matches(rule_def["filter"], node, self.options)
-            ),
+            (rule_def for rule_def in rules_list if _rule_filter_matches(rule_def["filter"], node, self.options)),
             None,
         )
 

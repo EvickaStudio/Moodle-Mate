@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Tuple
 
 
 class ModelType(Enum):
@@ -21,8 +20,10 @@ class ModelPricing:
     output_cost_per_1m: float
 
     def calculate_costs(
-        self, input_tokens: int, output_tokens: int
-    ) -> Tuple[float, float, float]:
+        self,
+        input_tokens: int,
+        output_tokens: int,
+    ) -> tuple[float, float, float]:
         """Calculate costs for token usage."""
         input_cost = input_tokens * (self.input_cost_per_1m / 1_000_000)
         output_cost = output_tokens * (self.output_cost_per_1m / 1_000_000)

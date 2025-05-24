@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Union
+
+import requests
 
 from src.core.notification.base import NotificationProvider
 from src.core.version import __version__
@@ -15,14 +16,17 @@ class DiscordWebhookEmbed:
     def __init__(self, title: str, description: str):
         self.title = title
         self.description = description[:2000]  # Discord limit
-        self.fields: List[Dict[str, Union[str, bool]]] = []
+        self.fields: list[dict[str, str | bool]] = []
         self.color = 0x5865F2  # Discord Blurple
-        self.thumbnail: Optional[Dict[str, str]] = None
-        self.footer: Optional[Dict[str, str]] = None
-        self.timestamp: Optional[str] = None
+        self.thumbnail: dict[str, str] | None = None
+        self.footer: dict[str, str] | None = None
+        self.timestamp: str | None = None
 
     def add_field(
-        self, name: str, value: str, inline: bool = False
+        self,
+        name: str,
+        value: str,
+        inline: bool = False,
     ) -> "DiscordWebhookEmbed":
         """Add a field to the embed."""
         if len(self.fields) < 25:  # Discord's limit
@@ -31,7 +35,7 @@ class DiscordWebhookEmbed:
                     "name": name[:256],  # Discord limit
                     "value": value[:1024],  # Discord limit
                     "inline": inline,
-                }
+                },
             )
         return self
 
@@ -46,7 +50,9 @@ class DiscordWebhookEmbed:
         return self
 
     def set_footer(
-        self, text: str, icon_url: Optional[str] = None
+        self,
+        text: str,
+        icon_url: str | None = None,
     ) -> "DiscordWebhookEmbed":
         """Set the footer content."""
         self.footer = {"text": text[:2048]}  # Discord limit
@@ -55,15 +61,14 @@ class DiscordWebhookEmbed:
         return self
 
     def set_timestamp(
-        self, timestamp: Optional[datetime] = None
+        self,
+        timestamp: datetime | None = None,
     ) -> "DiscordWebhookEmbed":
         """Set ISO8601 timestamp."""
-        self.timestamp = (
-            timestamp.isoformat() if timestamp else datetime.utcnow().isoformat()
-        )
+        self.timestamp = timestamp.isoformat() if timestamp else datetime.now(timezone.utc).isoformat()
         return self
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert embed to dictionary format."""
         embed_dict = {
             "title": self.title,
@@ -102,7 +107,10 @@ class DiscordProvider(NotificationProvider):
         self.session = request_manager.session
 
     def create_notification_embed(
-        self, subject: str, content: str, summary: Optional[str] = None
+        self,
+        subject: str,
+        content: str,
+        summary: str | None = None,
     ) -> DiscordWebhookEmbed:
         """Create a formatted embed for the notification."""
         embed = DiscordWebhookEmbed(subject, content)
@@ -123,7 +131,7 @@ class DiscordProvider(NotificationProvider):
 
         return embed
 
-    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """Send a notification via Discord webhook.
 
         Args:
@@ -140,7 +148,7 @@ class DiscordProvider(NotificationProvider):
                 "username": self.bot_name,
                 "avatar_url": self.LOGO_URL,
                 "embeds": [
-                    self.create_notification_embed(subject, message, summary).to_dict()
+                    self.create_notification_embed(subject, message, summary).to_dict(),
                 ],
             }
 
@@ -159,6 +167,9 @@ class DiscordProvider(NotificationProvider):
             )
             return False
 
+        except requests.exceptions.RequestException as req_e:
+            logger.error(f"Failed to send Discord message (network error): {req_e!s}")
+            return False
         except Exception as e:
-            logger.error("Failed to send Discord message: %s", str(e))
+            logger.error(f"Failed to send Discord message (unexpected error): {e!s}", exc_info=True)
             return False

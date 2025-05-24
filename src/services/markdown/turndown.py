@@ -37,18 +37,12 @@ class MarkdownConverter:
             "linkReferenceStyle": "full",
             "br": "  ",
             "preformattedCode": False,
-            "blankReplacement": lambda content, node, opts: (
-                "\n\n" if getattr(node, "is_block", False) else ""
-            ),
+            "blankReplacement": lambda content, node, opts: ("\n\n" if getattr(node, "is_block", False) else ""),
             "keepReplacement": lambda content, node, opts: (
-                "\n\n" + node.outer_html + "\n\n"
-                if getattr(node, "is_block", False)
-                else node.outer_html
+                "\n\n" + node.outer_html + "\n\n" if getattr(node, "is_block", False) else node.outer_html
             ),
             "defaultReplacement": lambda content, node, opts: (
-                "\n\n" + content + "\n\n"
-                if getattr(node, "is_block", False)
-                else content
+                "\n\n" + content + "\n\n" if getattr(node, "is_block", False) else content
             ),
         }
         # Merge user options with defaults
@@ -132,9 +126,7 @@ class MarkdownConverter:
             child = enhance_node(child, self.options)
             if child.node_type == 3:  # TEXT
                 # If it's code, preserve; otherwise do .escape
-                piece = (
-                    child.node_value if child.is_code else self.escape(child.node_value)
-                )
+                piece = child.node_value if child.is_code else self.escape(child.node_value)
             elif child.node_type == 1:  # ELEMENT
                 piece = self._replacement_for_node(child)
             else:
@@ -153,11 +145,7 @@ class MarkdownConverter:
         ws = node.flanking_whitespace
         if ws["leading"] or ws["trailing"]:
             inner_content = inner_content.strip()
-        return (
-            ws["leading"]
-            + rule["replacement"](inner_content, node, self.options)
-            + ws["trailing"]
-        )
+        return ws["leading"] + rule["replacement"](inner_content, node, self.options) + ws["trailing"]
 
     def _post_process(self, text):
         """
