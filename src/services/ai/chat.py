@@ -277,9 +277,7 @@ class GPT:
                         f"Rate limit exceeded after {max_retries} attempts: {str(e)}"
                     ) from e
 
-                wait_time = retry_delay * (
-                    2 ** (attempt - 1)
-                )  # Exponential backoff
+                wait_time = retry_delay * (2 ** (attempt - 1))  # Exponential backoff
                 logging.warning(
                     f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
                 )
