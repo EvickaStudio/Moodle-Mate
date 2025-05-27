@@ -57,7 +57,7 @@ class GPT:
     @property
     def is_openrouter(self) -> bool:
         """Check if the current endpoint is for OpenRouter."""
-        return "openrouter.ai" in self._endpoint if self._endpoint else False
+        return "openrouter.ai" in self._endpoint.lower() if self._endpoint else False
 
     @property
     def api_key(self) -> Optional[str]:
@@ -192,11 +192,10 @@ class GPT:
         model: str,
         temperature: float,
         max_tokens: Optional[int],
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
     ) -> str:  # sourcery skip: low-code-quality
         """Internal method to handle chat completion requests."""
-        max_retries = 3
-        retry_delay = 2  # seconds
-
         for attempt in range(1, max_retries + 1):
             try:
                 # Convert messages to the expected type
@@ -216,21 +215,24 @@ class GPT:
                         )
                     # Add other roles as needed
 
-                # Prepare extra headers if using OpenRouter
-                extra_headers = None
+                # Prepare headers for OpenRouter if needed
+                extra_headers = {}
                 if self.is_openrouter:
-                    extra_headers = {
-                        "HTTP-Referer": "https://github.com/EvickaStudio/Moodle-Mate",
-                        "X-Title": "Moodle-Mate",
-                    }
+                    extra_headers["HTTP-Referer"] = "https://moodle-mate.app"
+                    extra_headers["X-Title"] = "Moodle Mate"
 
-                # Make the API call first since token counting might fail for unknown models
+                # Prepare arguments for the API call
+                api_call_args = {
+                    "model": model,
+                    "messages": typed_messages,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                }
+                if extra_headers:  # Only include extra_headers if it's a non-empty dict
+                    api_call_args["extra_headers"] = extra_headers
+
                 response: ChatCompletion = openai.chat.completions.create(
-                    model=model,
-                    messages=typed_messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    extra_headers=extra_headers,
+                    **api_call_args
                 )
 
                 # Extract and validate response
