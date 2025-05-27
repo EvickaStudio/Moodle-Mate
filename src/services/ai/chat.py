@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from typing import Dict, List, Optional
 
 import openai  # version 1.5
@@ -52,6 +53,11 @@ class GPT:
             ModelType.O3_MINI.value: ModelPricing(1.10, 4.40),
         }
         self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
+
+    @property
+    def is_openrouter(self) -> bool:
+        """Check if the current endpoint is for OpenRouter."""
+        return "openrouter.ai" in self._endpoint.lower() if self._endpoint else False
 
     @property
     def api_key(self) -> Optional[str]:
@@ -186,11 +192,10 @@ class GPT:
         model: str,
         temperature: float,
         max_tokens: Optional[int],
-    ) -> str:
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ) -> str:  # sourcery skip: low-code-quality
         """Internal method to handle chat completion requests."""
-        max_retries = 3
-        retry_delay = 2  # seconds
-
         for attempt in range(1, max_retries + 1):
             try:
                 # Convert messages to the expected type
@@ -210,12 +215,24 @@ class GPT:
                         )
                     # Add other roles as needed
 
-                # Make the API call first since token counting might fail for unknown models
+                # Prepare headers for OpenRouter if needed
+                extra_headers = {}
+                if self.is_openrouter:
+                    extra_headers["HTTP-Referer"] = "https://moodle-mate.app"
+                    extra_headers["X-Title"] = "Moodle Mate"
+
+                # Prepare arguments for the API call
+                api_call_args = {
+                    "model": model,
+                    "messages": typed_messages,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                }
+                if extra_headers:  # Only include extra_headers if it's a non-empty dict
+                    api_call_args["extra_headers"] = extra_headers
+
                 response: ChatCompletion = openai.chat.completions.create(
-                    model=model,
-                    messages=typed_messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
+                    **api_call_args
                 )
 
                 # Extract and validate response
@@ -258,64 +275,58 @@ class GPT:
                 return output_text
 
             except openai.RateLimitError as e:
-                if attempt < max_retries:
-                    wait_time = retry_delay * (
-                        2 ** (attempt - 1)
-                    )  # Exponential backoff
-                    logging.warning(
-                        f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                    )
-                    import time
-
-                    time.sleep(wait_time)
-                else:
+                if attempt >= max_retries:
                     raise RateLimitExceededError(
                         f"Rate limit exceeded after {max_retries} attempts: {str(e)}"
                     ) from e
 
+                wait_time = retry_delay * (2 ** (attempt - 1))  # Exponential backoff
+                logging.warning(
+                    f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                )
+                time.sleep(wait_time)
             except openai.APITimeoutError as e:
                 if attempt < max_retries:
                     wait_time = retry_delay * (2 ** (attempt - 1))
                     logging.warning(
-                        f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                        f"API timeout on attempt {attempt}/{max_retries}. "
+                        f"Retrying in {wait_time} seconds..."
                     )
-                    import time
-
                     time.sleep(wait_time)
-                else:
-                    raise APITimeoutError(
-                        f"API request timed out after {max_retries} attempts: {str(e)}"
-                    ) from e
+                    continue
+                raise APITimeoutError(
+                    f"Request timed out after {max_retries} attempts"
+                ) from e
 
             except openai.APIConnectionError as e:
                 if attempt < max_retries:
                     wait_time = retry_delay * (2 ** (attempt - 1))
                     logging.warning(
-                        f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                        f"API connection error on attempt {attempt}/{max_retries}. "
+                        f"Retrying in {wait_time} seconds..."
                     )
-                    import time
-
                     time.sleep(wait_time)
-                else:
-                    raise APIConnectionError(
-                        f"API connection failed after {max_retries} attempts: {str(e)}"
-                    ) from e
+                    continue
+                raise APIConnectionError(
+                    f"Connection failed after {max_retries} attempts"
+                ) from e
 
             except openai.APIError as e:
-                if 500 <= getattr(e, "status_code", 0) < 600:
+                if e.status_code and 500 <= e.status_code < 600:  # Server errors
                     if attempt < max_retries:
                         wait_time = retry_delay * (2 ** (attempt - 1))
                         logging.warning(
-                            f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                            f"Server error (status {e.status_code}) on attempt {attempt}/{max_retries}. "
+                            f"Retrying in {wait_time} seconds..."
                         )
-                        import time
-
                         time.sleep(wait_time)
-                    else:
-                        raise ServerError(
-                            f"OpenAI server error after {max_retries} attempts: {str(e)}"
-                        ) from e
-                elif 400 <= getattr(e, "status_code", 0) < 500:
+                        continue
+                    raise ServerError(
+                        f"Server error after {max_retries} attempts: {str(e)}"
+                    ) from e
+                elif e.status_code == 401:
+                    raise InvalidAPIKeyError("Invalid API key provided") from e
+                elif e.status_code and 400 <= e.status_code < 500:
                     raise ClientError(f"Client error: {str(e)}") from e
                 else:
                     raise ChatCompletionError(f"API error: {str(e)}") from e
