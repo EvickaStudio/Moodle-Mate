@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 from typing import Dict, List, Optional
 
 import openai  # version 1.5
@@ -281,49 +282,49 @@ class GPT:
                 logging.warning(
                     f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
                 )
-                import time
-
                 time.sleep(wait_time)
             except openai.APITimeoutError as e:
-                if attempt >= max_retries:
-                    raise APITimeoutError(
-                        f"API request timed out after {max_retries} attempts: {str(e)}"
-                    ) from e
-
-                wait_time = retry_delay * (2 ** (attempt - 1))
-                logging.warning(
-                    f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                )
-                import time
-
-                time.sleep(wait_time)
-            except openai.APIConnectionError as e:
-                if attempt >= max_retries:
-                    raise APIConnectionError(
-                        f"API connection failed after {max_retries} attempts: {str(e)}"
-                    ) from e
-
-                wait_time = retry_delay * (2 ** (attempt - 1))
-                logging.warning(
-                    f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                )
-                import time
-
-                time.sleep(wait_time)
-            except openai.APIError as e:
-                if 500 <= getattr(e, "status_code", 0) < 600:
-                    if attempt >= max_retries:
-                        raise ServerError(
-                            f"OpenAI server error after {max_retries} attempts: {str(e)}"
-                        ) from e
+                if attempt < max_retries:
                     wait_time = retry_delay * (2 ** (attempt - 1))
                     logging.warning(
-                        f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                        f"API timeout on attempt {attempt}/{max_retries}. "
+                        f"Retrying in {wait_time} seconds..."
                     )
-                    import time
-
                     time.sleep(wait_time)
-                elif 400 <= getattr(e, "status_code", 0) < 500:
+                    continue
+                raise APITimeoutError(
+                    f"Request timed out after {max_retries} attempts"
+                ) from e
+
+            except openai.APIConnectionError as e:
+                if attempt < max_retries:
+                    wait_time = retry_delay * (2 ** (attempt - 1))
+                    logging.warning(
+                        f"API connection error on attempt {attempt}/{max_retries}. "
+                        f"Retrying in {wait_time} seconds..."
+                    )
+                    time.sleep(wait_time)
+                    continue
+                raise APIConnectionError(
+                    f"Connection failed after {max_retries} attempts"
+                ) from e
+
+            except openai.APIError as e:
+                if e.status_code and 500 <= e.status_code < 600:  # Server errors
+                    if attempt < max_retries:
+                        wait_time = retry_delay * (2 ** (attempt - 1))
+                        logging.warning(
+                            f"Server error (status {e.status_code}) on attempt {attempt}/{max_retries}. "
+                            f"Retrying in {wait_time} seconds..."
+                        )
+                        time.sleep(wait_time)
+                        continue
+                    raise ServerError(
+                        f"Server error after {max_retries} attempts: {str(e)}"
+                    ) from e
+                elif e.status_code == 401:
+                    raise InvalidAPIKeyError("Invalid API key provided") from e
+                elif e.status_code and 400 <= e.status_code < 500:
                     raise ClientError(f"Client error: {str(e)}") from e
                 else:
                     raise ChatCompletionError(f"API error: {str(e)}") from e
