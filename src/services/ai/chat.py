@@ -54,6 +54,11 @@ class GPT:
         self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
     @property
+    def is_openrouter(self) -> bool:
+        """Check if the current endpoint is for OpenRouter."""
+        return "openrouter.ai" in self._endpoint if self._endpoint else False
+
+    @property
     def api_key(self) -> Optional[str]:
         """Get the configured API key."""
         return self._api_key
@@ -186,7 +191,7 @@ class GPT:
         model: str,
         temperature: float,
         max_tokens: Optional[int],
-    ) -> str:
+    ) -> str:  # sourcery skip: low-code-quality
         """Internal method to handle chat completion requests."""
         max_retries = 3
         retry_delay = 2  # seconds
@@ -210,12 +215,21 @@ class GPT:
                         )
                     # Add other roles as needed
 
+                # Prepare extra headers if using OpenRouter
+                extra_headers = None
+                if self.is_openrouter:
+                    extra_headers = {
+                        "HTTP-Referer": "https://github.com/EvickaStudio/Moodle-Mate",
+                        "X-Title": "Moodle-Mate",
+                    }
+
                 # Make the API call first since token counting might fail for unknown models
                 response: ChatCompletion = openai.chat.completions.create(
                     model=model,
                     messages=typed_messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    extra_headers=extra_headers,
                 )
 
                 # Extract and validate response
@@ -258,63 +272,59 @@ class GPT:
                 return output_text
 
             except openai.RateLimitError as e:
-                if attempt < max_retries:
-                    wait_time = retry_delay * (
-                        2 ** (attempt - 1)
-                    )  # Exponential backoff
-                    logging.warning(
-                        f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                    )
-                    import time
-
-                    time.sleep(wait_time)
-                else:
+                if attempt >= max_retries:
                     raise RateLimitExceededError(
                         f"Rate limit exceeded after {max_retries} attempts: {str(e)}"
                     ) from e
 
-            except openai.APITimeoutError as e:
-                if attempt < max_retries:
-                    wait_time = retry_delay * (2 ** (attempt - 1))
-                    logging.warning(
-                        f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                    )
-                    import time
+                wait_time = retry_delay * (
+                    2 ** (attempt - 1)
+                )  # Exponential backoff
+                logging.warning(
+                    f"Rate limit exceeded. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                )
+                import time
 
-                    time.sleep(wait_time)
-                else:
+                time.sleep(wait_time)
+            except openai.APITimeoutError as e:
+                if attempt >= max_retries:
                     raise APITimeoutError(
                         f"API request timed out after {max_retries} attempts: {str(e)}"
                     ) from e
 
-            except openai.APIConnectionError as e:
-                if attempt < max_retries:
-                    wait_time = retry_delay * (2 ** (attempt - 1))
-                    logging.warning(
-                        f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                    )
-                    import time
+                wait_time = retry_delay * (2 ** (attempt - 1))
+                logging.warning(
+                    f"API timeout. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                )
+                import time
 
-                    time.sleep(wait_time)
-                else:
+                time.sleep(wait_time)
+            except openai.APIConnectionError as e:
+                if attempt >= max_retries:
                     raise APIConnectionError(
                         f"API connection failed after {max_retries} attempts: {str(e)}"
                     ) from e
 
+                wait_time = retry_delay * (2 ** (attempt - 1))
+                logging.warning(
+                    f"API connection error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                )
+                import time
+
+                time.sleep(wait_time)
             except openai.APIError as e:
                 if 500 <= getattr(e, "status_code", 0) < 600:
-                    if attempt < max_retries:
-                        wait_time = retry_delay * (2 ** (attempt - 1))
-                        logging.warning(
-                            f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
-                        )
-                        import time
-
-                        time.sleep(wait_time)
-                    else:
+                    if attempt >= max_retries:
                         raise ServerError(
                             f"OpenAI server error after {max_retries} attempts: {str(e)}"
                         ) from e
+                    wait_time = retry_delay * (2 ** (attempt - 1))
+                    logging.warning(
+                        f"Server error. Retrying in {wait_time} seconds... (Attempt {attempt}/{max_retries})"
+                    )
+                    import time
+
+                    time.sleep(wait_time)
                 elif 400 <= getattr(e, "status_code", 0) < 500:
                     raise ClientError(f"Client error: {str(e)}") from e
                 else:
