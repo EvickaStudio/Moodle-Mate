@@ -3,12 +3,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+    image: moodlemate:2.1.0
+    container_name: moodlemate
     volumes:
       - ./config.ini:/app/config.ini:ro
       - moodlemate_logs:/app/logs
     restart: unless-stopped
     environment:
       - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0 if True else 1)"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
 
 volumes:
   moodlemate_logs:
+    driver: local
