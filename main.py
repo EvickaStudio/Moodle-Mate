@@ -17,6 +17,11 @@ def main() -> None:
         "--gen-config", action="store_true", help="Generate a new configuration file"
     )
     parser.add_argument("--config", default="config.ini", help="Path to config file")
+    parser.add_argument(
+        "--test-notification",
+        action="store_true",
+        help="Send a test notification to all configured providers",
+    )
     args = parser.parse_args()
 
     setup_logging()
@@ -33,7 +38,10 @@ def main() -> None:
     logging.info("Starting Moodle Mate...")
 
     app = MoodleMateApp()
-    app.run()
+    if args.test_notification:
+        app.send_test_notification()
+    else:
+        app.run()
 
 
 if __name__ == "__main__":

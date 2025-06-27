@@ -33,6 +33,11 @@ class NotificationProcessor:
             subject = self._get_notification_subject(notification)
             message = self._get_notification_message(notification)
 
+            # Apply filters
+            if self._should_ignore_notification(subject, notification):
+                logger.info(f"Notification with subject '{subject}' ignored by filter.")
+                return
+
             # Generate summary if enabled
             summary = self._generate_summary(message) if self.summarizer else None
 
@@ -41,6 +46,23 @@ class NotificationProcessor:
 
         except Exception as e:
             logging.error(f"Failed to process notification: {str(e)}", exc_info=True)
+
+    def _should_ignore_notification(self, subject: str, notification: dict) -> bool:
+        """Checks if a notification should be ignored based on configured filters."""
+        # Subject filtering
+        for phrase in self.config.filters.ignore_subjects_containing:
+            if phrase.lower() in subject.lower():
+                return True
+
+        # Course ID filtering (assuming notification contains 'courseid' or similar)
+        # Moodle's message_popup_get_popup_notifications does not return courseid directly.
+        # If course ID filtering is needed, MoodleAPI would need to be extended
+        # to fetch more detailed notification info or course info.
+        # For now, this part is a placeholder or can be removed if not feasible.
+        # if 'courseid' in notification and notification['courseid'] in self.config.filters.ignore_courses_by_id:
+        #     return True
+
+        return False
 
     def _get_notification_subject(self, notification: dict) -> str:
         """Extract and validate notification subject."""

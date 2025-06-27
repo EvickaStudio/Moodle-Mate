@@ -1,11 +1,13 @@
 import configparser
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from .schema import (
     AIConfig,
     DiscordConfig,
+    FiltersConfig,
+    HealthConfig,
     MoodleConfig,
     NotificationConfig,
     ProviderConfig,
@@ -36,6 +38,8 @@ class Config:
         self.moodle = self._load_moodle_config()
         self.ai = self._load_ai_config()
         self.notification = self._load_notification_config()
+        self.filters = self._load_filters_config()
+        self.health = self._load_health_config()
 
         # Load built-in providers
         self.discord = self._load_discord_config()
@@ -63,6 +67,9 @@ class Config:
             url=self._get_config("moodle", "url", ""),
             username=self._get_config("moodle", "username", ""),
             password=self._get_config("moodle", "password", ""),
+            initial_fetch_count=int(
+                self._get_config("moodle", "initial_fetch_count", "1")
+            ),
         )
 
     def _load_ai_config(self) -> AIConfig:
@@ -117,6 +124,41 @@ class Config:
             include_summary=self._get_bool("pushbullet", "include_summary", True),
         )
 
+    def _load_filters_config(self) -> FiltersConfig:
+        """Load Filters configuration."""
+        return FiltersConfig(
+            ignore_subjects_containing=self._get_list(
+                "filters", "ignore_subjects_containing"
+            ),
+            ignore_courses_by_id=self._get_int_list("filters", "ignore_courses_by_id"),
+        )
+
+    def _load_health_config(self) -> HealthConfig:
+        """Load Health configuration."""
+        return HealthConfig(
+            enabled=self._get_bool("health", "enabled", False),
+            heartbeat_interval=self._get_int_or_none("health", "heartbeat_interval"),
+            failure_alert_threshold=self._get_int_or_none(
+                "health", "failure_alert_threshold"
+            ),
+            target_provider=self._get_config("health", "target_provider", None),
+        )
+
+    def _get_list(self, section: str, key: str) -> list[str]:
+        """Get a list of strings from config."""
+        value = self._get_config(section, key, "")
+        return [item.strip() for item in value.split(",")] if value else []
+
+    def _get_int_list(self, section: str, key: str) -> list[int]:
+        """Get a list of integers from config."""
+        value = self._get_config(section, key, "")
+        return [int(item.strip()) for item in value.split(",")] if value else []
+
+    def _get_int_or_none(self, section: str, key: str) -> Optional[int]:
+        """Get an integer from config, or None if not present/empty."""
+        value = self._get_config(section, key)
+        return int(value) if value else None
+
     def _load_provider_configs(self):
         """Dynamically load configuration for all providers."""
         # Get all sections that might be providers
@@ -129,6 +171,8 @@ class Config:
                 "discord",
                 "webhook_site",
                 "pushbullet",
+                "filters",
+                "health",
             ]:
                 continue
 

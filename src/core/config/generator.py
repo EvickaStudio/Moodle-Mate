@@ -33,6 +33,12 @@ class ConfigGenerator:
             # Notification Configuration
             self._configure_notification()
 
+            # Configure filters
+            self._configure_filters()
+
+            # Configure health notifications
+            self._configure_health()
+
             # Discover and configure all providers
             self._configure_providers()
 
@@ -159,6 +165,50 @@ class ConfigGenerator:
             "max_retries": self._get_input("Enter max retries", "5"),
             "fetch_interval": self._get_input("Enter fetch interval in seconds", "60"),
         }
+
+    def _configure_filters(self):
+        """Configure notification filters section."""
+        print("\n🔍 Notification Filters")
+        print("-" * 50)
+
+        self.config["filters"] = {
+            "ignore_subjects_containing": self._get_input(
+                "Enter comma-separated phrases to ignore in subjects (e.g., 'forum digest, test')",
+                optional=True,
+            ),
+            "ignore_courses_by_id": self._get_input(
+                "Enter comma-separated course IDs to ignore (e.g., '123, 456')",
+                optional=True,
+            ),
+        }
+
+    def _configure_health(self):
+        """Configure health and status notifications section."""
+        print("\n❤️ Health & Status Notifications")
+        print("-" * 50)
+
+        enabled = self._get_bool_input("Enable health notifications?", False)
+        self.config["health"] = {"enabled": "1" if enabled else "0"}
+
+        if enabled:
+            self.config["health"].update(
+                {
+                    "heartbeat_interval": self._get_input(
+                        "Enter heartbeat interval in hours (e.g., 24 for daily)",
+                        "24",
+                        optional=True,
+                    ),
+                    "failure_alert_threshold": self._get_input(
+                        "Enter number of consecutive errors before sending an alert",
+                        "5",
+                        optional=True,
+                    ),
+                    "target_provider": self._get_input(
+                        "Enter the name of the notification provider for health alerts (e.g., 'discord')",
+                        optional=True,
+                    ),
+                }
+            )
 
     def _configure_providers(self):
         """Discover and configure all available notification providers."""

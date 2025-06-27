@@ -26,7 +26,7 @@ def initialize_providers(config: Config) -> List[NotificationProvider]:
     logger.info("Initializing notification providers...")
     enabled_providers = PluginManager.load_enabled_providers(config)
     logger.info(
-        f"Initialized {len(enabled_providers)} notification providers: {[p.__class__.__name__ for p in enabled_providers]}"
+        f"Initialized {len(enabled_providers)} notification providers: {[p.__class__.__name__ for p in enabled_providers]}"  # noqa: E501
     )
     loaded_provider_names = {p.provider_name for p in enabled_providers}
     configured_provider_names = get_configured_provider_names(config)

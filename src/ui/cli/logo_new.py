@@ -11,7 +11,7 @@ LOGO = [
 
 
 def get_logo(pad: str = "") -> str:
-    result = []
+    result: list[str] = []
     result.extend(
         f"{pad}{Style.TEXT_MOODLE}{row[0]}{Style.TEXT_MATE}{row[1]}" for row in LOGO
     )

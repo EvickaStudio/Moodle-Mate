@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 
@@ -7,6 +7,7 @@ class MoodleConfig:
     url: str
     username: str
     password: str
+    initial_fetch_count: int = 1
 
 
 @dataclass
@@ -64,3 +65,21 @@ class ProviderConfig:
 
     enabled: bool = False
     # Additional attributes will be added dynamically
+
+
+@dataclass
+class FiltersConfig:
+    """Configuration for notification filters."""
+
+    ignore_subjects_containing: list[str] = field(default_factory=list)
+    ignore_courses_by_id: list[int] = field(default_factory=list)
+
+
+@dataclass
+class HealthConfig:
+    """Configuration for health and status notifications."""
+
+    enabled: bool = False
+    heartbeat_interval: Optional[int] = None
+    failure_alert_threshold: Optional[int] = None
+    target_provider: Optional[str] = None

@@ -1,6 +1,7 @@
 from src.core.config.loader import Config
 from src.core.notification.processor import NotificationProcessor
 from src.core.service_locator import ServiceLocator
+from src.core.state_manager import StateManager
 from src.providers.notification import initialize_providers
 from src.services.ai.chat import GPT
 from src.services.moodle.api import MoodleAPI
@@ -15,6 +16,10 @@ def initialize_services() -> None:
     # Initialize config first as other services depend on it
     config = Config()
     locator.register("config", config)
+
+    # Initialize State Manager
+    state_manager = StateManager()
+    locator.register("state_manager", state_manager)
 
     # Initialize Moodle API
     moodle_api = MoodleAPI(url=config.moodle.url)

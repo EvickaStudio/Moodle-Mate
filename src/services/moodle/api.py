@@ -129,11 +129,13 @@ class MoodleAPI:
         result = self.get_site_info()
         return result["userid"] if result else None
 
-    def get_popup_notifications(self, user_id: int) -> Optional[dict]:
+    def get_popup_notifications(
+        self, user_id: int, limit: Optional[int] = None
+    ) -> Optional[dict]:
         """
         Retrieves popup notifications for a user.
         """
-        return self._post("message_popup_get_popup_notifications", user_id)
+        return self._post("message_popup_get_popup_notifications", user_id, limit=limit)
 
     def core_user_get_users_by_field(self, field: str, value: str) -> Optional[dict]:
         """
@@ -162,7 +164,9 @@ class MoodleAPI:
             logger.error(f"Failed to get user by field: {e}")
             return None
 
-    def _post(self, wsfunction: str, user_id: int) -> Optional[dict]:
+    def _post(
+        self, wsfunction: str, user_id: int, limit: Optional[int] = None
+    ) -> Optional[dict]:
         """
         Sends a POST request to the Moodle API with the given wsfunction and user ID.
         """
@@ -176,6 +180,9 @@ class MoodleAPI:
             "useridto": user_id,
             "moodlewsrestformat": "json",
         }
+
+        if limit is not None:
+            params["limit"] = limit
 
         try:
             response = self.session.post(

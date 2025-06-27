@@ -97,10 +97,11 @@ class MyPusherProvider(NotificationProvider):
 
 **Key Points:**
 
--   **Class Name:** The class name should be descriptive (e.g., `MyPusherProvider`).
--   **`__init__` Method:** The parameters of your `__init__` method define the configuration fields for your provider. The config generator will automatically ask the user for these values. Use type hints for clarity.
--   **`send` Method:** This is where you implement the logic to send the notification. It receives the `subject`, `message` (in Markdown), and an optional `summary`.
--   **`request_manager`:** For making HTTP requests, it's recommended to use the global `request_manager.session` to benefit from consistent headers and session management.
+- **Class Name:** The class name should be descriptive (e.g., `MyPusherProvider`).
+- **`__init__` Method:** The parameters of your `__init__` method (excluding `self` and `kwargs`) directly define the configuration fields for your provider. The config generator (`python main.py --gen-config`) will automatically discover these parameters and interactively prompt the user for their values. Use type hints for clarity and default values for optional parameters.
+- **`send` Method:** This is where you implement the core logic to send the notification. It receives the `subject` (string), `message` (string, always in Markdown format), and an optional `summary` (string, also in Markdown).
+- **`provider_name` Attribute:** While not strictly required, it's good practice to set a `provider_name` class attribute (e.g., `provider_name: str = "MyPusher"`). This name is used internally for logging and identification.
+- **`request_manager`:** For making HTTP requests, it's highly recommended to use the global `request_manager.session` (from `src.infrastructure.http.request_manager`) to benefit from consistent headers, session management, and connection pooling.
 
 ### 3. Generate the Configuration
 
@@ -116,7 +117,7 @@ After you complete the process, your `config.ini` will have a new section:
 
 ```ini
 [mypusher]
-_enabled = 1
+enabled = 1
 api_token = your_secret_api_token
 user_key = your_secret_user_key
 ```
