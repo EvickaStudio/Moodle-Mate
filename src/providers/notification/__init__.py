@@ -13,91 +13,44 @@ logger = logging.getLogger(__name__)
 
 
 def initialize_providers(config: Config) -> List[NotificationProvider]:
-    """Initialize enabled notification providers from config.
-
-    This function initializes both built-in providers and dynamically
-    discovered providers from the plugin system.
-
-    Args:
-        config: Application configuration
-
-    Returns:
-        List of initialized provider instances
     """
-    providers = []
-    already_loaded_providers = set()
-
-    # Initialize Discord provider if enabled
-    if hasattr(config, "discord") and config.discord.enabled:
-        logger.info("Initializing Discord provider")
-        providers.append(
-            DiscordProvider(
-                webhook_url=config.discord.webhook_url,
-                bot_name=config.discord.bot_name,
-                thumbnail_url=config.discord.thumbnail_url,
-            )
-        )
-        already_loaded_providers.add("discord")
-
-    # Initialize Pushbullet provider if enabled
-    if hasattr(config, "pushbullet") and config.pushbullet.enabled:
-        logger.info("Initializing Pushbullet provider")
-        providers.append(
-            PushbulletProvider(
-                api_key=config.pushbullet.api_key,
-                include_summary=config.pushbullet.include_summary,
-            )
-        )
-        already_loaded_providers.add("pushbullet")
-
-    # Initialize Webhook.site provider if enabled
-    if hasattr(config, "webhook_site") and config.webhook_site.enabled:
-        logger.info("Initializing Webhook.site provider")
-        providers.append(
-            WebhookSiteProvider(
-                webhook_url=config.webhook_site.webhook_url,
-                include_summary=config.webhook_site.include_summary,
-            )
-        )
-        already_loaded_providers.add("webhook_site")
-
-    # Load dynamically discovered providers
-    try:
-        # Pass the set of already loaded providers to avoid duplicates
-        dynamic_providers = PluginManager.load_enabled_providers(
-            config, already_loaded=already_loaded_providers
-        )
-        providers.extend(dynamic_providers)
-    except Exception as e:
-        logger.error(f"Error loading dynamic providers: {str(e)}")
-
-    # Log warning for configured but missing providers
-    for provider_name in get_configured_provider_names(config):
-        if provider_name not in already_loaded_providers and provider_name != "discord":
-            logger.warning(
-                f"Provider '{provider_name}' is configured but not implemented or found"
-            )
-
+    Initializes all enabled notification providers using the PluginManager.
+    This function relies on the PluginManager to discover all available providers,
+    check if they are enabled in the configuration, and initialize them with their
+    respective settings.
+    Args:
+        config: The application configuration.
+    Returns:
+        A list of initialized and enabled provider instances.
+    """
+    logger.info("Initializing notification providers...")
+    enabled_providers = PluginManager.load_enabled_providers(config)
     logger.info(
-        f"Initialized {len(providers)} notification providers: {[p.__class__.__name__ for p in providers]}"
+        f"Initialized {len(enabled_providers)} notification providers: {[p.__class__.__name__ for p in enabled_providers]}"
     )
-    return providers
+    loaded_provider_names = {p.provider_name for p in enabled_providers}
+    configured_provider_names = get_configured_provider_names(config)
+    for provider_name in configured_provider_names:
+        if provider_name not in loaded_provider_names:
+            logger.warning(
+                f"Provider '{provider_name}' is configured but was not loaded. "
+                "Ensure it is enabled and the implementation is correct."
+            )
+    return enabled_providers
 
 
 def get_configured_provider_names(config: Config) -> List[str]:
-    """Get names of all providers configured in config.ini."""
+    """
+    Gets the names of all provider sections in the config file that are marked as enabled.
+    """
     provider_names = []
-
-    # Get directly from the ConfigParser sections instead of Config object attributes
     non_provider_sections = {"moodle", "ai", "notification"}
-
     for section in config.config.sections():
-        # Skip known non-provider sections
-        if section not in non_provider_sections:
-            # Check if this section has an 'enabled' option which providers should have
-            if config.config.has_option(section, "enabled"):
+        if section not in non_provider_sections and config.config.has_option(
+            section, "enabled"
+        ):
+            if config.config.getboolean(section, "enabled"):
                 provider_names.append(section)
-
     return provider_names
 
 

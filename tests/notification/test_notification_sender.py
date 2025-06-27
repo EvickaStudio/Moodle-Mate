@@ -42,9 +42,10 @@ def sender(mock_config, mock_user_info_provider):
 
 def test_sender_initialization(mock_config):
     """Test sender initialization with various configurations."""
-    with patch("src.modules.pushbullet.Pushbullet") as mock_pushbullet, patch(
-        "src.modules.discord.Discord"
-    ) as mock_discord:
+    with (
+        patch("src.modules.pushbullet.Pushbullet") as mock_pushbullet,
+        patch("src.modules.discord.Discord") as mock_discord,
+    ):
         sender = NotificationSender(
             config=mock_config,
             bot_name="TestBot",

@@ -255,21 +255,21 @@ class GPT:
                     )
 
                     logging.info(
-                        f"\n{'-'*40}\n"
+                        f"\n{'-' * 40}\n"
                         f"{'Model':<15}: {model}\n"
                         f"{'Input Tokens':<15}: {input_tokens:,}\n"
                         f"{'Output Tokens':<15}: {output_tokens:,}\n"
                         f"{'Input Cost':<15}: ${input_cost:.6f}\n"
                         f"{'Output Cost':<15}: ${output_cost:.6f}\n"
                         f"{'Total Cost':<15}: ${total_cost:.6f}\n"
-                        f"{'-'*40}"
+                        f"{'-' * 40}"
                     )
                 else:
                     logging.info(
-                        f"\n{'-'*40}\n"
+                        f"\n{'-' * 40}\n"
                         f"{'Model':<15}: {model}\n"
                         f"{'Cost Tracking':<15}: Disabled (unknown model)\n"
-                        f"{'-'*40}"
+                        f"{'-' * 40}"
                     )
 
                 return output_text

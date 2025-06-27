@@ -5,6 +5,8 @@ from typing import Optional
 class NotificationProvider(ABC):
     """Base class for notification providers."""
 
+    provider_name: str = ""
+
     @abstractmethod
     def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
         """Send a notification.

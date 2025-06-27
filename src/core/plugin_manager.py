@@ -2,7 +2,7 @@ import importlib
 import inspect
 import logging
 import pkgutil
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Type
 
 from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
@@ -47,30 +47,21 @@ class PluginManager:
         return providers
 
     @classmethod
-    def load_enabled_providers(
-        cls, config: Config, already_loaded: Optional[set] = None
-    ) -> List[NotificationProvider]:
+    def load_enabled_providers(cls, config: Config) -> List[NotificationProvider]:
         """Load all enabled notification providers from configuration.
 
         Args:
             config: Application configuration
-            already_loaded: Set of provider names that have already been loaded
 
         Returns:
             List of initialized provider instances
         """
         providers = []
         discovered = cls.discover_providers()
-        already_loaded = already_loaded or set()
 
         # Check each discovered provider if it's enabled in config
         for name, provider_class in discovered.items():
             try:
-                # Skip if this provider has already been loaded
-                if name in already_loaded:
-                    logger.info(f"Skipping already loaded provider: {name}")
-                    continue
-
                 # Check if this provider is enabled in config
                 if hasattr(config, name) and getattr(config, name).enabled:
                     # Get provider-specific config
@@ -85,8 +76,8 @@ class PluginManager:
 
                     # Initialize the provider with its config
                     provider = provider_class(**config_dict)
+                    provider.provider_name = name  # Set the provider name
                     providers.append(provider)
-                    already_loaded.add(name)  # Add to already loaded set
                     logger.info(f"Loaded enabled provider: {name}")
             except Exception as e:
                 logger.error(f"Error initializing provider {name}: {str(e)}")

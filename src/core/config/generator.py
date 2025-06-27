@@ -1,13 +1,11 @@
 import configparser
-import importlib
 import inspect
 import logging
 import os
-import pkgutil
 import re
-from typing import Callable, Dict, Optional, Type
+from typing import Callable, Optional
 
-from src.core.notification.base import NotificationProvider
+from src.core.plugin_manager import PluginManager
 
 
 class ConfigGenerator:
@@ -19,68 +17,6 @@ class ConfigGenerator:
             r"https://discord\.com/api/webhooks/\d+/[\w-]+"
         )
         self.api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
-
-    def _discover_providers(
-        self,
-    ) -> Dict[str, Type[NotificationProvider]]:
-        """Discover available notification providers."""
-        providers: Dict[str, Type[NotificationProvider]] = {}
-
-        try:
-            # Import the notification package
-            from src.providers import notification
-
-            # Get built-in providers
-            self._load_builtin_providers(providers)
-
-            # Discover additional providers using the plugin system
-            self._load_plugin_providers(providers, notification.__path__)
-
-        except Exception as e:
-            logging.error(f"Error discovering providers: {str(e)}")
-
-        return providers
-
-    def _load_builtin_providers(
-        self, providers: Dict[str, Type[NotificationProvider]]
-    ) -> None:
-        """Load built-in notification providers."""
-        for provider_name in ["discord", "pushbullet", "slack", "ntfy"]:
-            try:
-                module = importlib.import_module(
-                    f"src.providers.notification.{provider_name}.provider"
-                )
-                self._extract_provider_classes(module, provider_name, providers)
-            except ImportError:
-                continue
-
-    def _load_plugin_providers(
-        self, providers: Dict[str, Type[NotificationProvider]], package_path
-    ) -> None:
-        """Load plugin notification providers."""
-        for _, name, is_pkg in pkgutil.iter_modules(package_path):
-            if is_pkg and name not in providers:
-                try:
-                    module = importlib.import_module(
-                        f"src.providers.notification.{name}.provider"
-                    )
-                    self._extract_provider_classes(module, name, providers)
-                except ImportError:
-                    continue
-
-    def _extract_provider_classes(
-        self,
-        module,
-        provider_name: str,
-        providers: Dict[str, Type[NotificationProvider]],
-    ) -> None:
-        """Extract notification provider classes from a module."""
-        for item_name, item in inspect.getmembers(module, inspect.isclass):
-            if (
-                issubclass(item, NotificationProvider)
-                and item is not NotificationProvider
-            ):
-                providers[provider_name] = item
 
     def generate_config(self) -> bool:
         """Generate configuration file interactively."""
@@ -97,12 +33,8 @@ class ConfigGenerator:
             # Notification Configuration
             self._configure_notification()
 
-            # Built-in provider configurations
-            self._configure_discord()
-            self._configure_pushbullet()
-
-            # Discover and configure additional providers
-            self._configure_additional_providers()
+            # Discover and configure all providers
+            self._configure_providers()
 
             return self._save_config()
 
@@ -120,14 +52,7 @@ class ConfigGenerator:
         validator: Optional[Callable[[str], bool]] = None,
         optional: bool = False,
     ) -> str:
-        """Get user input with validation.
-
-        Args:
-            prompt: Input prompt text
-            default: Default value if no input provided
-            validator: Optional validation function that takes a string and returns bool
-            optional: Whether the field is optional
-        """
+        """Get user input with validation."""
         while True:
             if default:
                 value = input(f"{prompt} [{default}]: ").strip()
@@ -135,6 +60,8 @@ class ConfigGenerator:
                 value = input(f"{prompt}: ").strip()
 
             if not value:
+                if default and not optional:
+                    return default
                 if optional:
                     return ""
                 print("This field cannot be empty. Please try again.")
@@ -218,6 +145,7 @@ class ConfigGenerator:
                     "endpoint": self._get_input(
                         "Enter API endpoint (optional)",
                         "https://api.openai.com/v1/chat/completions",
+                        optional=True,
                     ),
                 }
             )
@@ -232,92 +160,45 @@ class ConfigGenerator:
             "fetch_interval": self._get_input("Enter fetch interval in seconds", "60"),
         }
 
-    def _configure_discord(self):
-        """Configure Discord section."""
-        print("\n📱 Discord Configuration")
+    def _configure_providers(self):
+        """Discover and configure all available notification providers."""
+        print("\n🔌 Notification Provider Configuration")
         print("-" * 50)
-
-        enabled = self._get_bool_input("Enable Discord notifications?", True)
-        self.config["discord"] = {"enabled": "1" if enabled else "0"}
-
-        if enabled:
-            self.config["discord"].update(
-                {
-                    "webhook_url": self._get_input(
-                        "Enter Discord webhook URL", validator=self._validate_webhook
-                    ),
-                    "bot_name": self._get_input("Enter bot name", "MoodleMate"),
-                    "thumbnail_url": self._get_input(
-                        "Enter thumbnail URL (optional)", optional=True
-                    ),
-                }
-            )
-
-    def _configure_pushbullet(self):
-        """Configure Pushbullet section."""
-        print("\n📱 Pushbullet Configuration")
-        print("-" * 50)
-
-        enabled = self._get_bool_input("Enable Pushbullet notifications?", False)
-        self.config["pushbullet"] = {"enabled": "1" if enabled else "0"}
-
-        if enabled:
-            self.config["pushbullet"].update(
-                {"api_key": self._get_input("Enter Pushbullet API key")}
-            )
-
-    def _configure_additional_providers(self):
-        """Discover and configure additional notification providers."""
-        providers = self._discover_providers()
-
-        # Skip built-in providers that are already configured
-        for provider_name in ["discord", "pushbullet"]:
-            if provider_name in providers:
-                del providers[provider_name]
-
+        providers = PluginManager.discover_providers()
         if not providers:
+            print("No notification providers found.")
             return
-
-        print("\n🔌 Additional Notification Providers")
-        print("-" * 50)
-        print(f"Found {len(providers)} additional notification providers.")
-
-        for name, provider_class in providers.items():
+        print(f"Found {len(providers)} notification providers.")
+        print("You will now be asked to configure each one.")
+        for name, provider_class in sorted(providers.items()):
             print(f"\n📱 {name.capitalize()} Configuration")
             print("-" * 50)
-
-            # Get provider description from docstring
             description = (
                 provider_class.__doc__ or f"{name.capitalize()} notification provider"
             )
-            print(f"{description}\n")
-
+            print(f"{description.strip()}\n")
             enabled = self._get_bool_input(
-                f"Enable {name.capitalize()} notifications?", False
+                f"Enable {name.capitalize()} notifications?", name == "discord"
             )
             self.config[name] = {"enabled": "1" if enabled else "0"}
-
             if enabled:
-                # Get init parameters for the provider
                 try:
                     init_params = inspect.signature(provider_class.__init__).parameters
-
-                    # Skip self parameter
-                    param_names = [p for p in init_params if p != "self"]
-
+                    param_names = [
+                        p for p in init_params if p not in ("self", "kwargs")
+                    ]
                     for param_name in param_names:
                         param = init_params[param_name]
-                        # Check if parameter has a default value
+                        is_webhook = "webhook_url" in param_name and "discord" in name
+                        validator = self._validate_webhook if is_webhook else None
                         has_default = param.default is not param.empty
-                        default_value = param.default if has_default else ""
-
-                        # Make parameter optional if it has a default value
+                        default_value = param.default if has_default else None
                         value = self._get_input(
                             f"Enter {param_name.replace('_', ' ')}",
                             default_value if has_default else None,
                             optional=has_default,
+                            validator=validator,
                         )
-
                         if value or not has_default:
                             self.config[name][param_name] = value
                 except Exception as e:
