@@ -1,3 +1,14 @@
+certifi==2024.2.2
+charset-normalizer==3.3.2
+idna==3.7
+python-dotenv==1.0.1
+requests==2.31.0
+urllib3==2.2.1
+fastapi==0.111.0
+uvicorn==0.29.0
+jinja2==3.1.4
+slowapi==0.1.9
+passlib[bcrypt]==1.7.4
 openai
 configparser
 requests>=2.32.2 # version pinned by Snyk to avoid a vulnerability

@@ -1,5 +1,6 @@
 import logging
-from typing import List, Optional
+from collections import deque
+from typing import Deque, List, Optional
 
 from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
@@ -25,6 +26,7 @@ class NotificationProcessor:
         self.config = config
         self.providers = providers
         self.summarizer = NotificationSummarizer(config) if config.ai.enabled else None
+        self.notification_history: Deque[dict] = deque(maxlen=50)
 
     def process(self, notification: dict) -> None:
         """Process and send a notification through all enabled providers."""
@@ -40,6 +42,13 @@ class NotificationProcessor:
 
             # Generate summary if enabled
             summary = self._generate_summary(message) if self.summarizer else None
+
+            # Add to history
+            self.notification_history.appendleft({
+                "subject": subject,
+                "message": message,
+                "summary": summary
+            })
 
             # Send through providers
             self._send_to_providers(subject, message, summary)

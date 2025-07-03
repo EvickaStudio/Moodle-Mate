@@ -13,6 +13,7 @@ from .schema import (
     ProviderConfig,
     PushbulletConfig,
     WebhookSiteConfig,
+    WebUIConfig,
 )
 
 
@@ -24,8 +25,14 @@ class Config:
     def __new__(cls, config_path: str = "config.ini"):
         if cls._instance is None:
             cls._instance = super(Config, cls).__new__(cls)
+            cls._instance.config_path = config_path
             cls._instance._init_config(config_path)
         return cls._instance
+
+    def reload(self) -> None:
+        """Reloads the configuration from the config file."""
+        logging.info("Reloading configuration from %s", self.config_path)
+        self._init_config(self.config_path)
 
     def _init_config(self, config_path: str):
         """Initialize configuration from file."""
@@ -40,6 +47,7 @@ class Config:
         self.notification = self._load_notification_config()
         self.filters = self._load_filters_config()
         self.health = self._load_health_config()
+        self.webui = self._load_webui_config()
 
         # Load built-in providers
         self.discord = self._load_discord_config()
@@ -144,6 +152,13 @@ class Config:
             target_provider=self._get_config("health", "target_provider", None),
         )
 
+    def _load_webui_config(self) -> WebUIConfig:
+        """Load WebUI configuration."""
+        return WebUIConfig(
+            enabled=self._get_bool("webui", "enabled", False),
+            password=self._get_config("webui", "password", ""),
+        )
+
     def _get_list(self, section: str, key: str) -> list[str]:
         """Get a list of strings from config."""
         value = self._get_config(section, key, "")
@@ -173,6 +188,7 @@ class Config:
                 "pushbullet",
                 "filters",
                 "health",
+                "webui",
             ]:
                 continue
 

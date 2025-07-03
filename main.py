@@ -1,11 +1,14 @@
 import argparse
 import logging
 import sys
+import threading
 
 from src.app import MoodleMateApp
 from src.core.config.generator import ConfigGenerator
 from src.infrastructure.logging.setup import setup_logging
 from src.ui.cli.screen import animate_logo, logo_lines
+from src.ui.web.app import WebUI
+from src.core.service_locator import ServiceLocator
 
 
 def main() -> None:
@@ -22,6 +25,9 @@ def main() -> None:
         action="store_true",
         help="Send a test notification to all configured providers",
     )
+    parser.add_argument(
+        "--web-ui", action="store_true", help="Enable the web UI"
+    )
     args = parser.parse_args()
 
     setup_logging()
@@ -37,7 +43,14 @@ def main() -> None:
     animate_logo(logo_lines)
     logging.info("Starting Moodle Mate...")
 
-    app = MoodleMateApp()
+    reload_event = threading.Event()
+    app = MoodleMateApp(reload_event)
+    ServiceLocator.register("moodle_mate_app", app)
+
+    if args.web_ui:
+        web_ui = WebUI()
+        web_ui.run_in_thread(reload_event)
+
     if args.test_notification:
         app.send_test_notification()
     else:

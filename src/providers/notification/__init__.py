@@ -44,7 +44,7 @@ def get_configured_provider_names(config: Config) -> List[str]:
     Gets the names of all provider sections in the config file that are marked as enabled.
     """
     provider_names = []
-    non_provider_sections = {"moodle", "ai", "notification"}
+    non_provider_sections = {"moodle", "ai", "notification", "webui"}
     for section in config.config.sections():
         if section not in non_provider_sections and config.config.has_option(
             section, "enabled"

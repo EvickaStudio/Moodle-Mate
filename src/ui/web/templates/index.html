@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodle-Mate Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <h1 class="logo">Moodle-Mate</h1>
+            <nav>
+                <a href="#" class="nav-item active" data-view="dashboard">Dashboard</a>
+                <a href="#" class="nav-item" data-view="notifications">Notifications</a>
+                <a href="#" class="nav-item" data-view="config">Configuration</a>
+                <a href="#" class="nav-item" data-view="logs">Logs</a>
+                <a href="/logout" class="nav-item">Logout</a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <div id="dashboard" class="view active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>Uptime</h3><p id="uptime">--</p></div>
+                    <div class="stat-card"><h3>Notifications</h3><p id="notifications-processed">--</p></div>
+                    <div class="stat-card"><h3>Errors</h3><p id="errors">--</p></div>
+                </div>
+            </div>
+
+            <div id="notifications" class="view">
+                <h2>Recent Notifications</h2>
+                <div id="notification-list"></div>
+            </div>
+
+            <div id="config" class="view">
+                <h2>Configuration</h2>
+                <form id="config-form" action="/save-config" method="post">
+                    {% for section, settings in config.items() %}
+                        <h3>{{ section }}</h3>
+                        {% for key, value in settings.items() %}
+                            <div class="form-group">
+                                <label for="{{ section }}.{{ key }}">{{ key }}</label>
+                                <input type="text" id="{{ section }}.{{ key }}" name="{{ section }}.{{ key }}" value="{{ value }}">
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                    <button type="submit">Save and Reload</button>
+                </form>
+            </div>
+
+            <div id="logs" class="view">
+                <h2>Logs</h2>
+                <pre id="log-content">Loading logs...</pre>
+            </div>
+        </main>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

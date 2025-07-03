@@ -15,7 +15,29 @@ from src.services.moodle.notification_handler import MoodleNotificationHandler
 class MoodleMateApp:
     """Encapsulates the main application logic for Moodle Mate."""
 
-    def __init__(self):
+    import logging
+import threading
+import time
+
+from src.core.config.loader import Config
+from src.core.notification.processor import NotificationProcessor
+from src.core.service_locator import ServiceLocator
+from src.core.services import initialize_services
+from src.core.state_manager import StateManager
+from src.core.utils.retry import with_retry
+from src.infrastructure.http.request_manager import request_manager
+from src.services.moodle.api import MoodleAPI
+from src.services.moodle.notification_handler import MoodleNotificationHandler
+
+
+class MoodleMateApp:
+    """Encapsulates the main application logic for Moodle Mate."""
+
+    def __init__(self, reload_event: threading.Event):
+        self.start_time = time.time()
+        self.notifications_processed = 0
+        self.errors = 0
+        self.reload_event = reload_event
         self.config: Config
         self.notification_processor: NotificationProcessor
         self.moodle_handler: MoodleNotificationHandler
@@ -23,6 +45,65 @@ class MoodleMateApp:
         self.state_manager: StateManager
         self._last_heartbeat_sent: float = 0.0
         self._initialize()
+
+    def _initialize(self) -> None:
+        """Initializes services and components."""
+        initialize_services()
+        locator = ServiceLocator()
+        self.config = locator.get("config", Config)
+        self.notification_processor = locator.get(
+            "notification_processor", NotificationProcessor
+        )
+        self.moodle_handler = locator.get("moodle_handler", MoodleNotificationHandler)
+        self.moodle_api = locator.get("moodle_api", MoodleAPI)
+        self.state_manager = locator.get("state_manager", StateManager)
+
+    def _reload(self) -> None:
+        """Reloads the application configuration and re-initializes services."""
+        logging.info("Hot-reloading configuration and services...")
+        self.config.reload()
+        self._initialize()
+        self.reload_event.clear()
+        logging.info("Hot-reload complete.")
+
+    def run(self) -> None:
+        """Starts the main application loop."""
+        try:
+            self._main_loop()
+        except KeyboardInterrupt:
+            logging.info("Shutting down gracefully...")
+            self.state_manager.save_state()
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {str(e)}")
+            raise
+
+    def _main_loop(self) -> None:
+        """The main loop that continuously fetches and processes notifications."""
+        consecutive_errors = 0
+        session_refresh_interval = 24.0  # hours
+
+        while True:
+            if self.reload_event.is_set():
+                self._reload()
+
+            try:
+                self._check_and_refresh_session(session_refresh_interval)
+
+                if self._fetch_and_process_notifications():
+                    consecutive_errors = 0
+
+                self._send_heartbeat_if_due()
+
+                sleep_time = self._calculate_sleep_time(
+                    consecutive_errors, self.config.notification.fetch_interval
+                )
+                time.sleep(sleep_time)
+
+            except Exception as e:
+                consecutive_errors, error_sleep = self._handle_error(
+                    consecutive_errors, e
+                )
+                time.sleep(error_sleep)
 
     def _initialize(self) -> None:
         """Initializes services and components."""
@@ -92,12 +173,14 @@ class MoodleMateApp:
         if notifications:
             for notification in notifications:
                 self.notification_processor.process(notification)
+                self.notifications_processed += 1
         return True
 
     def _handle_error(
         self, consecutive_errors: int, error: Exception
     ) -> tuple[int, float]:
         """Handles errors that occur during the main loop."""
+        self.errors += 1
         consecutive_errors += 1
         logging.error(
             f"Error during execution (attempt {consecutive_errors}): {str(error)}"

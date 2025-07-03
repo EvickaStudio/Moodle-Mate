@@ -5,6 +5,8 @@ import os
 import re
 from typing import Callable, Optional
 
+from passlib.hash import bcrypt
+
 from src.core.plugin_manager import PluginManager
 
 
@@ -14,7 +16,7 @@ class ConfigGenerator:
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.webhook_pattern = re.compile(
-            r"https://discord\.com/api/webhooks/\d+/[\w-]+"
+            r"https://discord\.com/api/webhooks/\d+/[\]\w-\\ ]+"
         )
         self.api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
@@ -38,6 +40,9 @@ class ConfigGenerator:
 
             # Configure health notifications
             self._configure_health()
+
+            # Configure Web UI
+            self._configure_webui()
 
             # Discover and configure all providers
             self._configure_providers()
@@ -209,6 +214,19 @@ class ConfigGenerator:
                     ),
                 }
             )
+
+    def _configure_webui(self):
+        """Configure Web UI section."""
+        print("\n🌐 Web UI Configuration")
+        print("-" * 50)
+
+        enabled = self._get_bool_input("Enable Web UI?", True)
+        self.config["webui"] = {"enabled": "1" if enabled else "0"}
+
+        if enabled:
+            password = self._get_input("Enter a password for the Web UI")
+            hashed_password = bcrypt.hash(password)
+            self.config["webui"].update({"password": hashed_password})
 
     def _configure_providers(self):
         """Discover and configure all available notification providers."""

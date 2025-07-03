@@ -83,3 +83,11 @@ class HealthConfig:
     heartbeat_interval: Optional[int] = None
     failure_alert_threshold: Optional[int] = None
     target_provider: Optional[str] = None
+
+
+@dataclass
+class WebUIConfig:
+    """Configuration for the Web UI."""
+
+    enabled: bool = False
+    password: str = ""

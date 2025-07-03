@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Moodle-Mate</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h1>Moodle-Mate</h1>
+            <p>Please log in to continue</p>
+            <form action="/login" method="post">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Login</button>
+                {% if request.query_params.get('error') %}
+                    <p class="error">Invalid password. Please try again.</p>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</body>
+</html>
