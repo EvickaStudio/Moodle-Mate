@@ -1,0 +1,420 @@
+---
+description: Guidelines for creating notification providers in Moodle-Mate
+globs: src/providers/notification/**/*.py
+alwaysApply: false
+---
+
+# Notification Provider Development Guidelines
+
+This rule provides comprehensive guidance for creating and extending notification providers in Moodle-Mate, following established patterns and best practices.
+
+## Core Architecture
+
+### Base Class Requirements
+
+All notification providers must inherit from `NotificationProvider` and implement the required interface:
+
+```python
+from abc import ABC, abstractmethod
+from typing import Optional
+
+class NotificationProvider(ABC):
+    provider_name: str = ""
+    
+    @abstractmethod
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        """Send a notification through this provider."""
+        pass
+```
+
+### Required Implementation Pattern
+
+Every provider must follow this structure:
+
+```python
+import logging
+from typing import Optional
+
+from src.core.notification.base import NotificationProvider
+from src.infrastructure.http.request_manager import request_manager
+
+logger = logging.getLogger(__name__)
+
+
+class YourServiceProvider(NotificationProvider):
+    """Provider for YourService notification platform."""
+    
+    def __init__(self, api_key: str, endpoint: str = "https://api.yourservice.com"):
+        """Initialize the provider.
+        
+        Args:
+            api_key: Authentication key for the service
+            endpoint: API endpoint URL
+        """
+        self.api_key = api_key
+        self.endpoint = endpoint.rstrip("/")
+        self.session = request_manager.session
+    
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        """Send notification via YourService.
+        
+        Args:
+            subject: Notification title/subject
+            message: Main content (Markdown format)
+            summary: Optional AI-generated summary
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Implementation here
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send notification: {str(e)}")
+            return False
+```
+
+## File Structure Requirements
+
+### Directory Layout
+
+```
+src/providers/notification/
+├── your_service_name/
+│   ├── __init__.py          # Empty file
+│   └── provider.py          # Main provider implementation
+└── existing_providers/
+```
+
+### Naming Conventions
+
+- **Directory name**: Lowercase with underscores (e.g., `your_service_name`)
+- **Class name**: PascalCase with "Provider" suffix (e.g., `YourServiceProvider`)
+- **File name**: Always `provider.py`
+
+## Configuration Integration
+
+### Automatic Discovery
+
+The `PluginManager` automatically discovers providers by:
+
+1. Scanning `src/providers/notification/` for subdirectories
+2. Importing `provider.py` from each directory
+3. Finding classes that inherit from `NotificationProvider`
+
+### Configuration Parameters
+
+- **Constructor parameters** become config.ini fields automatically
+- **Type hints** are used for validation
+- **Default values** make parameters optional
+- **`**kwargs`** allows for flexible configuration
+
+### Example Configuration Generation
+
+```python
+def __init__(self, api_key: str, webhook_url: str, timeout: int = 30):
+    # This creates config.ini:
+    # [your_service_name]
+    # enabled = 1
+    # api_key = your_key
+    # webhook_url = your_url
+    # timeout = 30
+```
+
+## HTTP Request Patterns
+
+### Use RequestManager
+
+Always use the global request manager for consistent behavior:
+
+```python
+from src.infrastructure.http.request_manager import request_manager
+
+class YourProvider(NotificationProvider):
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.session = request_manager.session  # Use global session
+    
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        try:
+            # Update headers for this request
+            request_manager.update_headers({
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            })
+            
+            response = self.session.post(url, json=payload)
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Request failed: {str(e)}")
+            return False
+```
+
+### Error Handling Standards
+
+- **Catch specific exceptions** when possible
+- **Log errors** with context using the module logger
+- **Return False** on any failure
+- **Include status codes** in error messages
+
+## Advanced Features
+
+### Rich Content Support
+
+For providers that support rich formatting (like Discord):
+
+```python
+class RichProvider(NotificationProvider):
+    def create_rich_payload(self, subject: str, message: str, summary: Optional[str] = None):
+        """Create service-specific rich content."""
+        payload = {
+            "title": subject,
+            "content": message,
+            "format": "markdown"
+        }
+        
+        if summary:
+            payload["summary"] = summary
+            
+        return payload
+    
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        payload = self.create_rich_payload(subject, message, summary)
+        # Send payload...
+```
+
+### Configuration Validation
+
+Add validation in the constructor:
+
+```python
+def __init__(self, api_key: str, endpoint: str):
+    if not api_key:
+        raise ValueError("API key is required")
+    if not endpoint.startswith(("http://", "https://")):
+        raise ValueError("Endpoint must be a valid URL")
+    
+    self.api_key = api_key
+    self.endpoint = endpoint
+```
+
+### Rate Limiting Support
+
+Implement rate limiting for API-heavy services:
+
+```python
+import time
+from functools import wraps
+
+def rate_limit(calls_per_minute: int = 60):
+    """Decorator for rate limiting."""
+    def decorator(func):
+        last_call = 0
+        min_interval = 60.0 / calls_per_minute
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            nonlocal last_call
+            current_time = time.time()
+            
+            if current_time - last_call < min_interval:
+                sleep_time = min_interval - (current_time - last_call)
+                time.sleep(sleep_time)
+            
+            last_call = time.time()
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+class RateLimitedProvider(NotificationProvider):
+    @rate_limit(calls_per_minute=30)
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        # Implementation...
+```
+
+## Testing Guidelines
+
+### Unit Test Structure
+
+Create tests in `tests/providers/notification/`:
+
+```python
+import pytest
+from unittest.mock import Mock, patch
+from src.providers.notification.your_service.provider import YourServiceProvider
+
+class TestYourServiceProvider:
+    def setup_method(self):
+        self.provider = YourServiceProvider("test_key", "https://test.com")
+    
+    def test_send_success(self):
+        with patch('src.infrastructure.http.request_manager.request_manager') as mock_manager:
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_manager.session.post.return_value = mock_response
+            
+            result = self.provider.send("Test", "Message")
+            assert result is True
+    
+    def test_send_failure(self):
+        with patch('src.infrastructure.http.request_manager.request_manager') as mock_manager:
+            mock_response = Mock()
+            mock_response.status_code = 400
+            mock_manager.session.post.return_value = mock_response
+            
+            result = self.provider.send("Test", "Message")
+            assert result is False
+```
+
+## Documentation Requirements
+
+### Class Documentation
+
+Every provider class must have comprehensive docstrings:
+
+```python
+class YourServiceProvider(NotificationProvider):
+    """YourService notification provider.
+    
+    This provider sends notifications to YourService platform using their REST API.
+    Supports rich formatting, attachments, and custom webhooks.
+    
+    Configuration:
+        api_key (str): YourService API key for authentication
+        endpoint (str): API endpoint URL (default: https://api.yourservice.com)
+        timeout (int): Request timeout in seconds (default: 30)
+    
+    Features:
+        - Markdown formatting support
+        - File attachments
+        - Custom webhook URLs
+        - Rate limiting protection
+    """
+```
+
+### Method Documentation
+
+Document all public methods with clear parameter descriptions:
+
+```python
+def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    """Send a notification via YourService.
+    
+    Args:
+        subject: Notification title (max 100 characters)
+        message: Main content in Markdown format
+        summary: Optional AI-generated summary (max 500 characters)
+    
+    Returns:
+        bool: True if notification was sent successfully
+        
+    Raises:
+        ValueError: If subject or message is empty
+        ConnectionError: If network connection fails
+    """
+```
+
+## Best Practices
+
+### Security
+
+- **Never log sensitive data** (API keys, tokens)
+- **Validate all inputs** in constructor
+- **Use HTTPS endpoints** by default
+- **Sanitize user content** before sending
+
+### Performance
+
+- **Reuse HTTP sessions** via request_manager
+- **Implement connection pooling** for high-volume providers
+- **Add timeout handling** for all requests
+- **Use async patterns** for I/O heavy operations
+
+### Maintainability
+
+- **Follow single responsibility** principle
+- **Keep methods focused** and testable
+- **Use type hints** throughout
+- **Add comprehensive logging** for debugging
+
+### Error Recovery
+
+- **Implement retry logic** for transient failures
+- **Handle rate limiting** gracefully
+- **Provide fallback options** when possible
+- **Log recovery attempts** for monitoring
+
+## Integration Examples
+
+### Simple Webhook Provider
+
+```python
+class WebhookProvider(NotificationProvider):
+    def __init__(self, webhook_url: str):
+        self.webhook_url = webhook_url
+        self.session = request_manager.session
+    
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        payload = {"title": subject, "content": message}
+        if summary:
+            payload["summary"] = summary
+        
+        try:
+            response = self.session.post(self.webhook_url, json=payload)
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Webhook failed: {str(e)}")
+            return False
+```
+
+### OAuth Provider
+
+```python
+class OAuthProvider(NotificationProvider):
+    def __init__(self, client_id: str, client_secret: str, refresh_token: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.refresh_token = refresh_token
+        self.access_token = None
+        self.session = request_manager.session
+    
+    def _refresh_access_token(self):
+        """Refresh OAuth access token."""
+        # Implementation for token refresh
+        pass
+    
+    def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+        if not self.access_token:
+            self._refresh_access_token()
+        
+        # Send with OAuth token
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        # Implementation...
+```
+
+## Migration and Updates
+
+### Version Compatibility
+
+- **Maintain backward compatibility** when possible
+- **Add deprecation warnings** for old parameters
+- **Provide migration guides** for breaking changes
+- **Test with multiple config versions**
+
+### Feature Flags
+
+Use configuration for optional features:
+
+```python
+def __init__(self, api_key: str, enable_rich_formatting: bool = False):
+    self.api_key = api_key
+    self.enable_rich_formatting = enable_rich_formatting
+
+def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
+    if self.enable_rich_formatting:
+        payload = self._create_rich_payload(subject, message, summary)
+    else:
+        payload = self._create_simple_payload(subject, message, summary)
+```
+
+This comprehensive guide ensures all notification providers follow consistent patterns, maintain high quality, and integrate seamlessly with the Moodle-Mate ecosystem.

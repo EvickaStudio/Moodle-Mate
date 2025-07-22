@@ -1,0 +1,12 @@
+---
+description: Run Moodle-Mate
+globs: **/*
+alwaysApply: true
+---
+
+
+If you try to run moodle-mate use uv:
+
+uv run .\main.py
+
+If you are in the root repo directory
