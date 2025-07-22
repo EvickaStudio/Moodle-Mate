@@ -53,3 +53,6 @@ alwaysApply: true
   - Include both DO and DON'T examples
   - Reference actual code over theoretical examples
   - Use consistent formatting across rules
+  - Keep rules under 500 lines
+  - Split large rules into multiple, composable rules
+  - Avoid vague guidance. Write rules like clear internal docs
