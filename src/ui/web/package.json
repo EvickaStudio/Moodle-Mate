@@ -1,0 +1,23 @@
+{
+  "name": "moodle-mate-web",
+  "version": "1.0.0",
+  "description": "TailwindCSS compilation for Moodle-Mate web interface",
+  "main": "index.js",
+  "scripts": {
+    "build-css": "npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch",
+    "build-css-prod": "npx tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify"
+  },
+  "keywords": [
+    "tailwindcss",
+    "flask"
+  ],
+  "author": "Moodle-Mate",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16"
+  }
+}

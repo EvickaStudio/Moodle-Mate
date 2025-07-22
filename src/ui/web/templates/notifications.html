@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block page_title %}Notifications{% endblock %}
+{% block page_description %}View and manage notification history{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filters and Controls -->
+    <div class="bg-container border border-primary rounded-lg shadow-sm">
+        <div class="px-6 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Search and Filters -->
+                <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                    <div class="form-field flex-1">
+                        <div class="form-field__body">
+                            <div class="relative">
+                                <svg class="absolute left-3 top-3 w-4 h-4 text-gray pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <input type="text" 
+                                       id="search-notifications" 
+                                       class="form-field__input pl-10"
+                                       placeholder="Search notifications...">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <div class="form-field__body">
+                            <select id="filter-status" class="form-field__input">
+                                <option value="">All Statuses</option>
+                                <option value="processed">Processed</option>
+                                <option value="pending">Pending</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <div class="form-field__body">
+                            <select id="filter-limit" class="form-field__input">
+                                <option value="25">25 items</option>
+                                <option value="50" selected>50 items</option>
+                                <option value="100">100 items</option>
+                                <option value="200">200 items</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2">
+                    <button id="refresh-notifications" 
+                            class="button-bg-secondary hover:button-bg-secondary-hover text-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                    
+                    <button id="clear-notifications" 
+                            class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-container border border-primary rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray">Total</p>
+                    <p id="total-count" class="text-lg font-semibold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-container border border-primary rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray">Processed</p>
+                    <p id="processed-count" class="text-lg font-semibold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-container border border-primary rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray">Pending</p>
+                    <p id="pending-count" class="text-lg font-semibold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-container border border-primary rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray">Errors</p>
+                    <p id="error-count" class="text-lg font-semibold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="bg-container border border-primary rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-primary">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-primary">Notification History</h3>
+                <div class="flex items-center gap-2 text-sm text-gray">
+                    <span>Last updated:</span>
+                    <span id="last-updated">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-surface">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider">Subject</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider">Preview</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="notifications-table-body" class="divide-y divide-gray-200">
+                    <!-- Notifications will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading-state" class="p-12 text-center">
+            <div class="animate-spin w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full mx-auto mb-4"></div>
+            <p class="text-gray">Loading notifications...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="hidden p-12 text-center">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+            </svg>
+            <h3 class="text-lg font-semibold text-primary mb-2">No notifications found</h3>
+            <p class="text-gray">No notifications match your current filters.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination-controls" class="px-6 py-4 border-t border-primary bg-surface hidden">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray">
+                    Showing <span id="pagination-start">0</span> to <span id="pagination-end">0</span> of <span id="pagination-total">0</span> results
+                </div>
+                <div class="flex gap-2">
+                    <button id="prev-page" class="px-3 py-1 text-sm border border-primary rounded text-gray hover:bg-container-hover disabled:opacity-50" disabled>
+                        Previous
+                    </button>
+                    <button id="next-page" class="px-3 py-1 text-sm border border-primary rounded text-gray hover:bg-container-hover disabled:opacity-50" disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Detail Modal -->
+<div id="notification-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-container rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div class="px-6 py-4 border-b border-primary">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-primary">Notification Details</h3>
+                <button id="close-modal" class="text-gray hover:text-primary">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-96">
+            <div id="modal-content" class="space-y-4">
+                <!-- Modal content will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Notifications page management
+    let notifications = [];
+    let filteredNotifications = [];
+    let currentPage = 1;
+    let itemsPerPage = 50;
+
+    // Load notifications
+    async function loadNotifications() {
+        try {
+            showLoadingState();
+            const limit = document.getElementById('filter-limit').value;
+            const response = await MoodleMateAPI.get(`/notifications?limit=${limit}`);
+            
+            notifications = response.notifications || [];
+            filteredNotifications = [...notifications];
+            
+            updateStatistics();
+            updateTable();
+            updateLastUpdated();
+            
+        } catch (error) {
+            console.error('Failed to load notifications:', error);
+            showToast('Failed to load notifications', 'error');
+            showEmptyState();
+        }
+    }
+
+    function showLoadingState() {
+        document.getElementById('loading-state').classList.remove('hidden');
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('notifications-table-body').innerHTML = '';
+    }
+
+    function showEmptyState() {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+    }
+
+    function updateStatistics() {
+        const total = notifications.length;
+        const processed = notifications.filter(n => n.status === 'processed').length;
+        const pending = notifications.filter(n => n.status === 'pending').length;
+        const errors = notifications.filter(n => n.status === 'error').length;
+
+        document.getElementById('total-count').textContent = total;
+        document.getElementById('processed-count').textContent = processed;
+        document.getElementById('pending-count').textContent = pending;
+        document.getElementById('error-count').textContent = errors;
+    }
+
+    function updateTable() {
+        const tbody = document.getElementById('notifications-table-body');
+        document.getElementById('loading-state').classList.add('hidden');
+
+        if (filteredNotifications.length === 0) {
+            showEmptyState();
+            return;
+        }
+
+        document.getElementById('empty-state').classList.add('hidden');
+
+        tbody.innerHTML = filteredNotifications.map(notification => {
+            const date = new Date(notification.timestamp);
+            const timeString = date.toLocaleString();
+            
+            // Strip HTML and create preview
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = notification.message || '';
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+            const preview = plainText.length > 80 ? plainText.substring(0, 80) + '...' : plainText;
+
+            // Status badge
+            const statusClass = getStatusBadgeClass(notification.status || 'processed');
+            const statusText = (notification.status || 'processed').charAt(0).toUpperCase() + (notification.status || 'processed').slice(1);
+
+            return `
+                <tr class="hover:bg-container-hover cursor-pointer" onclick="showNotificationDetail(${notification.id})">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray">${timeString}</td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-primary max-w-xs truncate">${notification.subject}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray max-w-md truncate">${preview}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">${statusText}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="event.stopPropagation(); showNotificationDetail(${notification.id})" 
+                                class="text-blue-600 hover:text-blue-800 mr-3">View</button>
+                        <button onclick="event.stopPropagation(); deleteNotification(${notification.id})" 
+                                class="text-red-600 hover:text-red-800">Delete</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getStatusBadgeClass(status) {
+        switch (status) {
+            case 'processed':
+                return 'bg-green-100 text-green-800';
+            case 'pending':
+                return 'bg-orange-100 text-orange-800';
+            case 'error':
+                return 'bg-red-100 text-red-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    function updateLastUpdated() {
+        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+    }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('search-notifications').value.toLowerCase();
+        const statusFilter = document.getElementById('filter-status').value;
+
+        filteredNotifications = notifications.filter(notification => {
+            const matchesSearch = !searchTerm || 
+                notification.subject.toLowerCase().includes(searchTerm) ||
+                (notification.message && notification.message.toLowerCase().includes(searchTerm));
+            
+            const matchesStatus = !statusFilter || 
+                (notification.status || 'processed') === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        });
+
+        updateTable();
+    }
+
+    function showNotificationDetail(notificationId) {
+        const notification = notifications.find(n => n.id === notificationId);
+        if (!notification) return;
+
+        const modal = document.getElementById('notification-modal');
+        const content = document.getElementById('modal-content');
+
+        const date = new Date(notification.timestamp);
+        const formattedDate = date.toLocaleString();
+
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-semibold text-primary mb-2">Subject</h4>
+                    <p class="text-sm">${notification.subject}</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-primary mb-2">Time</h4>
+                    <p class="text-sm text-gray">${formattedDate}</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-primary mb-2">Status</h4>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(notification.status || 'processed')}">
+                        ${(notification.status || 'processed').charAt(0).toUpperCase() + (notification.status || 'processed').slice(1)}
+                    </span>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-primary mb-2">Message</h4>
+                    <div class="prose prose-sm max-w-none text-primary bg-surface p-4 rounded-lg">
+                        ${notification.message || 'No message content'}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.classList.remove('hidden');
+    }
+
+    function deleteNotification(notificationId) {
+        if (!confirm('Are you sure you want to delete this notification?')) {
+            return;
+        }
+
+        // Remove from local array (in real implementation, this would call the API)
+        notifications = notifications.filter(n => n.id !== notificationId);
+        applyFilters();
+        updateStatistics();
+        showToast('Notification deleted', 'success');
+    }
+
+    // Event handlers
+    document.getElementById('search-notifications').addEventListener('input', applyFilters);
+    document.getElementById('filter-status').addEventListener('change', applyFilters);
+    document.getElementById('filter-limit').addEventListener('change', loadNotifications);
+
+    document.getElementById('refresh-notifications').addEventListener('click', loadNotifications);
+
+    document.getElementById('clear-notifications').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all notifications? This action cannot be undone.')) {
+            notifications = [];
+            filteredNotifications = [];
+            updateTable();
+            updateStatistics();
+            showToast('All notifications cleared', 'success');
+        }
+    });
+
+    document.getElementById('close-modal').addEventListener('click', () => {
+        document.getElementById('notification-modal').classList.add('hidden');
+    });
+
+    document.getElementById('notification-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            document.getElementById('notification-modal').classList.add('hidden');
+        }
+    });
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        loadNotifications();
+        setInterval(loadNotifications, 60000); // Auto-refresh every minute
+    });
+</script>
+{% endblock %} 

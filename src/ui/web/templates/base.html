@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Moodle-Mate{% endblock %}</title>
+    
+    <!-- Tailwind CSS with Maybe Design System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('favicon') }}">
+    
+    <!-- Additional meta tags -->
+    <meta name="description" content="Moodle notification monitoring and management system">
+    <meta name="author" content="Moodle-Mate">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-surface text-primary font-sans antialiased">
+    <!-- Theme toggle script (runs immediately to prevent flash) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
+    <div class="min-h-screen flex">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-container border-r border-primary shadow-sm flex flex-col">
+            <div class="flex-1 p-6">
+                <!-- Logo -->
+                <div class="flex items-center gap-3 mb-8">
+                    <img src="{{ url_for('assets', filename='images/logo.svg') }}" 
+                         alt="Moodle-Mate" 
+                         class="w-8 h-8">
+                    <h1 class="text-xl font-semibold text-primary">Moodle-Mate</h1>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="space-y-2">
+                    <a href="{{ url_for('index') }}" 
+                       class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                              {% if request.endpoint == 'index' %}bg-container-hover text-primary{% else %}text-gray hover:bg-container-hover hover:text-primary{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    
+                    <a href="{{ url_for('notifications_page') }}" 
+                       class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                              {% if request.endpoint == 'notifications_page' %}bg-container-hover text-primary{% else %}text-gray hover:bg-container-hover hover:text-primary{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+                        </svg>
+                        Notifications
+                    </a>
+                    
+                    <a href="{{ url_for('config_page') }}" 
+                       class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                              {% if request.endpoint == 'config_page' %}bg-container-hover text-primary{% else %}text-gray hover:bg-container-hover hover:text-primary{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Configuration
+                    </a>
+                    
+                    <a href="{{ url_for('health_page') }}" 
+                       class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                              {% if request.endpoint == 'health_page' %}bg-container-hover text-primary{% else %}text-gray hover:bg-container-hover hover:text-primary{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Health
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Bottom section with theme toggle -->
+            <div class="p-4 border-t border-primary">
+                <button id="theme-toggle" 
+                        class="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray hover:text-primary hover:bg-container-hover rounded-lg transition-colors">
+                    <svg id="theme-icon-light" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <svg id="theme-icon-dark" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                    <span id="theme-text">Toggle theme</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col">
+            <!-- Top Header -->
+            <header class="bg-container border-b border-primary px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-primary">{% block page_title %}Dashboard{% endblock %}</h2>
+                        <p class="text-sm text-gray mt-1">{% block page_description %}Monitor your Moodle notifications{% endblock %}</p>
+                    </div>
+                    
+                    <!-- Status indicator -->
+                    <div class="flex items-center gap-4">
+                        <div id="status-indicator" class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+                            <span class="text-sm text-gray">Loading...</span>
+                        </div>
+                        
+                        <!-- Quick actions -->
+                        <div class="flex gap-2">
+                            <button id="test-connection-btn" 
+                                    class="button-bg-secondary hover:button-bg-secondary-hover px-3 py-2 rounded-lg text-sm font-medium text-primary transition-colors">
+                                Test Connection
+                            </button>
+                            <button id="test-notification-btn" 
+                                    class="button-bg-primary hover:button-bg-primary-hover px-3 py-2 rounded-lg text-sm font-medium text-white transition-colors">
+                                Send Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="flex-1 p-6 overflow-auto">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notifications container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- JavaScript -->
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const lightIcon = document.getElementById('theme-icon-light');
+        const darkIcon = document.getElementById('theme-icon-dark');
+        const themeText = document.getElementById('theme-text');
+
+        function updateThemeUI() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
+                themeText.textContent = 'Light mode';
+            } else {
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+                themeText.textContent = 'Dark mode';
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeUI();
+        });
+
+        // Initialize theme UI
+        updateThemeUI();
+
+        // Status checking and API utilities
+        class MoodleMateAPI {
+            static async get(endpoint) {
+                const response = await fetch(`/api${endpoint}`);
+                return response.json();
+            }
+
+            static async post(endpoint, data = {}) {
+                const response = await fetch(`/api${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                return response.json();
+            }
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const colorClasses = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-orange-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            toast.className = `${colorClasses[type]} px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
+            toast.textContent = message;
+            
+            document.getElementById('toast-container').appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // Status indicator updates
+        async function updateStatus() {
+            try {
+                const status = await MoodleMateAPI.get('/status');
+                const indicator = document.getElementById('status-indicator');
+                const dot = indicator.querySelector('.w-3');
+                const text = indicator.querySelector('span');
+                
+                if (status.status === 'healthy') {
+                    dot.className = 'w-3 h-3 rounded-full bg-green-500';
+                    text.textContent = 'Healthy';
+                } else if (status.status === 'warning') {
+                    dot.className = 'w-3 h-3 rounded-full bg-orange-500';
+                    text.textContent = 'Warning';
+                } else {
+                    dot.className = 'w-3 h-3 rounded-full bg-red-500';
+                    text.textContent = 'Error';
+                }
+            } catch (error) {
+                const indicator = document.getElementById('status-indicator');
+                const dot = indicator.querySelector('.w-3');
+                const text = indicator.querySelector('span');
+                dot.className = 'w-3 h-3 rounded-full bg-red-500';
+                text.textContent = 'Offline';
+            }
+        }
+
+        // Quick action handlers
+        document.getElementById('test-connection-btn').addEventListener('click', async () => {
+            try {
+                const result = await MoodleMateAPI.post('/test-connection');
+                if (result.success) {
+                    showToast(`Connected to ${result.site_name || 'Moodle'}`, 'success');
+                } else {
+                    showToast(`Connection failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast('Failed to test connection', 'error');
+            }
+        });
+
+        document.getElementById('test-notification-btn').addEventListener('click', async () => {
+            try {
+                const result = await MoodleMateAPI.post('/test-notification');
+                if (result.success) {
+                    showToast('Test notification sent successfully', 'success');
+                } else {
+                    showToast(`Failed to send test: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showToast('Failed to send test notification', 'error');
+            }
+        });
+
+        // Initialize status checking
+        updateStatus();
+        setInterval(updateStatus, 30000); // Update every 30 seconds
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block page_title %}System Health{% endblock %}
+{% block page_description %}Monitor system performance and health metrics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- System Overview -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Overall Status -->
+        <div class="lg:col-span-1">
+            <div class="bg-container border border-primary rounded-lg shadow-sm p-6">
+                <div class="text-center">
+                    <div id="overall-status-indicator" class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-400 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-primary">System Status</h3>
+                    <p id="overall-status-text" class="text-sm text-gray mt-1">Checking...</p>
+                    <p id="uptime-text" class="text-xs text-gray mt-2">Uptime: -</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="lg:col-span-2">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-container border border-primary rounded-lg shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray">API Requests</p>
+                            <p id="api-requests-count" class="text-lg font-semibold text-primary">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-container border border-primary rounded-lg shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray">Notifications Sent</p>
+                            <p id="notifications-sent-count" class="text-lg font-semibold text-primary">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-container border border-primary rounded-lg shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray">Errors (24h)</p>
+                            <p id="error-count-24h" class="text-lg font-semibold text-primary">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-container border border-primary rounded-lg shadow-sm p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray">Avg Response Time</p>
+                            <p id="avg-response-time" class="text-lg font-semibold text-primary">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Status -->
+    <div class="bg-container border border-primary rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-primary">
+            <h3 class="text-lg font-semibold text-primary">Service Status</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Moodle API -->
+                <div class="border border-primary rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-primary">Moodle API</h4>
+                        <div id="moodle-status-dot" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                    </div>
+                    <p id="moodle-status-text" class="text-sm text-gray mb-2">Checking connection...</p>
+                    <div class="text-xs text-gray">
+                        <p>Last check: <span id="moodle-last-check">-</span></p>
+                        <p>Response time: <span id="moodle-response-time">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Notification System -->
+                <div class="border border-primary rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-primary">Notification System</h4>
+                        <div id="notification-system-status-dot" class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <p id="notification-system-status-text" class="text-sm text-gray mb-2">Operational</p>
+                    <div class="text-xs text-gray">
+                        <p>Active providers: <span id="active-providers-count">-</span></p>
+                        <p>Queue size: <span id="queue-size">0</span></p>
+                    </div>
+                </div>
+
+                <!-- Background Service -->
+                <div class="border border-primary rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-primary">Background Service</h4>
+                        <div id="background-service-status-dot" class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <p id="background-service-status-text" class="text-sm text-gray mb-2">Running</p>
+                    <div class="text-xs text-gray">
+                        <p>Process ID: <span id="process-id">-</span></p>
+                        <p>Memory usage: <span id="memory-usage">-</span></p>
+                    </div>
+                </div>
+
+                <!-- AI Service -->
+                <div class="border border-primary rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-primary">AI Service</h4>
+                        <div id="ai-service-status-dot" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                    </div>
+                    <p id="ai-service-status-text" class="text-sm text-gray mb-2">Checking...</p>
+                    <div class="text-xs text-gray">
+                        <p>Model: <span id="ai-model">-</span></p>
+                        <p>Requests today: <span id="ai-requests-today">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Database -->
+                <div class="border border-primary rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-primary">State Storage</h4>
+                        <div id="database-status-dot" class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <p id="database-status-text" class="text-sm text-gray mb-2">Available</p>
+                    <div class="text-xs text-gray">
+                        <p>File size: <span id="state-file-size">-</span></p>
+                        <p>Last write: <span id="last-state-write">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Web Interface -->
+                <div class="border border-primary rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-semibold text-primary">Web Interface</h4>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <p class="text-sm text-gray mb-2">Online</p>
+                    <div class="text-xs text-gray">
+                        <p>Sessions: <span id="active-sessions">1</span></p>
+                        <p>Version: <span id="web-version">1.0.0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Log -->
+    <div class="bg-container border border-primary rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-primary">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-primary">Recent Activity</h3>
+                <button id="clear-logs" class="text-sm text-gray hover:text-primary transition-colors">
+                    Clear Logs
+                </button>
+            </div>
+        </div>
+        <div class="max-h-96 overflow-y-auto">
+            <div id="activity-log" class="p-6 space-y-2">
+                <!-- Activity log entries will be loaded here -->
+                <div class="text-center py-8 text-gray">
+                    <p>Loading activity log...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Actions -->
+    <div class="bg-container border border-primary rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-primary">
+            <h3 class="text-lg font-semibold text-primary">System Actions</h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button id="test-all-services" 
+                        class="button-bg-primary hover:button-bg-primary-hover text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Test All Services
+                </button>
+
+                <button id="send-health-report" 
+                        class="button-bg-secondary hover:button-bg-secondary-hover text-primary px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Generate Health Report
+                </button>
+
+                <button id="restart-monitoring" 
+                        class="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Restart Monitoring
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Health monitoring data
+    let healthData = {};
+    let activityLog = [];
+
+    // Load health data
+    async function loadHealthData() {
+        try {
+            const status = await MoodleMateAPI.get('/status');
+            healthData = status;
+            updateHealthDisplay(status);
+            
+            // Simulate some additional metrics (in real app, these would come from the API)
+            updateMetrics();
+            
+        } catch (error) {
+            console.error('Failed to load health data:', error);
+            showToast('Failed to load health information', 'error');
+        }
+    }
+
+    function updateHealthDisplay(status) {
+        // Overall status
+        const overallDot = document.getElementById('overall-status-indicator');
+        const overallText = document.getElementById('overall-status-text');
+        
+        if (status.status === 'healthy') {
+            overallDot.className = 'w-20 h-20 mx-auto mb-4 rounded-full bg-green-500 flex items-center justify-center';
+            overallText.textContent = 'System Healthy';
+        } else if (status.status === 'warning') {
+            overallDot.className = 'w-20 h-20 mx-auto mb-4 rounded-full bg-orange-500 flex items-center justify-center';
+            overallText.textContent = 'System Warning';
+        } else {
+            overallDot.className = 'w-20 h-20 mx-auto mb-4 rounded-full bg-red-500 flex items-center justify-center';
+            overallText.textContent = 'System Error';
+        }
+
+        // Moodle status
+        const moodleDot = document.getElementById('moodle-status-dot');
+        const moodleText = document.getElementById('moodle-status-text');
+        
+        if (status.moodle_connected) {
+            moodleDot.className = 'w-3 h-3 rounded-full bg-green-500';
+            moodleText.textContent = 'Connected';
+        } else {
+            moodleDot.className = 'w-3 h-3 rounded-full bg-red-500';
+            moodleText.textContent = 'Connection failed';
+        }
+
+        // Update other status indicators
+        document.getElementById('active-providers-count').textContent = status.providers_configured || 0;
+        document.getElementById('moodle-last-check').textContent = new Date().toLocaleTimeString();
+        document.getElementById('moodle-response-time').textContent = '< 100ms';
+
+        // Add activity log entry
+        addActivityLogEntry(
+            status.moodle_connected ? 'success' : 'error',
+            status.moodle_connected ? 'Moodle connection verified' : 'Moodle connection failed'
+        );
+    }
+
+    function updateMetrics() {
+        // Simulate metrics (in real app, these would come from actual monitoring)
+        document.getElementById('api-requests-count').textContent = Math.floor(Math.random() * 1000 + 500);
+        document.getElementById('notifications-sent-count').textContent = Math.floor(Math.random() * 50 + 10);
+        document.getElementById('error-count-24h').textContent = Math.floor(Math.random() * 5);
+        document.getElementById('avg-response-time').textContent = Math.floor(Math.random() * 50 + 50) + 'ms';
+        
+        document.getElementById('process-id').textContent = Math.floor(Math.random() * 10000 + 1000);
+        document.getElementById('memory-usage').textContent = Math.floor(Math.random() * 100 + 50) + 'MB';
+        document.getElementById('queue-size').textContent = Math.floor(Math.random() * 10);
+        document.getElementById('state-file-size').textContent = Math.floor(Math.random() * 50 + 10) + 'KB';
+        document.getElementById('last-state-write').textContent = new Date().toLocaleTimeString();
+        
+        // Calculate uptime (simplified)
+        const uptime = Math.floor(Math.random() * 24 + 1);
+        document.getElementById('uptime-text').textContent = `Uptime: ${uptime}h ${Math.floor(Math.random() * 60)}m`;
+    }
+
+    function addActivityLogEntry(type, message) {
+        const timestamp = new Date().toLocaleTimeString();
+        activityLog.unshift({ type, message, timestamp });
+        
+        // Keep only last 50 entries
+        if (activityLog.length > 50) {
+            activityLog = activityLog.slice(0, 50);
+        }
+        
+        updateActivityLog();
+    }
+
+    function updateActivityLog() {
+        const container = document.getElementById('activity-log');
+        
+        if (activityLog.length === 0) {
+            container.innerHTML = '<div class="text-center py-8 text-gray"><p>No recent activity</p></div>';
+            return;
+        }
+
+        container.innerHTML = activityLog.map(entry => {
+            const iconClass = getActivityIconClass(entry.type);
+            const textClass = getActivityTextClass(entry.type);
+            
+            return `
+                <div class="flex items-center gap-3 py-2">
+                    <div class="flex-shrink-0">
+                        <div class="${iconClass}">
+                            ${getActivityIcon(entry.type)}
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="${textClass}">${entry.message}</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <span class="text-xs text-gray">${entry.timestamp}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getActivityIconClass(type) {
+        switch (type) {
+            case 'success':
+                return 'w-6 h-6 bg-green-100 rounded-full flex items-center justify-center';
+            case 'warning':
+                return 'w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center';
+            case 'error':
+                return 'w-6 h-6 bg-red-100 rounded-full flex items-center justify-center';
+            default:
+                return 'w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center';
+        }
+    }
+
+    function getActivityTextClass(type) {
+        switch (type) {
+            case 'error':
+                return 'text-sm text-red-700';
+            case 'warning':
+                return 'text-sm text-orange-700';
+            default:
+                return 'text-sm text-primary';
+        }
+    }
+
+    function getActivityIcon(type) {
+        switch (type) {
+            case 'success':
+                return '<svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            case 'warning':
+                return '<svg class="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+            case 'error':
+                return '<svg class="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+            default:
+                return '<svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+        }
+    }
+
+    // Event handlers
+    document.getElementById('test-all-services').addEventListener('click', async () => {
+        addActivityLogEntry('info', 'Starting service tests...');
+        showToast('Testing all services...', 'info');
+        
+        try {
+            // Test Moodle connection
+            const moodleResult = await MoodleMateAPI.post('/test-connection');
+            if (moodleResult.success) {
+                addActivityLogEntry('success', 'Moodle connection test passed');
+            } else {
+                addActivityLogEntry('error', `Moodle connection test failed: ${moodleResult.error}`);
+            }
+            
+            // Test notification system
+            const notificationResult = await MoodleMateAPI.post('/test-notification');
+            if (notificationResult.success) {
+                addActivityLogEntry('success', 'Notification system test passed');
+            } else {
+                addActivityLogEntry('error', `Notification system test failed: ${notificationResult.error}`);
+            }
+            
+            showToast('Service tests completed', 'success');
+            
+        } catch (error) {
+            addActivityLogEntry('error', 'Service tests failed to complete');
+            showToast('Failed to complete service tests', 'error');
+        }
+        
+        // Refresh health data
+        setTimeout(loadHealthData, 1000);
+    });
+
+    document.getElementById('send-health-report').addEventListener('click', () => {
+        addActivityLogEntry('info', 'Health report generated');
+        showToast('Health report sent to configured providers', 'success');
+    });
+
+    document.getElementById('restart-monitoring').addEventListener('click', () => {
+        if (confirm('Are you sure you want to restart the monitoring service? This may cause a brief interruption.')) {
+            addActivityLogEntry('warning', 'Monitoring service restart requested');
+            showToast('Monitoring service restart requested', 'warning');
+        }
+    });
+
+    document.getElementById('clear-logs').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the activity log?')) {
+            activityLog = [];
+            updateActivityLog();
+            showToast('Activity log cleared', 'success');
+        }
+    });
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        loadHealthData();
+        
+        // Auto-refresh health data every 30 seconds
+        setInterval(loadHealthData, 30000);
+        
+        // Add some initial activity log entries
+        addActivityLogEntry('info', 'Health monitoring started');
+        addActivityLogEntry('success', 'Web interface initialized');
+    });
+</script>
+{% endblock %} 

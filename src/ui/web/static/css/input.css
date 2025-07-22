@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Maybe Design System */
+@import "../assets/tailwind/maybe-design-system.css";
+@import "../assets/tailwind/geist-font.css";
+@import "../assets/tailwind/geist-mono-font.css";
+@import "../assets/tailwind/simonweb_pickr.css";
+
+/* Custom component styles from application.css */
+@layer components {
+  .pcr-app{
+    position: static !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  .pcr-color-palette{
+      height: 12em !important;
+  }
+  .pcr-palette{
+      border-radius: 10px !important;
+  }
+  .pcr-palette:before{
+      border-radius: 10px !important;
+  }
+  .pcr-color-chooser{
+      height: 200px !important;
+  }
+  .pcr-picker{
+      color: #2E384D !important;
+  }
+}
+
+.combobox {
+  .hw-combobox__main__wrapper,
+  .hw-combobox__main__wrapper * {
+    @apply !outline-none !border-none !ring-0;
+  }
+
+  .hw-combobox__main__wrapper {
+    @apply w-full;
+  }
+
+  .hw-combobox__listbox {
+    @apply z-50;
+  }
+
+  .hw-combobox__label {
+    @apply text-sm font-medium text-primary;
+  }
+
+  .hw-combobox__option {
+    @apply px-4 py-2 text-sm text-primary hover:bg-container-hover cursor-pointer;
+  }
+
+  .hw_combobox__pagination__wrapper {
+    @apply px-4 py-2;
+
+    &:only-child {
+      @apply hidden;
+    }
+  }
+}
+
+.prose {
+  @apply max-w-none text-primary;
+
+  a {
+    @apply text-blue-600 hover:text-blue-800;
+  }
+
+  h2 {
+    @apply text-primary;
+  }
+
+  h3 {
+    @apply text-primary;
+  }
+
+  li {
+    @apply text-primary;
+  }
+
+  details {
+    @apply text-primary;
+  }
+
+  summary {
+    @apply text-primary cursor-pointer;
+  }
+
+  video {
+    @apply rounded-lg;
+  }
+}
+
+.prose--github-release-notes {
+  .octicon {
+    @apply inline-block;
+  }
+
+  .dropdown-caret {
+    @apply inline-block;
+  }
+
+  .user-mention {
+    @apply text-blue-600 hover:text-blue-800;
+  }
+}
+
+.prose--ai-chat {
+  @apply text-sm leading-relaxed;
+
+  p, li {
+    @apply mb-2;
+  }
+}
+
+/* Scrollbar styles */
+.scrollbar {
+  &::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+} 

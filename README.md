@@ -24,6 +24,12 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 ## Key Features
 
+- **Modern Web Interface** 🌐
+  - Beautiful, responsive dashboard built with TailwindCSS and Maybe design system
+  - Real-time monitoring and configuration management
+  - Dark/light theme support with accessible design
+  - Mobile-friendly interface for on-the-go management
+
 - **Smart Notification Management**
   - Automatically fetch and process notifications from Moodle.
   - Optional AI-based content summarization that creates quick TLDRs.
@@ -163,6 +169,38 @@ To stop the application:
 ```bash
 docker compose down
 ```
+
+### Web Interface Usage
+
+For a modern, user-friendly experience, you can use the web interface:
+
+#### Quick Start
+```bash
+# Start the web interface (default: http://localhost:5000)
+python web_launcher.py
+
+# Custom host and port
+python web_launcher.py --host 0.0.0.0 --port 8080
+
+# Debug mode for development
+python web_launcher.py --debug
+```
+
+The web interface includes:
+- **Dashboard**: Overview of system status and recent notifications
+- **Notifications**: History and management of Moodle notifications
+- **Configuration**: User-friendly settings management
+- **Health**: System monitoring and diagnostics
+- **Dark/Light Theme**: Toggle between themes with persistent preference
+
+The web interface provides:
+- 📊 **Real-time dashboard** with system status and recent notifications
+- ⚙️ **Interactive configuration** forms for all settings
+- 📋 **Notification history** with search and filtering
+- 🏥 **Health monitoring** with detailed system metrics
+- 🎨 **Modern UI** with dark/light theme support
+
+Visit the [Web Interface Documentation](src/ui/web/README.md) for more details.
 
 When running, the application will:
 

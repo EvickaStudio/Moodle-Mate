@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block page_title %}Configuration{% endblock %}
+{% block page_description %}Manage your Moodle-Mate settings{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Configuration Form -->
+    <form id="config-form" class="space-y-8">
+        <!-- Moodle Configuration -->
+        <div class="bg-container border border-primary rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-primary">
+                <h3 class="text-lg font-semibold text-primary">Moodle Configuration</h3>
+                <p class="text-sm text-gray mt-1">Connect to your Moodle instance</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="form-field">
+                    <label class="form-field__label" for="moodle-url">
+                        Moodle URL <span class="text-red-500">*</span>
+                    </label>
+                    <div class="form-field__body">
+                        <input type="url" 
+                               id="moodle-url" 
+                               name="moodle_url"
+                               class="form-field__input"
+                               placeholder="https://your-moodle-site.com"
+                               required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-field">
+                        <label class="form-field__label" for="moodle-username">
+                            Username <span class="text-red-500">*</span>
+                        </label>
+                        <div class="form-field__body">
+                            <input type="text" 
+                                   id="moodle-username" 
+                                   name="moodle_username"
+                                   class="form-field__input"
+                                   placeholder="your-username"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-field__label" for="moodle-password">
+                            Password <span class="text-red-500">*</span>
+                        </label>
+                        <div class="form-field__body">
+                            <input type="password" 
+                                   id="moodle-password" 
+                                   name="moodle_password"
+                                   class="form-field__input"
+                                   placeholder="••••••••"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-field__label" for="initial-fetch-count">
+                        Initial Fetch Count
+                    </label>
+                    <div class="form-field__body">
+                        <input type="number" 
+                               id="initial-fetch-count" 
+                               name="initial_fetch_count"
+                               class="form-field__input"
+                               min="1"
+                               max="100"
+                               value="1">
+                        <p class="text-xs text-gray mt-1">Number of notifications to fetch on first run</p>
+                    </div>
+                </div>
+
+                <div class="form-field__actions">
+                    <button type="button" 
+                            id="test-moodle-connection"
+                            class="button-bg-secondary hover:button-bg-secondary-hover text-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Test Connection
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Configuration -->
+        <div class="bg-container border border-primary rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-primary">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-primary">AI Summary</h3>
+                        <p class="text-sm text-gray mt-1">Enable AI-powered notification summaries</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               id="ai-enabled" 
+                               name="ai_enabled"
+                               class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+            </div>
+            <div id="ai-config-panel" class="p-6 space-y-4 hidden">
+                <div class="form-field">
+                    <label class="form-field__label" for="ai-api-key">
+                        OpenAI API Key <span class="text-red-500">*</span>
+                    </label>
+                    <div class="form-field__body">
+                        <input type="password" 
+                               id="ai-api-key" 
+                               name="ai_api_key"
+                               class="form-field__input"
+                               placeholder="sk-...">
+                        <p class="text-xs text-gray mt-1">Your OpenAI API key for GPT models</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-field">
+                        <label class="form-field__label" for="ai-model">
+                            Model
+                        </label>
+                        <div class="form-field__body">
+                            <select id="ai-model" 
+                                    name="ai_model"
+                                    class="form-field__input">
+                                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                <option value="gpt-4o">GPT-4o</option>
+                                <option value="gpt-4">GPT-4</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-field__label" for="ai-temperature">
+                            Temperature
+                        </label>
+                        <div class="form-field__body">
+                            <input type="number" 
+                                   id="ai-temperature" 
+                                   name="ai_temperature"
+                                   class="form-field__input"
+                                   min="0"
+                                   max="2"
+                                   step="0.1"
+                                   value="0.7">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-field__label" for="ai-max-tokens">
+                        Max Tokens
+                    </label>
+                    <div class="form-field__body">
+                        <input type="number" 
+                               id="ai-max-tokens" 
+                               name="ai_max_tokens"
+                               class="form-field__input"
+                               min="50"
+                               max="500"
+                               value="150">
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-field__label" for="ai-system-prompt">
+                        System Prompt
+                    </label>
+                    <div class="form-field__body">
+                        <textarea id="ai-system-prompt" 
+                                  name="ai_system_prompt"
+                                  class="form-field__input"
+                                  rows="3"
+                                  placeholder="Summarize the message concisely with appropriate emojis, excluding links."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-field__label" for="ai-endpoint">
+                        Custom Endpoint (Optional)
+                    </label>
+                    <div class="form-field__body">
+                        <input type="url" 
+                               id="ai-endpoint" 
+                               name="ai_endpoint"
+                               class="form-field__input"
+                               placeholder="https://api.openai.com/v1">
+                        <p class="text-xs text-gray mt-1">Leave empty for default OpenAI endpoint</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="bg-container border border-primary rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-primary">
+                <h3 class="text-lg font-semibold text-primary">Notification Settings</h3>
+                <p class="text-sm text-gray mt-1">Configure how notifications are processed</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-field">
+                        <label class="form-field__label" for="fetch-interval">
+                            Fetch Interval (seconds)
+                        </label>
+                        <div class="form-field__body">
+                            <input type="number" 
+                                   id="fetch-interval" 
+                                   name="fetch_interval"
+                                   class="form-field__input"
+                                   min="30"
+                                   max="3600"
+                                   value="60">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-field__label" for="max-retries">
+                            Max Retries
+                        </label>
+                        <div class="form-field__body">
+                            <input type="number" 
+                                   id="max-retries" 
+                                   name="max_retries"
+                                   class="form-field__input"
+                                   min="1"
+                                   max="10"
+                                   value="5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Monitoring -->
+        <div class="bg-container border border-primary rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-primary">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-primary">Health Monitoring</h3>
+                        <p class="text-sm text-gray mt-1">Monitor system health and send alerts</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" 
+                               id="health-enabled" 
+                               name="health_enabled"
+                               class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+            </div>
+            <div id="health-config-panel" class="p-6 space-y-4 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-field">
+                        <label class="form-field__label" for="heartbeat-interval">
+                            Heartbeat Interval (hours)
+                        </label>
+                        <div class="form-field__body">
+                            <input type="number" 
+                                   id="heartbeat-interval" 
+                                   name="heartbeat_interval"
+                                   class="form-field__input"
+                                   min="1"
+                                   max="168"
+                                   placeholder="24">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-field__label" for="failure-alert-threshold">
+                            Failure Alert Threshold
+                        </label>
+                        <div class="form-field__body">
+                            <input type="number" 
+                                   id="failure-alert-threshold" 
+                                   name="failure_alert_threshold"
+                                   class="form-field__input"
+                                   min="1"
+                                   max="20"
+                                   placeholder="5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-field__label" for="target-provider">
+                        Target Provider
+                    </label>
+                    <div class="form-field__body">
+                        <select id="target-provider" 
+                                name="target_provider"
+                                class="form-field__input">
+                            <option value="">Select a provider...</option>
+                            <option value="discord">Discord</option>
+                            <option value="pushbullet">Pushbullet</option>
+                            <option value="webhook">Webhook</option>
+                        </select>
+                        <p class="text-xs text-gray mt-1">Provider to send health notifications to</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-container border border-primary rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-primary">
+                <h3 class="text-lg font-semibold text-primary">Notification Filters</h3>
+                <p class="text-sm text-gray mt-1">Filter out unwanted notifications</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="form-field">
+                    <label class="form-field__label" for="ignore-subjects">
+                        Ignore Subjects Containing
+                    </label>
+                    <div class="form-field__body">
+                        <input type="text" 
+                               id="ignore-subjects" 
+                               name="ignore_subjects"
+                               class="form-field__input"
+                               placeholder="spam, test, ignore (comma-separated)">
+                        <p class="text-xs text-gray mt-1">Notifications with these words in the subject will be ignored</p>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label class="form-field__label" for="ignore-courses">
+                        Ignore Course IDs
+                    </label>
+                    <div class="form-field__body">
+                        <input type="text" 
+                               id="ignore-courses" 
+                               name="ignore_courses"
+                               class="form-field__input"
+                               placeholder="123, 456, 789 (comma-separated)">
+                        <p class="text-xs text-gray mt-1">Notifications from these course IDs will be ignored</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-end gap-4">
+            <button type="button" 
+                    id="reset-config"
+                    class="px-6 py-2 border border-primary text-primary hover:bg-container-hover rounded-lg font-medium transition-colors">
+                Reset
+            </button>
+            <button type="submit" 
+                    id="save-config"
+                    class="button-bg-primary hover:button-bg-primary-hover text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                Save Configuration
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Configuration management
+    let currentConfig = {};
+
+    // Load current configuration
+    async function loadConfiguration() {
+        try {
+            const config = await MoodleMateAPI.get('/config');
+            currentConfig = config;
+            populateForm(config);
+        } catch (error) {
+            console.error('Failed to load configuration:', error);
+            showToast('Failed to load current configuration', 'error');
+        }
+    }
+
+    function populateForm(config) {
+        if (config.error) {
+            showToast('Configuration not available', 'warning');
+            return;
+        }
+
+        // Moodle configuration
+        if (config.moodle) {
+            document.getElementById('moodle-url').value = config.moodle.url || '';
+            document.getElementById('moodle-username').value = config.moodle.username || '';
+            document.getElementById('initial-fetch-count').value = config.moodle.initial_fetch_count || 1;
+        }
+
+        // AI configuration
+        if (config.ai) {
+            document.getElementById('ai-enabled').checked = config.ai.enabled || false;
+            document.getElementById('ai-model').value = config.ai.model || 'gpt-4o-mini';
+            document.getElementById('ai-temperature').value = config.ai.temperature || 0.7;
+            document.getElementById('ai-max-tokens').value = config.ai.max_tokens || 150;
+            document.getElementById('ai-system-prompt').value = config.ai.system_prompt || '';
+            document.getElementById('ai-endpoint').value = config.ai.endpoint || '';
+            
+            toggleAIPanel(config.ai.enabled);
+        }
+
+        // Notification settings
+        if (config.notification) {
+            document.getElementById('fetch-interval').value = config.notification.fetch_interval || 60;
+            document.getElementById('max-retries').value = config.notification.max_retries || 5;
+        }
+
+        // Health monitoring
+        if (config.health) {
+            document.getElementById('health-enabled').checked = config.health.enabled || false;
+            document.getElementById('heartbeat-interval').value = config.health.heartbeat_interval || '';
+            document.getElementById('failure-alert-threshold').value = config.health.failure_alert_threshold || '';
+            document.getElementById('target-provider').value = config.health.target_provider || '';
+            
+            toggleHealthPanel(config.health.enabled);
+        }
+
+        // Filters
+        if (config.filters) {
+            document.getElementById('ignore-subjects').value = (config.filters.ignore_subjects_containing || []).join(', ');
+            document.getElementById('ignore-courses').value = (config.filters.ignore_courses_by_id || []).join(', ');
+        }
+    }
+
+    function toggleAIPanel(enabled) {
+        const panel = document.getElementById('ai-config-panel');
+        if (enabled) {
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+    function toggleHealthPanel(enabled) {
+        const panel = document.getElementById('health-config-panel');
+        if (enabled) {
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+    function collectFormData() {
+        const formData = new FormData(document.getElementById('config-form'));
+        const config = {};
+
+        // Convert FormData to object structure
+        config.moodle = {
+            url: formData.get('moodle_url'),
+            username: formData.get('moodle_username'),
+            password: formData.get('moodle_password'),
+            initial_fetch_count: parseInt(formData.get('initial_fetch_count'))
+        };
+
+        config.ai = {
+            enabled: formData.get('ai_enabled') === 'on',
+            api_key: formData.get('ai_api_key'),
+            model: formData.get('ai_model'),
+            temperature: parseFloat(formData.get('ai_temperature')),
+            max_tokens: parseInt(formData.get('ai_max_tokens')),
+            system_prompt: formData.get('ai_system_prompt'),
+            endpoint: formData.get('ai_endpoint')
+        };
+
+        config.notification = {
+            fetch_interval: parseInt(formData.get('fetch_interval')),
+            max_retries: parseInt(formData.get('max_retries'))
+        };
+
+        config.health = {
+            enabled: formData.get('health_enabled') === 'on',
+            heartbeat_interval: formData.get('heartbeat_interval') ? parseInt(formData.get('heartbeat_interval')) : null,
+            failure_alert_threshold: formData.get('failure_alert_threshold') ? parseInt(formData.get('failure_alert_threshold')) : null,
+            target_provider: formData.get('target_provider')
+        };
+
+        const ignoreSubjects = formData.get('ignore_subjects');
+        const ignoreCourses = formData.get('ignore_courses');
+
+        config.filters = {
+            ignore_subjects_containing: ignoreSubjects ? ignoreSubjects.split(',').map(s => s.trim()).filter(s => s) : [],
+            ignore_courses_by_id: ignoreCourses ? ignoreCourses.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : []
+        };
+
+        return config;
+    }
+
+    // Event handlers
+    document.getElementById('ai-enabled').addEventListener('change', function() {
+        toggleAIPanel(this.checked);
+    });
+
+    document.getElementById('health-enabled').addEventListener('change', function() {
+        toggleHealthPanel(this.checked);
+    });
+
+    document.getElementById('test-moodle-connection').addEventListener('click', async () => {
+        const url = document.getElementById('moodle-url').value;
+        const username = document.getElementById('moodle-username').value;
+        const password = document.getElementById('moodle-password').value;
+
+        if (!url || !username || !password) {
+            showToast('Please fill in all Moodle connection fields', 'warning');
+            return;
+        }
+
+        try {
+            // This would need to be implemented on the backend
+            showToast('Connection test not yet implemented', 'info');
+        } catch (error) {
+            showToast('Failed to test connection', 'error');
+        }
+    });
+
+    document.getElementById('reset-config').addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset all settings? This will reload the current saved configuration.')) {
+            loadConfiguration();
+            showToast('Configuration reset', 'info');
+        }
+    });
+
+    document.getElementById('config-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const config = collectFormData();
+        
+        try {
+            const result = await MoodleMateAPI.post('/config', config);
+            if (result.success !== false) {
+                showToast('Configuration saved successfully', 'success');
+                currentConfig = config;
+            } else {
+                showToast(result.error || 'Failed to save configuration', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to save configuration:', error);
+            showToast('Failed to save configuration', 'error');
+        }
+    });
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+        loadConfiguration();
+    });
+</script>
+{% endblock %} 

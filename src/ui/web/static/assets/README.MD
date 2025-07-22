@@ -1,0 +1,1 @@
+Everything from https://github.com/maybe-finance/maybe assets was copied to this directory.

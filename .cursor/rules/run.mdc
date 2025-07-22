@@ -1,0 +1,17 @@
+---
+description: Run Moodle-Mate
+globs: **/*
+alwaysApply: true
+---
+
+
+If you try to run moodle-mate use uv:
+
+uv run .\main.py
+
+or for the web interface:
+
+uv run .\web_launcher.py --debug
+
+
+If you are in the root repo directory

@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_description %}Monitor your Moodle notification system{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- System Status Cards -->
+    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Moodle Connection Status -->
+        <div class="bg-container border border-primary rounded-lg p-6 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div id="moodle-status-dot" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray">Moodle Connection</h3>
+                    <p id="moodle-status-text" class="text-lg font-semibold text-primary">Checking...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Providers Count -->
+        <div class="bg-container border border-primary rounded-lg p-6 shadow-sm">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+                </svg>
+                <div>
+                    <h3 class="text-sm font-medium text-gray">Active Providers</h3>
+                    <p id="providers-count" class="text-lg font-semibold text-primary">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Last Notification -->
+        <div class="bg-container border border-primary rounded-lg p-6 shadow-sm">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <h3 class="text-sm font-medium text-gray">Last Notification</h3>
+                    <p id="last-notification" class="text-lg font-semibold text-primary">None</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Uptime -->
+        <div class="bg-container border border-primary rounded-lg p-6 shadow-sm">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <div>
+                    <h3 class="text-sm font-medium text-gray">Status</h3>
+                    <p id="system-status" class="text-lg font-semibold text-primary">Active</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Notifications -->
+    <div class="lg:col-span-2">
+        <div class="bg-container border border-primary rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-primary">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-primary">Recent Notifications</h3>
+                    <button id="refresh-notifications" 
+                            class="text-sm text-gray hover:text-primary transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="notifications-list" class="space-y-4">
+                    <!-- Notifications will be loaded here -->
+                    <div class="text-center py-8 text-gray">
+                        <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+                        </svg>
+                        <p>Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="lg:col-span-1">
+        <div class="space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-container border border-primary rounded-lg shadow-sm">
+                <div class="px-6 py-4 border-b border-primary">
+                    <h3 class="text-lg font-semibold text-primary">Quick Actions</h3>
+                </div>
+                <div class="p-6 space-y-3">
+                    <button id="send-test-notification" 
+                            class="w-full button-bg-primary hover:button-bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Send Test Notification
+                    </button>
+                    <button id="check-connection" 
+                            class="w-full button-bg-secondary hover:button-bg-secondary-hover text-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Test Moodle Connection
+                    </button>
+                    <a href="{{ url_for('config_page') }}" 
+                       class="block w-full bg-gray-50 hover:bg-gray-100 text-primary px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center">
+                        Configure Settings
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="bg-container border border-primary rounded-lg shadow-sm">
+                <div class="px-6 py-4 border-b border-primary">
+                    <h3 class="text-lg font-semibold text-primary">System Health</h3>
+                </div>
+                <div class="p-6">
+                    <div id="health-status" class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray">Moodle API</span>
+                            <span id="api-health" class="text-sm font-medium">Checking...</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray">Notification System</span>
+                            <span id="notification-health" class="text-sm font-medium">Active</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray">Background Service</span>
+                            <span id="service-health" class="text-sm font-medium">Running</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Summary -->
+            <div class="bg-container border border-primary rounded-lg shadow-sm">
+                <div class="px-6 py-4 border-b border-primary">
+                    <h3 class="text-lg font-semibold text-primary">Configuration</h3>
+                </div>
+                <div class="p-6">
+                    <div id="config-summary" class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray">Fetch Interval</span>
+                            <span id="fetch-interval" class="text-sm font-medium">60s</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray">AI Enabled</span>
+                            <span id="ai-enabled" class="text-sm font-medium">No</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray">Health Monitoring</span>
+                            <span id="health-enabled" class="text-sm font-medium">No</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dashboard-specific JavaScript
+    let notifications = [];
+    let systemStatus = {};
+
+    // Load dashboard data
+    async function loadDashboardData() {
+        try {
+            // Load system status
+            const status = await MoodleMateAPI.get('/status');
+            updateSystemStatus(status);
+
+            // Load recent notifications
+            const notificationsData = await MoodleMateAPI.get('/notifications?limit=10');
+            updateNotificationsList(notificationsData.notifications || []);
+
+            // Load configuration summary
+            const config = await MoodleMateAPI.get('/config');
+            updateConfigSummary(config);
+
+        } catch (error) {
+            console.error('Failed to load dashboard data:', error);
+            showToast('Failed to load dashboard data', 'error');
+        }
+    }
+
+    function updateSystemStatus(status) {
+        systemStatus = status;
+
+        // Update status cards
+        const moodleDot = document.getElementById('moodle-status-dot');
+        const moodleText = document.getElementById('moodle-status-text');
+        const providersCount = document.getElementById('providers-count');
+        const lastNotification = document.getElementById('last-notification');
+        const systemStatusText = document.getElementById('system-status');
+        const apiHealth = document.getElementById('api-health');
+
+        // Moodle connection status
+        if (status.moodle_connected) {
+            moodleDot.className = 'w-3 h-3 rounded-full bg-green-500';
+            moodleText.textContent = 'Connected';
+            apiHealth.textContent = 'Healthy';
+            apiHealth.className = 'text-sm font-medium text-green-600';
+        } else {
+            moodleDot.className = 'w-3 h-3 rounded-full bg-red-500';
+            moodleText.textContent = 'Disconnected';
+            apiHealth.textContent = 'Error';
+            apiHealth.className = 'text-sm font-medium text-red-600';
+        }
+
+        // Providers count
+        providersCount.textContent = status.providers_configured || 0;
+
+        // Last notification
+        if (status.last_notification) {
+            const date = new Date(status.last_notification.timestamp);
+            lastNotification.textContent = date.toLocaleTimeString();
+        } else {
+            lastNotification.textContent = 'None';
+        }
+
+        // System status
+        systemStatusText.textContent = status.status.charAt(0).toUpperCase() + status.status.slice(1);
+        
+        if (status.status === 'healthy') {
+            systemStatusText.className = 'text-lg font-semibold text-green-600';
+        } else if (status.status === 'warning') {
+            systemStatusText.className = 'text-lg font-semibold text-orange-600';
+        } else {
+            systemStatusText.className = 'text-lg font-semibold text-red-600';
+        }
+    }
+
+    function updateNotificationsList(notificationsList) {
+        notifications = notificationsList;
+        const container = document.getElementById('notifications-list');
+
+        if (notifications.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray">
+                    <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M15 17h5l-5 5v-5zM12 19h-2a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v5"/>
+                    </svg>
+                    <p>No notifications yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = notifications.map(notification => {
+            const date = new Date(notification.timestamp);
+            const timeString = date.toLocaleTimeString();
+            
+            // Strip HTML from message for preview
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = notification.message;
+            const plainText = tempDiv.textContent || tempDiv.innerText || '';
+            const preview = plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+
+            return `
+                <div class="border border-primary rounded-lg p-4 hover:bg-container-hover transition-colors">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-primary text-sm">${notification.subject}</h4>
+                            <p class="text-gray text-xs mt-1">${preview}</p>
+                        </div>
+                        <span class="text-xs text-gray ml-4 flex-shrink-0">${timeString}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateConfigSummary(config) {
+        if (config.error) {
+            return;
+        }
+
+        // Update config display
+        const fetchInterval = document.getElementById('fetch-interval');
+        const aiEnabled = document.getElementById('ai-enabled');
+        const healthEnabled = document.getElementById('health-enabled');
+
+        if (config.notification) {
+            fetchInterval.textContent = `${config.notification.fetch_interval}s`;
+        }
+
+        if (config.ai) {
+            aiEnabled.textContent = config.ai.enabled ? 'Yes' : 'No';
+            aiEnabled.className = `text-sm font-medium ${config.ai.enabled ? 'text-green-600' : 'text-gray-600'}`;
+        }
+
+        if (config.health) {
+            healthEnabled.textContent = config.health.enabled ? 'Yes' : 'No';
+            healthEnabled.className = `text-sm font-medium ${config.health.enabled ? 'text-green-600' : 'text-gray-600'}`;
+        }
+    }
+
+    // Event handlers
+    document.getElementById('refresh-notifications').addEventListener('click', async () => {
+        try {
+            const notificationsData = await MoodleMateAPI.get('/notifications?limit=10');
+            updateNotificationsList(notificationsData.notifications || []);
+            showToast('Notifications refreshed', 'success');
+        } catch (error) {
+            showToast('Failed to refresh notifications', 'error');
+        }
+    });
+
+    document.getElementById('send-test-notification').addEventListener('click', async () => {
+        try {
+            const result = await MoodleMateAPI.post('/test-notification');
+            if (result.success) {
+                showToast('Test notification sent successfully', 'success');
+                // Refresh the notifications list after a brief delay
+                setTimeout(() => {
+                    loadDashboardData();
+                }, 2000);
+            } else {
+                showToast(`Failed to send test: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showToast('Failed to send test notification', 'error');
+        }
+    });
+
+    document.getElementById('check-connection').addEventListener('click', async () => {
+        try {
+            const result = await MoodleMateAPI.post('/test-connection');
+            if (result.success) {
+                showToast(`Connected to ${result.site_name || 'Moodle'}`, 'success');
+                loadDashboardData(); // Refresh status
+            } else {
+                showToast(`Connection failed: ${result.error}`, 'error');
+            }
+        } catch (error) {
+            showToast('Failed to test connection', 'error');
+        }
+    });
+
+    // Auto-refresh dashboard data
+    function startAutoRefresh() {
+        setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboardData();
+        startAutoRefresh();
+    });
+</script>
+{% endblock %} 
