@@ -197,12 +197,13 @@ MoodleMate now supports a plugin system that allows you to easily create and add
 
 ### Quick Start
 
-1. Copy the template from `src/templates/notification_service_template.py` to `src/providers/notification/your_service_name/provider.py`
-2. Rename the class to match your service (e.g., `YourServiceNameProvider`)
-3. Implement the `send()` method with your service's API
-4. Add your service's configuration to `config.ini`
+1. Start from the template at `src/templates/notification_service_template.py`.
+2. Copy it to `src/providers/notification/your_service_name/provider.py` and rename the class (e.g., `YourServiceNameProvider`).
+3. Implement `send(self, subject, message, summary=None) -> bool` with your service’s API.
+4. Run `python main.py --gen-config` to generate the provider section in `config.ini` from your constructor parameters.
+5. Optionally verify with `python main.py --test-notification`.
 
-For more detailed information, see the [Creating Custom Notification Providers](docs/CUSTOM_PROVIDERS.md) documentation.
+See detailed steps in [Creating Custom Notification Providers](docs/CUSTOM_PROVIDERS.md).
 
 ## Contributing
 

@@ -1,38 +1,44 @@
 # Creating Custom Notification Providers
 
-MoodleMate features a dynamic plugin system that allows you to create and integrate your own notification providers without altering the core application code. This makes it easy to extend MoodleMate to support any notification service with an API.
+Moodle-Mate has a simple, dynamic plugin system that lets you add new notification providers without touching core code. Place your provider under `src/providers/notification/`, implement a tiny interface, and the app will auto-discover, configure, and run it.
 
-## How It Works
+## Provider lifecycle at a glance
 
-The application automatically discovers and loads any provider located in the `src/providers/notification/` directory. When you run the configuration generator (`--gen-config`), it will find your custom provider and interactively prompt you for the necessary configuration values.
+1) Discovery: any folder under `src/providers/notification/<name>/provider.py` is scanned and classes inheriting `NotificationProvider` are picked up by the plugin manager.
+2) Config generation: running the config generator inspects your provider `__init__` signature and prompts for those fields. It then writes a `[<name>]` section to `config.ini`.
+3) Loading: on startup, enabled providers are constructed with values from `config.ini` and passed into the `NotificationProcessor`, which calls `provider.send(...)` for each notification.
 
-## Steps to Create a Custom Provider
+Notes and caveats:
+- Only explicit constructor parameters are prompted by the generator. `**kwargs` is ignored during prompting. If you need a field to be prompted, declare it as a named argument with a sensible default when optional.
+- Values for dynamically loaded providers are read as strings from `config.ini`. Convert and validate types you require in your constructor (e.g., `int(timeout)`).
+- Use the global HTTP `request_manager.session` for connection pooling and consistent headers.
 
-### 1. Create the Provider Directory and File
+## Steps to create a provider
 
-First, create a new directory for your provider inside `src/providers/notification/`. The directory name should be the desired name for your provider (e.g., `slack`, `ntfy`).
+### 1) Create the provider directory and file
 
-Inside this new directory, create a file named `provider.py`.
+Create `src/providers/notification/<your_provider_name>/provider.py` and an empty `__init__.py` in the same folder.
 
-Your file structure should look like this:
+Example layout:
 
 ```
 src/
 └── providers/
     └── notification/
         ├── your_provider_name/
-        │   ├── __init__.py  (can be empty)
+        │   ├── __init__.py
         │   └── provider.py
-        └── ... (other providers)
+        └── discord/
+            └── provider.py
 ```
 
-### 2. Implement the Provider Class
+### 2) Implement the provider class
 
-Copy the template from `src/templates/notification_service_template.py` into your new `provider.py` file. This provides the basic structure for your provider.
+Option A: copy the template from `src/templates/notification_service_template.py` and adapt it (now includes validation, structured logging, and header usage examples).
 
-Alternatively, you can create the class from scratch. It must inherit from `NotificationProvider` and implement the `send` method.
+Option B: implement from scratch. Your class must inherit from `NotificationProvider` and implement `send(self, subject: str, message: str, summary: Optional[str]) -> bool`.
 
-Here is a complete example for a hypothetical service called `MyPusher`:
+Minimal webhook-style example (`mypusher`):
 
 ```python
 # src/providers/notification/mypusher/provider.py
@@ -95,25 +101,26 @@ class MyPusherProvider(NotificationProvider):
 
 ```
 
-**Key Points:**
+**Key points:**
 
-- **Class Name:** The class name should be descriptive (e.g., `MyPusherProvider`).
-- **`__init__` Method:** The parameters of your `__init__` method (excluding `self` and `kwargs`) directly define the configuration fields for your provider. The config generator (`python main.py --gen-config`) will automatically discover these parameters and interactively prompt the user for their values. Use type hints for clarity and default values for optional parameters.
-- **`send` Method:** This is where you implement the core logic to send the notification. It receives the `subject` (string), `message` (string, always in Markdown format), and an optional `summary` (string, also in Markdown).
-- **`provider_name` Attribute:** While not strictly required, it's good practice to set a `provider_name` class attribute (e.g., `provider_name: str = "MyPusher"`). This name is used internally for logging and identification.
-- **`request_manager`:** For making HTTP requests, it's highly recommended to use the global `request_manager.session` (from `src.infrastructure.http.request_manager`) to benefit from consistent headers, session management, and connection pooling.
+- **Class name:** Use a descriptive class name ending with `Provider` (e.g., `MyPusherProvider`).
+- **Constructor drives config:** The `__init__` parameters (excluding `self` and `kwargs`) define which fields the generator will prompt for. Use defaults for optional fields. Remember that values are read as strings; convert/validate as needed.
+- **`send` method:** Receives `subject` and Markdown `message`, plus optional Markdown `summary`. Return `True` on success, `False` otherwise.
+- **`provider_name` attribute:** The plugin manager sets this automatically from the folder name; you can override for clarity.
+- **Networking:** Use `request_manager.session` for HTTP calls and `request_manager.update_headers({...})` to add per-request headers.
 
-### 3. Generate the Configuration
+### 3) Generate the configuration
 
 Run the interactive configuration generator:
 
 ```bash
+# standard Python
 python main.py --gen-config
 ```
 
-The generator will automatically detect your new `MyPusher` provider and prompt you to enable and configure it. It will ask for the `api_token` and `user_key` as defined in your `__init__` method.
+The generator will detect `mypusher` and prompt for `api_token` and `user_key` as defined in your constructor.
 
-After you complete the process, your `config.ini` will have a new section:
+Afterwards, your `config.ini` will contain:
 
 ```ini
 [mypusher]
@@ -129,3 +136,19 @@ That's it! When you start MoodleMate, it will load your custom provider and star
 ```bash
 python main.py
 ```
+
+### 5) Test your provider quickly
+
+You can send a test notification to all enabled providers without connecting to Moodle:
+
+```bash
+python main.py --test-notification
+```
+
+## Troubleshooting and best practices
+
+- Validate all required constructor params early and raise `ValueError` with a clear message.
+- Convert types from strings (e.g., `timeout = int(timeout)`), and normalize URLs using `rstrip('/')` where appropriate.
+- Log errors with context but never log secrets (API keys, tokens).
+- Keep `send` focused: build payload → send request → check status → return `True/False`.
+- Prefer small, explicit parameters over packing values into `**kwargs` so the config generator prompts users correctly.
