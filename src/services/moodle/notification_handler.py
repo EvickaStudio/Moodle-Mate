@@ -490,9 +490,7 @@ class MoodleNotificationHandler:
 
         return None
 
-    def _fetch_notifications(
-        self, limit: int
-    ) -> Optional[list[NotificationData]]:  # noqa: C901
+    def _fetch_notifications(self, limit: int) -> Optional[list[NotificationData]]:  # noqa: C901
         # Ensure connection is active before making the request
         self._ensure_connection()
 

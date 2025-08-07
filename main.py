@@ -5,7 +5,7 @@ import sys
 from src.app import MoodleMateApp
 from src.core.config.generator import ConfigGenerator
 from src.infrastructure.logging.setup import setup_logging
-from src.ui.cli.screen import animate_logo, logo_lines
+from src.ui.cli.screen import animate_logo, clear_screen, loading_animation
 
 
 def main() -> None:
@@ -22,6 +22,11 @@ def main() -> None:
         action="store_true",
         help="Send a test notification to all configured providers",
     )
+    parser.add_argument(
+        "--no-anim",
+        action="store_true",
+        help="Disable startup animation (useful for logs/CI)",
+    )
     args = parser.parse_args()
 
     setup_logging()
@@ -34,7 +39,14 @@ def main() -> None:
             logging.error("Failed to generate configuration file.")
             sys.exit(1)
 
-    animate_logo(logo_lines)
+    # Improved startup: clear, quick spinner, then smooth centered logo
+    if args.no_anim:
+        animate_logo(animate=False)
+    else:
+        clear_screen()
+        # Show spinner a bit longer so it's noticeable
+        loading_animation(1.0)
+        animate_logo(animate=True)
     logging.info("Starting Moodle Mate...")
 
     app = MoodleMateApp()
