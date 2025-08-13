@@ -28,7 +28,7 @@ jobs:
             Your contribution is greatly appreciated. Before we can review and merge your PR, please ensure the following:
               
             - Your PR description clearly explains the purpose of your changes.
-            - You've adhered to the project's coding conventions and styles (PEP8, isort, black).
+            - You've adhered to the project's coding conventions and styles (PEP 8; Ruff for linting/formatting via uv).
             - You've added tests for any new code or features (if applicable).
             - You've updated any relevant documentation to reflect your changes.
               

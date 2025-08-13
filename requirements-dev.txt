@@ -1,7 +1,6 @@
 flake8 
 pytest 
 coverage 
-mypy 
 black 
 isort 
 types-requests

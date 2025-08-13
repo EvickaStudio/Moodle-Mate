@@ -40,18 +40,12 @@ iniconfig==2.1.0
     # via pytest
 jiter==0.10.0
     # via openai
-mypy==1.17.1
-    # via moodle-mate (pyproject.toml)
-mypy-extensions==1.1.0
-    # via mypy
 nodeenv==1.9.1
     # via pre-commit
 openai==1.99.9
     # via moodle-mate (pyproject.toml)
 packaging==25.0
     # via pytest
-pathspec==0.12.1
-    # via mypy
 platformdirs==4.3.8
     # via virtualenv
 pluggy==1.6.0
@@ -89,7 +83,6 @@ types-requests==2.32.4.20250809
 typing-extensions==4.14.1
     # via
     #   anyio
-    #   mypy
     #   openai
     #   pydantic
     #   pydantic-core
