@@ -31,7 +31,8 @@ This section controls the optional AI-powered summarization feature for notifica
 - `api_key`: Your API key for the chosen AI provider (e.g., OpenAI API key).
 - `model`: The name of the AI model to use (e.g., `gpt-4o-mini`, `google/gemini-flash-1.5`).
 - `temperature`: Controls the randomness of the AI's output. Lower values (e.g., `0.0`) make it more deterministic, higher values (e.g., `1.0`) make it more creative
-- `max_tokens`: The maximum number of tokens (words/characters) the AI should generate in its summary.
+- `max_tokens`: The maximum number of tokens the AI should generate in its summary.  
+  *Note: A token is a unit used by language models and may represent a word, part of a word, or even punctuation. The number of tokens is not the same as the number of words or characters.*
 - `system_prompt`: A prompt that guides the AI's behavior and style for summarization.
 - `endpoint`: (Optional) A custom API endpoint URL for AI services (e.g., for self-hosted models or services like OpenRouter). If not set, it defaults to OpenAI's endpoint.
 
