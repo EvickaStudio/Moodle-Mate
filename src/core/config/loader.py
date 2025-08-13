@@ -18,21 +18,27 @@ from .schema import (
 
 class Config:
     """Configuration manager for MoodleMate."""
-
     _instance = None
 
     def __new__(cls, config_path: str = "config.ini"):
+        """Create or reuse configuration instance."""
+
         if cls._instance is None:
             cls._instance = super(Config, cls).__new__(cls)
-            cls._instance._init_config(config_path)
+        cls._instance._init_config(config_path)
         return cls._instance
 
     def _init_config(self, config_path: str):
-        """Initialize configuration from file."""
-        self.config = configparser.ConfigParser()
-        if not Path(config_path).exists():
-            raise FileNotFoundError(f"Config file not found: {config_path}")
-        self.config.read(config_path)
+        """Initialise configuration; use empty parser when file is missing."""
+
+        self.parser = configparser.ConfigParser()
+        # ``self.config`` is kept for backwards compatibility with existing
+        # code that expects this attribute.
+        self.config = self.parser
+        if Path(config_path).exists():
+            self.parser.read(config_path)
+        else:
+            logging.warning(f"Config file not found: {config_path}")
 
         # Initialize config sections
         self.moodle = self._load_moodle_config()
@@ -48,6 +54,26 @@ class Config:
 
         # Load dynamic provider configurations
         self._load_provider_configs()
+
+    # ------------------------------------------------------------------
+    # Public helper methods used by legacy parts of the code base and
+    # unit tests.  These provide a thin wrapper around the private utility
+    # methods defined further below.
+    # ------------------------------------------------------------------
+
+    def get_config(self, section: str, key: str, default: Any | None = None) -> Any | None:
+        return self._get_config(section, key, default)
+
+    def get_config_boolean(self, section: str, key: str, default: bool = False) -> bool:
+        return self._get_bool(section, key, default)
+
+    def get_config_int(self, section: str, key: str, default: int = 0) -> int:
+        value = self.get_config(section, key)
+        return int(value) if value is not None else default
+
+    def get_config_float(self, section: str, key: str, default: float = 0.0) -> float:
+        value = self.get_config(section, key)
+        return float(value) if value is not None else default
 
     def _get_config(self, section: str, key: str, default: Any = None) -> Any:
         """Get configuration value with fallback to default."""
