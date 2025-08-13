@@ -1,67 +1,65 @@
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from core.notification.summarizer import NotificationSummarizer
+from src.core.config.schema import AIConfig
+from src.core.notification.summarizer import NotificationSummarizer
+from src.core.service_locator import ServiceLocator
+from src.services.ai.chat import GPT
+
+
+class DummyGPT(GPT):
+    def chat_completion(
+        self, model, system_message, user_message, temperature, max_tokens
+    ):
+        return "SUMMARIZED"
 
 
 @pytest.fixture
-def mock_config():
-    """Create a mock configuration."""
-    config = Mock()
-    config.get_summarize_enabled.return_value = True
-    config.get_openai_api_key.return_value = "test-key"
-    return config
+def config_with_ai():
+    cfg = MagicMock()
+    cfg.ai = AIConfig(
+        enabled=True,
+        api_key="sk-" + "a" * 60,
+        model="gpt-4o-mini",
+        temperature=0.1,
+        max_tokens=64,
+        system_prompt="Summarize",
+        endpoint=None,
+    )
+    return cfg
 
 
-def test_summarizer_initialization(mock_config):
-    """Test summarizer initialization."""
-    summarizer = NotificationSummarizer(mock_config)
-    assert summarizer is not None
+def test_init_requires_api_key():
+    cfg = MagicMock()
+    cfg.ai = AIConfig(enabled=True, api_key="")
+    with pytest.raises(ValueError):
+        NotificationSummarizer(cfg)
 
 
-def test_summarize_with_empty_text(mock_config):
-    """Test summarization with empty text."""
-    summarizer = NotificationSummarizer(mock_config)
-    assert summarizer.summarize("") == ""
+def test_init_disabled_allows_no_provider():
+    cfg = MagicMock()
+    cfg.ai = AIConfig(enabled=False)
+    # Should not raise
+    NotificationSummarizer(cfg)
 
 
-def test_summarize_with_short_text(mock_config):
-    """Test summarization with short text."""
-    summarizer = NotificationSummarizer(mock_config)
-    text = "This is a short text."
-    assert summarizer.summarize(text) == ""
+def test_summarize_happy_path(config_with_ai):
+    ServiceLocator.register("gpt", DummyGPT())
+    summarizer = NotificationSummarizer(config_with_ai)
+    assert summarizer.summarize("Some long text") == "SUMMARIZED"
 
 
-def test_summarize_with_long_text(mock_config):
-    """Test summarization with long text."""
-    summarizer = NotificationSummarizer(mock_config)
-    text = "This is a very long text. " * 50
-    with patch("src.gpt.deepinfra.GPT") as mock_gpt:
-        mock_gpt.return_value.chat_completion.return_value = "Summary"
-        assert summarizer.summarize(text) == "Summary"
+def test_summarize_empty_raises(config_with_ai):
+    ServiceLocator.register("gpt", DummyGPT())
+    summarizer = NotificationSummarizer(config_with_ai)
+    with pytest.raises(ValueError):
+        summarizer.summarize("  ")
 
 
-def test_summarize_with_html_text(mock_config):
-    """Test summarization with HTML text."""
-    summarizer = NotificationSummarizer(mock_config)
-    text = "<p>This is a very long text with HTML tags.</p> " * 50
-    with patch("src.gpt.deepinfra.GPT") as mock_gpt:
-        mock_gpt.return_value.chat_completion.return_value = "Summary"
-        assert summarizer.summarize(text) == "Summary"
-
-
-def test_summarize_with_api_error(mock_config):
-    """Test summarization with API error."""
-    summarizer = NotificationSummarizer(mock_config)
-    text = "This is a very long text. " * 50
-    with patch("src.gpt.deepinfra.GPT") as mock_gpt:
-        mock_gpt.return_value.chat_completion.side_effect = Exception("API Error")
-        assert summarizer.summarize(text) == ""
-
-
-def test_summarize_disabled(mock_config):
-    """Test summarization when disabled."""
-    mock_config.get_summarize_enabled.return_value = False
-    summarizer = NotificationSummarizer(mock_config)
-    assert summarizer.summarize("Any text") == ""
+def test_summarize_disabled_returns_input():
+    cfg = MagicMock()
+    cfg.ai = AIConfig(enabled=False)
+    summarizer = NotificationSummarizer(cfg)
+    # When disabled, code returns the original text
+    assert summarizer.summarize("abc") == "abc"

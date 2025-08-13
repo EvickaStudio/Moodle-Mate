@@ -1,78 +1,127 @@
-from configparser import ConfigParser
+from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
-from core.config.loader import Config
+from src.core.config.loader import Config
 
 
-@pytest.fixture
-def config_parser():
-    """Create a mock config parser."""
-    parser = ConfigParser()
-    parser.add_section("test")
-    parser.set("test", "key", "value")
-    return parser
+def write_cfg(tmp_path: Path, content: str) -> Path:
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(dedent(content))
+    return cfg
 
 
-def test_config_initialization():
-    """Test config initialization."""
-    config = Config()
-    assert isinstance(config.parser, ConfigParser)
+def test_config_initialization(tmp_path: Path):
+    path = write_cfg(
+        tmp_path,
+        """
+        [moodle]
+        url = https://example.com
+        username = u
+        password = p
+        initial_fetch_count = 2
+        """,
+    )
+    cfg = Config(str(path))
+    assert cfg.moodle.url.endswith("example.com")
 
 
-def test_get_config():
-    """Test getting config values."""
-    config = Config()
-    config.parser.add_section("test")
-    config.parser.set("test", "key", "value")
-    assert config.get_config("test", "key") == "value"
+def test_ai_defaults_and_overrides(tmp_path: Path):
+    path = write_cfg(
+        tmp_path,
+        """
+        [moodle]
+        url = x
+        username = u
+        password = p
+
+        [ai]
+        enabled = 0
+        model = gpt-4o-mini
+        temperature = 0.9
+        max_tokens = 256
+        system_prompt = Hello
+        """,
+    )
+    cfg = Config(str(path))
+    assert cfg.ai.enabled is False
+    assert cfg.ai.model == "gpt-4o-mini"
+    assert cfg.ai.temperature == 0.9
+    assert cfg.ai.max_tokens == 256
+    assert cfg.ai.system_prompt == "Hello"
 
 
-def test_get_config_with_default():
-    """Test getting config values with default."""
-    config = Config()
-    assert config.get_config("test", "nonexistent", "default") == "default"
+def test_filters_lists_parsed(tmp_path: Path):
+    path = write_cfg(
+        tmp_path,
+        """
+        [moodle]
+        url = x
+        username = u
+        password = p
+
+        [filters]
+        ignore_subjects_containing = spam, eggs ,  ham
+        ignore_courses_by_id = 1,2, 3
+        """,
+    )
+    cfg = Config(str(path))
+    assert cfg.filters.ignore_subjects_containing == ["spam", "eggs", "ham"]
+    assert cfg.filters.ignore_courses_by_id == [1, 2, 3]
 
 
-def test_get_config_boolean():
-    """Test getting boolean config values."""
-    config = Config()
-    config.parser.add_section("test")
-    config.parser.set("test", "true_value", "1")
-    config.parser.set("test", "false_value", "0")
-    assert config.get_config_boolean("test", "true_value") is True
-    assert config.get_config_boolean("test", "false_value") is False
+def test_missing_config_file_raises(tmp_path: Path):
+    with pytest.raises(FileNotFoundError):
+        Config(str(tmp_path / "missing.ini"))
 
 
-def test_get_config_boolean_with_default():
-    """Test getting boolean config values with default."""
-    config = Config()
-    assert config.get_config_boolean("test", "nonexistent", True) is True
+def test_webhook_and_discord_sections(tmp_path: Path):
+    path = write_cfg(
+        tmp_path,
+        """
+        [moodle]
+        url = x
+        username = u
+        password = p
+
+        [discord]
+        enabled = 1
+        webhook_url = https://discord
+        bot_name = Bot
+        thumbnail_url = https://img
+
+        [webhook_site]
+        enabled = yes
+        webhook_url = https://webhook.site/abc
+        include_summary = 0
+        """,
+    )
+    cfg = Config(str(path))
+    assert cfg.discord.enabled is True
+    assert cfg.discord.webhook_url.startswith("https://discord")
+    assert cfg.webhook_site.enabled is True
+    assert cfg.webhook_site.include_summary is False
 
 
-def test_get_config_int():
-    """Test getting integer config values."""
-    config = Config()
-    config.parser.add_section("test")
-    config.parser.set("test", "number", "42")
-    assert config.get_config_int("test", "number") == 42
+def test_health_config_optional_ints(tmp_path: Path):
+    path = write_cfg(
+        tmp_path,
+        """
+        [moodle]
+        url = x
+        username = u
+        password = p
 
-
-def test_get_config_int_with_default():
-    """Test getting integer config values with default."""
-    config = Config()
-    assert config.get_config_int("test", "nonexistent", 42) == 42
-
-
-def test_get_config_float():
-    """Test getting float config values."""
-    config = Config()
-    config.parser.add_section("test")
-    config.parser.set("test", "number", "3.14")
-    assert config.get_config_float("test", "number") == 3.14
-
-
-def test_get_config_float_with_default():
-    """Test getting float config values with default."""
-    config = Config()
-    assert config.get_config_float("test", "nonexistent", 3.14) == 3.14
+        [health]
+        enabled = true
+        heartbeat_interval = 60
+        failure_alert_threshold = 5
+        target_provider = discord
+        """,
+    )
+    cfg = Config(str(path))
+    assert cfg.health.enabled is True
+    assert cfg.health.heartbeat_interval == 60
+    assert cfg.health.failure_alert_threshold == 5
+    assert cfg.health.target_provider == "discord"
