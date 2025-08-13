@@ -69,11 +69,17 @@ class Config:
 
     def get_config_int(self, section: str, key: str, default: int = 0) -> int:
         value = self.get_config(section, key)
-        return int(value) if value is not None else default
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
 
     def get_config_float(self, section: str, key: str, default: float = 0.0) -> float:
         value = self.get_config(section, key)
-        return float(value) if value is not None else default
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return default
 
     def _get_config(self, section: str, key: str, default: Any = None) -> Any:
         """Get configuration value with fallback to default."""
