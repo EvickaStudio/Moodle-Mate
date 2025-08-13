@@ -2,7 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-
+from urllib.parse import urlparse
 from src.core.config.loader import Config
 
 
@@ -24,7 +24,7 @@ def test_config_initialization(tmp_path: Path):
         """,
     )
     cfg = Config(str(path))
-    assert cfg.moodle.url.endswith("example.com")
+    assert urlparse(cfg.moodle.url).hostname == "example.com"
 
 
 def test_ai_defaults_and_overrides(tmp_path: Path):
