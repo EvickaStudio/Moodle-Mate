@@ -18,6 +18,7 @@ from .schema import (
 
 class Config:
     """Configuration manager for MoodleMate."""
+
     _instance = None
 
     def __new__(cls, config_path: str = "config.ini"):
@@ -32,36 +33,27 @@ class Config:
         """Initialise configuration; use empty parser when file is missing."""
 
         self.parser = configparser.ConfigParser()
-        # ``self.config`` is kept for backwards compatibility with existing
-        # code that expects this attribute.
         self.config = self.parser
         if Path(config_path).exists():
             self.parser.read(config_path)
         else:
             logging.warning(f"Config file not found: {config_path}")
 
-        # Initialize config sections
         self.moodle = self._load_moodle_config()
         self.ai = self._load_ai_config()
         self.notification = self._load_notification_config()
         self.filters = self._load_filters_config()
         self.health = self._load_health_config()
 
-        # Load built-in providers
         self.discord = self._load_discord_config()
         self.webhook_site = self._load_webhook_site_config()
         self.pushbullet = self._load_pushbullet_config()
 
-        # Load dynamic provider configurations
         self._load_provider_configs()
 
-    # ------------------------------------------------------------------
-    # Public helper methods used by legacy parts of the code base and
-    # unit tests.  These provide a thin wrapper around the private utility
-    # methods defined further below.
-    # ------------------------------------------------------------------
-
-    def get_config(self, section: str, key: str, default: Any | None = None) -> Any | None:
+    def get_config(
+        self, section: str, key: str, default: Any | None = None
+    ) -> Any | None:
         return self._get_config(section, key, default)
 
     def get_config_boolean(self, section: str, key: str, default: bool = False) -> bool:
@@ -193,9 +185,7 @@ class Config:
 
     def _load_provider_configs(self):
         """Dynamically load configuration for all providers."""
-        # Get all sections that might be providers
         for section in self.config.sections():
-            # Skip known non-provider sections
             if section in [
                 "moodle",
                 "ai",
@@ -208,14 +198,11 @@ class Config:
             ]:
                 continue
 
-            # Check if this section has an 'enabled' option
             if self.config.has_option(section, "enabled"):
-                # Create a dynamic provider config
                 provider_config = ProviderConfig(
                     enabled=self._get_bool(section, "enabled", False)
                 )
 
-                # Add all other options from this section
                 for option in self.config.options(section):
                     if option != "enabled":
                         setattr(
@@ -224,7 +211,5 @@ class Config:
                             self._get_config(section, option, ""),
                         )
 
-                # Set the config on the main config object
                 setattr(self, section, provider_config)
-                # logging.info(f"Loaded dynamic provider config: {section}")
                 logging.info(f"Found provider config for {section} in config.ini")
