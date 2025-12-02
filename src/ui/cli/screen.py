@@ -33,7 +33,7 @@ def _compose_logo_lines() -> List[str]:
             f"{COLOR_RESET}/  |/  /__ _/ /____   /       / |     {COLOR_BORDER}│{COLOR_RESET}"
         ),
         (
-            f"{COLOR_BORDER}│     {COLOR_MOODLE}/ /|_/ / _ \\ / _ \\ _  / / -_)"
+            f"{COLOR_BORDER}│     {COLOR_MOODLE}/ /|_/ / _ \\/ _ \\/ _  / / -_)"
             f"{COLOR_RESET} /|_/ / _ `/ __/ -_) /______ /  /     {COLOR_BORDER}│{COLOR_RESET}"
         ),
         (

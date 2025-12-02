@@ -13,19 +13,35 @@ class StateManager:
 
     _instance = None
 
-    def __new__(cls, state_file: str = "state.json"):
+    def __new__(cls, state_file: Optional[str] = None):
         if cls._instance is None:
             cls._instance = super(StateManager, cls).__new__(cls)
-            cls._instance._init_state(state_file)
+            resolved_state_file = cls._instance._resolve_state_file(state_file)
+            cls._instance._init_state(resolved_state_file)
         return cls._instance
 
     def _init_state(self, state_file: str):
         """Initialize the StateManager."""
         self.state_file = state_file
         self.last_notification_id: Optional[int] = None
-        # Runtime history (not persisted to disk to avoid IO thrashing)
         self.notification_history: Deque[Dict] = deque(maxlen=50)
         self._load_state()
+
+    def _resolve_state_file(self, provided_path: Optional[str]) -> str:
+        """Determine where the state file should live."""
+        if provided_path:
+            return os.path.abspath(provided_path)
+
+        env_path = os.getenv("MOODLE_STATE_FILE")
+        if env_path:
+            return os.path.abspath(env_path)
+
+        state_dir = os.getenv("MOODLE_STATE_DIR", "/app/state")
+        if os.path.isdir(state_dir) or os.getenv("MOODLE_STATE_DIR"):
+            os.makedirs(state_dir, exist_ok=True)
+            return os.path.join(state_dir, "state.json")
+
+        return os.path.abspath("state.json")
 
     def _load_state(self) -> None:
         """Loads the last known state from the state file."""
@@ -45,6 +61,7 @@ class StateManager:
     def save_state(self) -> None:
         """Saves the current state to the state file."""
         try:
+            os.makedirs(os.path.dirname(self.state_file) or ".", exist_ok=True)
             state = {"last_notification_id": self.last_notification_id}
             with open(self.state_file, "w") as f:
                 json.dump(state, f, indent=4)
@@ -91,7 +108,7 @@ class StateManager:
             return time.time()
         try:
             timestamp = float(raw_timestamp)
-            if timestamp > 1_000_000_000_000:  # milliseconds
+            if timestamp > 1_000_000_000_000:
                 timestamp /= 1000.0
             return timestamp
         except (TypeError, ValueError):
