@@ -1,40 +1,35 @@
 import logging
 import time
+from typing import TYPE_CHECKING
 
-from src.core.config.loader import Config
-from src.core.notification.processor import NotificationProcessor
-from src.core.service_locator import ServiceLocator
-from src.core.services import initialize_services
-from src.core.state_manager import StateManager
 from src.core.utils.retry import with_retry
 from src.infrastructure.http.request_manager import request_manager
-from src.services.moodle.api import MoodleAPI
-from src.services.moodle.notification_handler import MoodleNotificationHandler
+
+if TYPE_CHECKING:
+    from src.config import Settings
+    from src.core.notification.processor import NotificationProcessor
+    from src.services.moodle.notification_handler import MoodleNotificationHandler
+    from src.services.moodle.api import MoodleAPI
+    from src.core.state_manager import StateManager
 
 
 class MoodleMateApp:
     """Encapsulates the main application logic for Moodle Mate."""
 
-    def __init__(self):
-        self.config: Config
-        self.notification_processor: NotificationProcessor
-        self.moodle_handler: MoodleNotificationHandler
-        self.moodle_api: MoodleAPI
-        self.state_manager: StateManager
+    def __init__(
+        self,
+        settings: "Settings",
+        notification_processor: "NotificationProcessor",
+        moodle_handler: "MoodleNotificationHandler",
+        moodle_api: "MoodleAPI",
+        state_manager: "StateManager",
+    ):
+        self.settings = settings
+        self.notification_processor = notification_processor
+        self.moodle_handler = moodle_handler
+        self.moodle_api = moodle_api
+        self.state_manager = state_manager
         self._last_heartbeat_sent: float = 0.0
-        self._initialize()
-
-    def _initialize(self) -> None:
-        """Initializes services and components."""
-        initialize_services()
-        locator = ServiceLocator()
-        self.config = locator.get("config", Config)
-        self.notification_processor = locator.get(
-            "notification_processor", NotificationProcessor
-        )
-        self.moodle_handler = locator.get("moodle_handler", MoodleNotificationHandler)
-        self.moodle_api = locator.get("moodle_api", MoodleAPI)
-        self.state_manager = locator.get("state_manager", StateManager)
 
     def run(self) -> None:
         """Starts the main application loop."""
@@ -62,7 +57,7 @@ class MoodleMateApp:
                 self._send_heartbeat_if_due()
 
                 sleep_time = self._calculate_sleep_time(
-                    consecutive_errors, self.config.notification.fetch_interval
+                    consecutive_errors, self.settings.notification.fetch_interval
                 )
                 time.sleep(sleep_time)
 
@@ -105,13 +100,13 @@ class MoodleMateApp:
 
         # Check if a failure alert should be sent
         if (
-            self.config.health.enabled
-            and self.config.health.failure_alert_threshold is not None
-            and consecutive_errors >= self.config.health.failure_alert_threshold
+            self.settings.health.enabled
+            and self.settings.health.failure_alert_threshold is not None
+            and consecutive_errors >= self.settings.health.failure_alert_threshold
         ):
             self._send_failure_alert(error)
 
-        if consecutive_errors >= self.config.notification.max_retries:
+        if consecutive_errors >= self.settings.notification.max_retries:
             logging.critical("Too many consecutive errors. Restarting main loop...")
             consecutive_errors = 0
 
@@ -143,15 +138,15 @@ class MoodleMateApp:
     def _send_heartbeat_if_due(self) -> None:
         """Sends a heartbeat notification if the interval has passed."""
         if (
-            not self.config.health.enabled
-            or self.config.health.heartbeat_interval is None
+            not self.settings.health.enabled
+            or self.settings.health.heartbeat_interval is None
         ):
             return
 
         current_time = time.time()
         if (
             current_time - self._last_heartbeat_sent
-        ) / 3600 >= self.config.health.heartbeat_interval:
+        ) / 3600 >= self.settings.health.heartbeat_interval:
             logging.info("Sending heartbeat notification...")
             subject = "Moodle-Mate Heartbeat"
             message = "Moodle-Mate is still running and healthy!"
@@ -160,7 +155,7 @@ class MoodleMateApp:
 
     def _send_failure_alert(self, error: Exception) -> None:
         """Sends a failure alert notification."""
-        if not self.config.health.enabled:
+        if not self.settings.health.enabled:
             return
 
         logging.error(f"Sending failure alert: {error}")
@@ -170,11 +165,11 @@ class MoodleMateApp:
 
     def _send_health_notification(self, subject: str, message: str) -> None:
         """Helper to send health-related notifications to the target provider."""
-        if not self.config.health.target_provider:
+        if not self.settings.health.target_provider:
             logging.warning("No target provider configured for health notifications.")
             return
 
-        target_provider_name = self.config.health.target_provider.lower()
+        target_provider_name = self.settings.health.target_provider.lower()
         for provider in self.notification_processor.providers:
             if provider.provider_name.lower() == target_provider_name:
                 try:

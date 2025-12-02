@@ -1,31 +1,34 @@
 import logging
+from typing import TYPE_CHECKING, Optional
 
-from src.core.config.loader import Config
-from src.core.service_locator import ServiceLocator
-from src.services.ai.chat import GPT
+if TYPE_CHECKING:
+    from src.config import Settings
+    from src.services.ai.chat import GPT
 
 
 class NotificationSummarizer:
     """Summarizes notification content using AI."""
 
-    def __init__(self, config: Config):
+    def __init__(self, settings: "Settings", ai_provider: Optional["GPT"] = None):
         """Initialize the summarizer.
 
         Args:
-            config: Configuration instance
+            settings: Configuration instance
+            ai_provider: Injected GPT service (optional)
         """
-        self.config = config.ai
+        self.config = settings.ai
+        self.ai_provider = ai_provider
+
         if not self.config.enabled:
             logging.info("AI summarization is disabled")
             return
 
         if not self.config.api_key:
-            raise ValueError("AI API key is required for summarization")
+            # This might be valid if endpoint doesn't need key, but generally required for OpenAI
+            pass
 
-        self.ai_provider = ServiceLocator().get("gpt", GPT)
-        self.ai_provider.api_key = self.config.api_key
-        if self.config.endpoint:
-            self.ai_provider.endpoint = self.config.endpoint
+        if self.config.enabled and not self.ai_provider:
+            raise ValueError("AI is enabled but no AI provider was injected.")
 
     def summarize(self, text: str) -> str:
         """Summarize the given text.
@@ -44,6 +47,10 @@ class NotificationSummarizer:
 
         if not self.config.enabled:
             return text
+        
+        if not self.ai_provider:
+            # Should be caught in init but safe guard
+             return text
 
         try:
             return self.ai_provider.chat_completion(
@@ -55,4 +62,5 @@ class NotificationSummarizer:
             )
         except Exception as e:
             logging.error(f"Failed to summarize text: {str(e)}")
-            raise
+            # Don't raise, just return original text so notification still goes out
+            return text

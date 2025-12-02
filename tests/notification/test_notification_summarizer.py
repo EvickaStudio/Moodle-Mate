@@ -20,7 +20,7 @@ def config_with_ai():
     cfg = MagicMock()
     cfg.ai = AIConfig(
         enabled=True,
-        api_key="sk-" + "a" * 60,
+        api_key="sk-test-key-for-testing-only-do-not-use-in-production-1234567890",
         model="gpt-4o-mini",
         temperature=0.1,
         max_tokens=64,

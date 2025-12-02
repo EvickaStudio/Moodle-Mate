@@ -1,0 +1,70 @@
+from typing import List, Optional
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class MoodleConfig(BaseModel):
+    url: str
+    username: str
+    password: str
+    initial_fetch_count: int = 1
+
+class AIConfig(BaseModel):
+    enabled: bool = True
+    api_key: str = ""
+    model: str = "gpt-4"
+    temperature: float = 0.7
+    max_tokens: int = 150
+    system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links."
+    endpoint: Optional[str] = None
+
+class NotificationConfig(BaseModel):
+    max_retries: int = 5
+    fetch_interval: int = 60
+
+class FiltersConfig(BaseModel):
+    ignore_subjects_containing: List[str] = Field(default_factory=list)
+    ignore_courses_by_id: List[int] = Field(default_factory=list)
+
+class HealthConfig(BaseModel):
+    enabled: bool = False
+    heartbeat_interval: Optional[int] = None
+    failure_alert_threshold: Optional[int] = None
+    target_provider: Optional[str] = None
+
+# Providers
+class DiscordConfig(BaseModel):
+    enabled: bool = False
+    webhook_url: str = ""
+    bot_name: str = "MoodleMate"
+    thumbnail_url: str = ""
+
+class WebhookSiteConfig(BaseModel):
+    enabled: bool = False
+    webhook_url: str = ""
+    include_summary: bool = True
+
+class PushbulletConfig(BaseModel):
+    enabled: bool = False
+    api_key: str = ""
+    include_summary: bool = True
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="MOODLEMATE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_nested_delimiter="__",
+        extra="ignore"
+    )
+    
+    moodle: MoodleConfig
+    ai: AIConfig = Field(default_factory=AIConfig)
+    notification: NotificationConfig = Field(default_factory=NotificationConfig)
+    filters: FiltersConfig = Field(default_factory=FiltersConfig)
+    health: HealthConfig = Field(default_factory=HealthConfig)
+    
+    # Providers
+    # To add a new provider, define its config model above and add it here.
+    discord: DiscordConfig = Field(default_factory=DiscordConfig)
+    webhook_site: WebhookSiteConfig = Field(default_factory=WebhookSiteConfig)
+    pushbullet: PushbulletConfig = Field(default_factory=PushbulletConfig)

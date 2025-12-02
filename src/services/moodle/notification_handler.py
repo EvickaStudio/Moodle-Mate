@@ -1,13 +1,13 @@
 import logging
 import time
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, TYPE_CHECKING
 
-from src.core.config import Config
-from src.core.service_locator import ServiceLocator
-from src.core.state_manager import StateManager
 from src.services.moodle.api import MoodleAPI
-
+from src.core.state_manager import StateManager
 from .errors import MoodleAuthenticationError, MoodleConnectionError
+
+if TYPE_CHECKING:
+    from src.config import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +37,16 @@ class MoodleNotificationHandler:
     and retrieval of notifications and user information.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(
+        self, settings: "Settings", api: MoodleAPI, state_manager: StateManager
+    ) -> None:
         """
         Initialize the notification handler.
 
         Args:
-            config: Application configuration
+            settings: Application configuration
+            api: Moodle API instance
+            state_manager: State manager instance
 
         Raises:
             MoodleConnectionError: If connection to Moodle fails
@@ -50,9 +54,11 @@ class MoodleNotificationHandler:
             ValueError: If required configuration is missing
         """
         try:
-            self.config = config
-            self.api = ServiceLocator().get("moodle_api", MoodleAPI)
-            self.state_manager = ServiceLocator().get("state_manager", StateManager)
+            self.settings = settings
+            self.api = api
+            self.state_manager = state_manager
+            
+            # Initial login
             self._login()
 
             # Get and store the authenticated user's ID
@@ -82,10 +88,8 @@ class MoodleNotificationHandler:
             MoodleAuthenticationError: If authentication fails
         """
         try:
-            if not self.api.login(
-                username=self.config.moodle.username,
-                password=self.config.moodle.password,
-            ):
+            # API instance already has credentials from its init
+            if not self.api.login():
                 raise MoodleAuthenticationError("Login returned false")
 
             # Update the last successful connection time
@@ -438,7 +442,7 @@ class MoodleNotificationHandler:
     def _handle_initial_fetch(self) -> Optional[list[NotificationData]]:
         """Handles the initial fetch of notifications on the first run."""
         logger.info("First run detected. Performing initial fetch.")
-        limit = self.config.moodle.initial_fetch_count
+        limit = self.settings.moodle.initial_fetch_count
         notifications = self.fetch_notifications(limit=limit)
 
         if not notifications:

@@ -5,7 +5,6 @@ description = "An Python application that fetches notifications from a Moodle in
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "configparser>=7.2.0",
     "openai>=1.92.2",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
@@ -13,4 +12,8 @@ dependencies = [
     "ruff>=0.12.1",
     "tiktoken>=0.9.0",
     "types-requests>=2.32.4.20250611",
+    "bleach>=0.7.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.0.0",
+    "urllib3[secure]>=2.3.0",
 ]

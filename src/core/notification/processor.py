@@ -1,10 +1,13 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
-from src.core.config.loader import Config
 from src.core.notification.base import NotificationProvider
 from src.core.notification.summarizer import NotificationSummarizer
+from src.core.security import InputValidator
 from src.services.markdown import convert
+
+if TYPE_CHECKING:
+    from src.config import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -12,29 +15,30 @@ logger = logging.getLogger(__name__)
 class NotificationProcessor:
     """Processes and sends notifications."""
 
-    _instance = None
-
-    def __new__(cls, config: Config, providers: List[NotificationProvider]):
-        if cls._instance is None:
-            cls._instance = super(NotificationProcessor, cls).__new__(cls)
-            cls._instance._init_processor(config, providers)
-        return cls._instance
-
-    def _init_processor(self, config: Config, providers: List[NotificationProvider]):
-        """Initialize the notification processor."""
-        self.config = config
+    def __init__(
+        self,
+        settings: "Settings",
+        providers: List[NotificationProvider],
+        summarizer: Optional[NotificationSummarizer] = None,
+    ):
+        self.settings = settings
         self.providers = providers
-        self.summarizer = NotificationSummarizer(config) if config.ai.enabled else None
+        self.summarizer = summarizer
 
     def process(self, notification: dict) -> None:
         """Process and send a notification through all enabled providers."""
         try:
+            # Security: Sanitize notification data first
+            sanitized_notification = InputValidator.sanitize_notification_data(
+                notification
+            )
+
             # Extract notification data
-            subject = self._get_notification_subject(notification)
-            message = self._get_notification_message(notification)
+            subject = self._get_notification_subject(sanitized_notification)
+            message = self._get_notification_message(sanitized_notification)
 
             # Apply filters
-            if self._should_ignore_notification(subject, notification):
+            if self._should_ignore_notification(subject, sanitized_notification):
                 logger.info(f"Notification with subject '{subject}' ignored by filter.")
                 return
 
@@ -50,7 +54,7 @@ class NotificationProcessor:
     def _should_ignore_notification(self, subject: str, notification: dict) -> bool:
         """Checks if a notification should be ignored based on configured filters."""
         # Subject filtering
-        for phrase in self.config.filters.ignore_subjects_containing:
+        for phrase in self.settings.filters.ignore_subjects_containing:
             if phrase.lower() in subject.lower():
                 return True
 
@@ -59,7 +63,7 @@ class NotificationProcessor:
         # If course ID filtering is needed, MoodleAPI would need to be extended
         # to fetch more detailed notification info or course info.
         # For now, this part is a placeholder or can be removed if not feasible.
-        # if 'courseid' in notification and notification['courseid'] in self.config.filters.ignore_courses_by_id:
+        # if 'courseid' in notification and notification['courseid'] in self.settings.filters.ignore_courses_by_id:
         #     return True
 
         return False

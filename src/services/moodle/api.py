@@ -1,10 +1,11 @@
 import logging
 import os
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from requests.exceptions import RequestException
 
 from src.infrastructure.http.request_manager import request_manager
+from src.core.security import InputValidator, rate_limiter_manager
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +15,11 @@ class MoodleAPI:
     A simple Moodle API wrapper for Python.
     """
 
-    _instance = None
-
-    def __new__(cls, url: Optional[str] = None):
-        if cls._instance is None:
-            cls._instance = super(MoodleAPI, cls).__new__(cls)
-            cls._instance._init_api(url)
-        return cls._instance
-
-    def _init_api(self, url: Optional[str] = None):
-        """Initialize the API with URL and session."""
-        self.url = url or os.getenv("MOODLE_URL")
+    def __init__(self, url: str, username: str, password: str):
+        """Initialize the API with credentials."""
+        self.url = url.rstrip("/")
+        self.username = username
+        self.password = password
         self.session = request_manager.session
         request_manager.update_headers(
             {
@@ -33,39 +28,48 @@ class MoodleAPI:
         )
         self.token: Optional[str] = None
         self.userid: Optional[int] = None
-        self._username: Optional[str] = None
-        self._password: Optional[str] = None
 
-    def login(self, username: str, password: str) -> bool:
+        # Validate on init (fail fast)
+        if not InputValidator.validate_username(username):
+            raise ValueError("Invalid username format")
+        if not InputValidator.validate_password(password):
+            # We don't log the password, just raise error
+            raise ValueError("Invalid password format (empty or invalid)")
+        if not InputValidator.validate_moodle_url(self.url):
+            raise ValueError("Invalid Moodle URL")
+
+    def login(self) -> bool:
         """
-        Logs in to the Moodle instance using the provided username and password.
-
-        Stores credentials securely for session refresh if successful.
+        Logs in to the Moodle instance using the stored credentials.
         """
-        if not username:
-            raise ValueError("Username is required")
-        if not password:
-            raise ValueError("Password is required")
-
         login_data = {
-            "username": username,
-            "password": password,
+            "username": self.username,
+            "password": self.password,
             "service": "moodle_mobile_app",
         }
+
+        # Rate limiting check
+        if not rate_limiter_manager.is_allowed("moodle_api", f"{self.url}_login"):
+            remaining = rate_limiter_manager.get_remaining_requests("moodle_api", f"{self.url}_login")
+            reset_time = rate_limiter_manager.get_reset_time("moodle_api", f"{self.url}_login")
+            logger.warning(f"Login rate limit exceeded for {self.url}. Remaining: {remaining}, Reset: {reset_time}")
+            raise ValueError("Too many login attempts. Please try again later.")
 
         try:
             response = self.session.post(f"{self.url}/login/token.php", data=login_data)
             response.raise_for_status()
-
-            if "token" in response.json():
-                self.token = response.json()["token"]
-                # Store credentials for session refresh
-                self._username = username
-                self._password = password
+            
+            json_resp = response.json()
+            if "token" in json_resp:
+                self.token = json_resp["token"]
                 logger.info("Login successful")
                 return True
-
-            logger.error("Login failed: Invalid credentials")
+            
+            if "error" in json_resp:
+                 logger.error(f"Login failed: {json_resp['error']}")
+            else:
+                 logger.error("Login failed: Invalid credentials or unexpected response")
+            
             return False
 
         except RequestException as e:
@@ -76,10 +80,6 @@ class MoodleAPI:
         """
         Refreshes the session by creating a new session and re-authenticating.
         """
-        if not self._username or not self._password:
-            logger.error("Cannot refresh session: No stored credentials")
-            return False
-
         logger.info("Refreshing Moodle session...")
 
         # Reset the request manager's session
@@ -90,7 +90,7 @@ class MoodleAPI:
 
         # Re-login with stored credentials
         self.token = None
-        return self.login(self._username, self._password)
+        return self.login()
 
     def get_site_info(self) -> Optional[dict]:
         """
@@ -112,8 +112,9 @@ class MoodleAPI:
                 f"{self.url}/webservice/rest/server.php", params=params
             )
             response.raise_for_status()
-            self.userid = response.json().get("userid")
-            return response.json()
+            data = response.json()
+            self.userid = data.get("userid")
+            return data
         except RequestException as e:
             logger.error(f"Failed to get site info: {e}")
             return None
@@ -183,6 +184,11 @@ class MoodleAPI:
 
         if limit is not None:
             params["limit"] = limit
+
+        # Rate limiting check
+        if not rate_limiter_manager.is_allowed("moodle_api", f"{self.url}_{wsfunction}"):
+            logger.warning(f"API rate limit exceeded for {self.url} - {wsfunction}")
+            return None
 
         try:
             response = self.session.post(

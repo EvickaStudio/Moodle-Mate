@@ -42,7 +42,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 ## Requirements
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 - Internet connection
 - Moodle instance with REST API access enabled
 
@@ -75,20 +75,24 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 3. **Configure the Application**
 
-   The recommended way is to use the config generator:
+   Create a `.env` file in the root directory. You can copy the example:
 
    ```bash
-   python main.py --gen-config
+   cp example.env .env
    ```
 
-   Alternatively, you can manually edit the `config.example.ini` file:
+   Edit `.env` with your settings. Configuration uses environment variables with the `MOODLEMATE_` prefix.
 
-   ```bash
-   cp config.example.ini config.ini
-   # Edit config.ini with your settings
+   Example `.env`:
+
+   ```env
+   MOODLEMATE_MOODLE__URL=https://moodle.example.com
+   MOODLEMATE_MOODLE__USERNAME=your_username
+   MOODLEMATE_MOODLE__PASSWORD=your_password
+
+   MOODLEMATE_DISCORD__ENABLED=true
+   MOODLEMATE_DISCORD__WEBHOOK_URL=https://discord.com/api/webhooks/...
    ```
-
-   Ensure your config.ini settings align with the latest [Configuration documentation](src/core/config/README.md), as example_config.ini may be more recent.
 
 ### Option 2: Docker Installation
 
@@ -101,40 +105,24 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 2. **Configuration**
 
-   First, generate a configuration file:
+   Create and edit your `.env` file:
 
    ```bash
-   # Using Python directly
-   python main.py --gen-config
-   
-   # Or using Docker (this will install required dependencies first)
-   docker run --rm -it -v $(pwd):/app python:3.12-slim-bookworm bash -c "pip install -r /app/requirements.txt && python /app/main.py --gen-config"
+   cp example.env .env
+   # Edit .env with your settings
    ```
 
-   Alternatively, you can manually edit the `config.example.ini` file:
-
-   ```bash
-   cp config.example.ini config.ini
-   # Edit config.ini with your settings
-   ```
-
-   For more information on the configuration, see the [Configuration](src/core/config/README.md) documentation. (might be not up to date with example_config.ini)
-
-3. **Edit the Configuration**
-
-   Edit the generated `config.ini` file with your settings.
-
-4. **Build and Run with Docker**
+3. **Build and Run with Docker**
 
    ```bash
    # Build the Docker image
    docker compose build
-   
+
    # Run the container
    docker compose up -d
    ```
 
-5. **View Logs**
+4. **View Logs**
 
    ```bash
    docker compose logs -f
@@ -200,7 +188,13 @@ MoodleMate now supports a plugin system that allows you to easily create and add
 1. Start from the template at `src/templates/notification_service_template.py`.
 2. Copy it to `src/providers/notification/your_service_name/provider.py` and rename the class (e.g., `YourServiceNameProvider`).
 3. Implement `send(self, subject, message, summary=None) -> bool` with your service’s API.
-4. Run `python main.py --gen-config` to generate the provider section in `config.ini` from your constructor parameters.
+4. Add configuration to your `.env` file:
+
+   ```env
+   MOODLEMATE_YOUR_SERVICE_NAME__ENABLED=true
+   MOODLEMATE_YOUR_SERVICE_NAME__API_KEY=your_key
+   ```
+
 5. Optionally verify with `python main.py --test-notification`.
 
 See detailed steps in [Creating Custom Notification Providers](docs/CUSTOM_PROVIDERS.md).
