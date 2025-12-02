@@ -47,10 +47,10 @@ class NotificationSummarizer:
 
         if not self.config.enabled:
             return text
-        
+
         if not self.ai_provider:
             # Should be caught in init but safe guard
-             return text
+            return text
 
         try:
             return self.ai_provider.chat_completion(

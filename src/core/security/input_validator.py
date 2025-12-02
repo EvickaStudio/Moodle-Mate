@@ -3,7 +3,7 @@
 import re
 import html
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 from urllib.parse import urlparse
 import bleach
 
@@ -15,30 +15,47 @@ class InputValidator:
 
     # HTML tags allowed in notifications
     ALLOWED_HTML_TAGS = [
-        'p', 'br', 'strong', 'em', 'b', 'i', 'u', 'ol', 'ul', 'li',
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre',
-        'a'  # Allow links for clickable URLs in notifications
+        "p",
+        "br",
+        "strong",
+        "em",
+        "b",
+        "i",
+        "u",
+        "ol",
+        "ul",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "blockquote",
+        "code",
+        "pre",
+        "a",  # Allow links for clickable URLs in notifications
     ]
 
     # HTML attributes allowed (safe attributes for security)
     ALLOWED_HTML_ATTRIBUTES = {
-        'a': ['href', 'title'],  # Allow href and title attributes for links
-        '*': ['class']  # Allow class attribute on any element
+        "a": ["href", "title"],  # Allow href and title attributes for links
+        "*": ["class"],  # Allow class attribute on any element
     }
 
     # URL validation patterns
     MOODLE_URL_PATTERN = re.compile(
-        r'^https?://[a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})+(?:/.*)?$'
+        r"^https?://[a-zA-Z0-9.-]+(?:\.[a-zA-Z]{2,})+(?:/.*)?$"
     )
 
     # Username validation pattern
-    USERNAME_PATTERN = re.compile(r'^[a-zA-Z0-9._-]{1,100}$')
+    USERNAME_PATTERN = re.compile(r"^[a-zA-Z0-9._-]{1,100}$")
 
     # API key pattern validation
     API_KEY_PATTERNS = {
-        'openai': re.compile(r'^sk-[A-Za-z0-9_-]{48,}$'),
-        'discord': re.compile(r'^[a-zA-Z0-9_-]{24,}$'),
-        'pushbullet': re.compile(r'^[a-zA-Z0-9._-]{43}$')
+        "openai": re.compile(r"^sk-[A-Za-z0-9_-]{48,}$"),
+        "discord": re.compile(r"^[a-zA-Z0-9_-]{24,}$"),
+        "pushbullet": re.compile(r"^[a-zA-Z0-9._-]{43}$"),
     }
 
     @classmethod
@@ -66,7 +83,7 @@ class InputValidator:
                     unescaped,
                     tags=cls.ALLOWED_HTML_TAGS,
                     attributes=cls.ALLOWED_HTML_ATTRIBUTES,
-                    strip=True
+                    strip=True,
                 )
 
                 # Additional XSS protection
@@ -80,7 +97,8 @@ class InputValidator:
                 # Sanitize list items
                 sanitized[key] = [
                     cls.sanitize_notification_data({"item": item})["item"]
-                    if isinstance(item, (dict, str)) else item
+                    if isinstance(item, (dict, str))
+                    else item
                     for item in value
                 ]
             else:
@@ -104,13 +122,13 @@ class InputValidator:
             return text
 
         # Remove javascript: URLs
-        text = re.sub(r'javascript\s*:', '', text, flags=re.IGNORECASE)
+        text = re.sub(r"javascript\s*:", "", text, flags=re.IGNORECASE)
 
         # Remove on* event handlers
-        text = re.sub(r'on\w+\s*=', '', text, flags=re.IGNORECASE)
+        text = re.sub(r"on\w+\s*=", "", text, flags=re.IGNORECASE)
 
         # Remove data: URLs that could be malicious
-        text = re.sub(r'data\s*:', '', text, flags=re.IGNORECASE)
+        text = re.sub(r"data\s*:", "", text, flags=re.IGNORECASE)
 
         return text
 
@@ -137,11 +155,11 @@ class InputValidator:
                 raise ValueError("Invalid URL format - missing scheme or domain")
 
             # Enforce HTTPS for security
-            if parsed.scheme not in ['http', 'https']:
+            if parsed.scheme not in ["http", "https"]:
                 raise ValueError("URL must use HTTP or HTTPS protocol")
 
             # Recommend HTTPS for security
-            if parsed.scheme == 'http':
+            if parsed.scheme == "http":
                 logger.warning(f"Insecure URL detected: {url} - HTTPS recommended")
 
             # Check against Moodle URL pattern
@@ -241,8 +259,8 @@ class InputValidator:
             return "default"
 
         # Remove path separators and dangerous characters
-        sanitized = re.sub(r'[<>:"/\\|?*]', '', filename)
-        sanitized = re.sub(r'\.\.', '', sanitized)  # Remove directory traversal
+        sanitized = re.sub(r'[<>:"/\\|?*]', "", filename)
+        sanitized = re.sub(r"\.\.", "", sanitized)  # Remove directory traversal
         sanitized = sanitized.strip()
 
         # Ensure it's not empty after sanitization
@@ -266,18 +284,20 @@ class InputValidator:
 
         # Check for dangerous patterns
         dangerous_patterns = [
-            r'<script[^>]*>',
-            r'javascript\s*:',
-            r'on\w+\s*=',
-            r'data\s*:',
-            r'<iframe[^>]*>',
-            r'<object[^>]*>',
-            r'<embed[^>]*>'
+            r"<script[^>]*>",
+            r"javascript\s*:",
+            r"on\w+\s*=",
+            r"data\s*:",
+            r"<iframe[^>]*>",
+            r"<object[^>]*>",
+            r"<embed[^>]*>",
         ]
 
         for pattern in dangerous_patterns:
             if re.search(pattern, content, re.IGNORECASE):
-                logger.warning(f"Potentially dangerous HTML content detected: {pattern}")
+                logger.warning(
+                    f"Potentially dangerous HTML content detected: {pattern}"
+                )
                 return False
 
         return True
@@ -299,12 +319,24 @@ class InputValidator:
         sanitized = message
 
         # Mask potential API keys
-        sanitized = re.sub(r'(sk-[A-Za-z0-9_-]{10})[A-Za-z0-9_-]{38,}', r'\1***', sanitized)
+        sanitized = re.sub(
+            r"(sk-[A-Za-z0-9_-]{10})[A-Za-z0-9_-]{38,}", r"\1***", sanitized
+        )
 
         # Mask potential passwords
-        sanitized = re.sub(r'(password["\s]*[:=]["\s]*)([^"\'\s]{8,})', r'\1***', sanitized, flags=re.IGNORECASE)
+        sanitized = re.sub(
+            r'(password["\s]*[:=]["\s]*)([^"\'\s]{8,})',
+            r"\1***",
+            sanitized,
+            flags=re.IGNORECASE,
+        )
 
         # Mask potential tokens
-        sanitized = re.sub(r'(token["\s]*[:=]["\s]*)([a-zA-Z0-9_-]{20,})', r'\1***', sanitized, flags=re.IGNORECASE)
+        sanitized = re.sub(
+            r'(token["\s]*[:=]["\s]*)([a-zA-Z0-9_-]{20,})',
+            r"\1***",
+            sanitized,
+            flags=re.IGNORECASE,
+        )
 
         return sanitized

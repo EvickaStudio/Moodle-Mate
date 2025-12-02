@@ -1,5 +1,6 @@
 """Domain-specific exceptions for Moodle Mate."""
 
+
 class MoodleMateException(Exception):
     """Base exception for Moodle Mate."""
 
@@ -26,59 +27,71 @@ class MoodleMateException(Exception):
 
 class ConfigurationError(MoodleMateException):
     """Configuration-related errors."""
+
     pass
 
 
 class NotificationError(MoodleMateException):
     """Notification processing errors."""
+
     pass
 
 
 class ProviderError(NotificationError):
     """Provider-specific errors."""
+
     pass
 
 
 class SecurityError(MoodleMateException):
     """Security-related errors."""
+
     pass
 
 
 class AuthenticationError(SecurityError):
     """Authentication and authorization errors."""
+
     pass
 
 
 class ValidationError(SecurityError):
     """Input validation errors."""
+
     pass
 
 
 class RateLimitError(SecurityError):
     """Rate limiting errors."""
+
     pass
 
 
 class APIError(MoodleMateException):
     """API communication errors."""
+
     pass
 
 
 class NetworkError(APIError):
     """Network connectivity errors."""
+
     pass
 
 
 class TimeoutError(NetworkError):
     """Request timeout errors."""
+
     pass
 
 
 class ServiceError(MoodleMateException):
     """Service initialization and management errors."""
+
     pass
 
 
 class DependencyError(ServiceError):
     """Dependency injection and service locator errors."""
+
     pass

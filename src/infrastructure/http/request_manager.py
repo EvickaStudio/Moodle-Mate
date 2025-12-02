@@ -64,14 +64,22 @@ class RequestManager:
             total=3,
             backoff_factor=1,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS", "TRACE"]
+            allowed_methods=[
+                "HEAD",
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+                "TRACE",
+            ],
         )
 
         # Configure connection pooling
         adapter = HTTPAdapter(
             pool_connections=10,  # Number of connection pools
-            pool_maxsize=10,      # Maximum number of connections in the pool
-            max_retries=retry_strategy
+            pool_maxsize=10,  # Maximum number of connections in the pool
+            max_retries=retry_strategy,
         )
 
         self._session.mount("http://", adapter)

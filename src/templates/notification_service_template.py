@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class TemplateNotificationProvider(NotificationProvider):
     """
     Template for creating new notification providers.
-    
+
     Usage:
     1. Copy this file to src/providers/notification/<name>/provider.py
     2. Rename the class.
@@ -22,10 +22,10 @@ class TemplateNotificationProvider(NotificationProvider):
     def __init__(self, api_key: str, some_setting: int = 10) -> None:
         """
         Initialize the provider.
-        
+
         The arguments here must match the fields defined in your Config model
         in src/config.py (excluding 'enabled').
-        
+
         Args:
             api_key: Passed from Settings.
             some_setting: Passed from Settings.
@@ -37,12 +37,12 @@ class TemplateNotificationProvider(NotificationProvider):
     def send(self, subject: str, message: str, summary: Optional[str] = None) -> bool:
         """
         Send the notification.
-        
+
         Args:
             subject: The title of the notification.
             message: The main content (Markdown).
             summary: An optional AI-generated summary.
-            
+
         Returns:
             bool: True if successful, False otherwise.
         """
@@ -68,10 +68,10 @@ class TemplateNotificationProvider(NotificationProvider):
             # if response.status_code == 200:
             #     logger.info("Notification sent successfully")
             #     return True
-            
+
             # logger.error(f"Failed to send: {response.status_code} - {response.text}")
             # return False
-            
+
             logger.info(f"Template provider received: {subject}")
             return True
 

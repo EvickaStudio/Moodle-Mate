@@ -5,22 +5,23 @@ from src.core.version import __version__
 
 # Original Color Palette (Restored)
 COLOR_BORDER = "\033[38;5;240m"
-COLOR_MOODLE = "\033[38;5;208m" # Orange/Moodle color
+COLOR_MOODLE = "\033[38;5;208m"  # Orange/Moodle color
 COLOR_RESET = "\033[0m"
 COLOR_BOLD = "\033[1m"
+
 
 def _compose_logo_lines() -> List[str]:
     """
     Build the colored ASCII logo lines (Original Design).
     """
     version_str = f"{__version__:>8}"
-    
+
     header = (
         f"{COLOR_BORDER}╭─┐ {COLOR_RESET}{COLOR_BOLD}Moodle Mate"
         f" {COLOR_MOODLE}{version_str}{COLOR_RESET} "
         f"{COLOR_BORDER}┌{'─' * 47}╮{COLOR_RESET}"
     )
-    
+
     lines = [
         header,
         (
@@ -51,6 +52,7 @@ def _compose_logo_lines() -> List[str]:
     ]
     return lines
 
+
 def _center_lines(lines: Iterable[str]) -> List[str]:
     """Center lines based on the current terminal width."""
     try:
@@ -65,11 +67,14 @@ def _center_lines(lines: Iterable[str]) -> List[str]:
         centered.append(" " * pad + raw)
     return centered
 
+
 def _strip_ansi(s: str) -> str:
     """Remove ANSI escape codes."""
     import re
+
     ansi_re = re.compile(r"\x1b\[[0-9;]*m")
     return ansi_re.sub("", s)
+
 
 def print_logo() -> None:
     """
@@ -79,6 +84,7 @@ def print_logo() -> None:
     centered_lines = _center_lines(raw_lines)
     for line in centered_lines:
         print(line)
+
 
 if __name__ == "__main__":
     print_logo()

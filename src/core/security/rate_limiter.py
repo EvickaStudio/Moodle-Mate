@@ -155,7 +155,9 @@ class RateLimiterManager:
         """
         with self.lock:
             self.rate_limiters[name] = TokenBucketRateLimiter(max_requests, time_window)
-            logger.info(f"Registered rate limiter '{name}': {max_requests} requests per {time_window}s")
+            logger.info(
+                f"Registered rate limiter '{name}': {max_requests} requests per {time_window}s"
+            )
 
     def is_allowed(self, limiter_name: str, identifier: str) -> bool:
         """Check if a request is allowed.
@@ -169,7 +171,9 @@ class RateLimiterManager:
         """
         with self.lock:
             if limiter_name not in self.rate_limiters:
-                logger.warning(f"Rate limiter '{limiter_name}' not found, allowing request")
+                logger.warning(
+                    f"Rate limiter '{limiter_name}' not found, allowing request"
+                )
                 return True
 
             return self.rate_limiters[limiter_name].is_allowed(identifier)
@@ -235,6 +239,7 @@ def rate_limit_limiter(limiter_name: str, identifier_key: str = None):
         limiter_name: Name of the rate limiter to use
         identifier_key: Key to extract identifier from function args/kwargs
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Generate identifier
@@ -251,12 +256,16 @@ def rate_limit_limiter(limiter_name: str, identifier_key: str = None):
 
             # Check rate limit
             if not rate_limiter_manager.is_allowed(limiter_name, identifier):
-                remaining = rate_limiter_manager.get_remaining_requests(limiter_name, identifier)
-                reset_time = rate_limiter_manager.get_reset_time(limiter_name, identifier)
+                remaining = rate_limiter_manager.get_remaining_requests(
+                    limiter_name, identifier
+                )
+                reset_time = rate_limiter_manager.get_reset_time(
+                    limiter_name, identifier
+                )
 
                 logger.warning(
                     f"Rate limit exceeded for '{limiter_name}' "
-                    f"(identifier: {identifier}, remaining: {remaining})"
+                    f"(identifier: {identifier}, remaining: {remaining}, resets at: {reset_time})"
                 )
 
                 # In production, you might want to raise an exception here
@@ -268,4 +277,5 @@ def rate_limit_limiter(limiter_name: str, identifier_key: str = None):
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
         return wrapper
+
     return decorator

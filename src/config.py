@@ -2,11 +2,13 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class MoodleConfig(BaseModel):
     url: str
     username: str
     password: str
     initial_fetch_count: int = 1
+
 
 class AIConfig(BaseModel):
     enabled: bool = True
@@ -17,13 +19,16 @@ class AIConfig(BaseModel):
     system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links. Write in target language of the notification."
     endpoint: Optional[str] = None
 
+
 class NotificationConfig(BaseModel):
     max_retries: int = 5
     fetch_interval: int = 60
 
+
 class FiltersConfig(BaseModel):
     ignore_subjects_containing: List[str] = Field(default_factory=list)
     ignore_courses_by_id: List[int] = Field(default_factory=list)
+
 
 class HealthConfig(BaseModel):
     enabled: bool = False
@@ -31,11 +36,13 @@ class HealthConfig(BaseModel):
     failure_alert_threshold: Optional[int] = None
     target_provider: Optional[str] = None
 
+
 class WebConfig(BaseModel):
     enabled: bool = True
     host: str = "0.0.0.0"
     port: int = 9095
     auth_secret: Optional[str] = None
+
 
 # Providers
 class DiscordConfig(BaseModel):
@@ -44,15 +51,18 @@ class DiscordConfig(BaseModel):
     bot_name: str = "MoodleMate"
     thumbnail_url: str = ""
 
+
 class WebhookSiteConfig(BaseModel):
     enabled: bool = False
     webhook_url: str = ""
     include_summary: bool = True
 
+
 class PushbulletConfig(BaseModel):
     enabled: bool = False
     api_key: str = ""
     include_summary: bool = True
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -60,16 +70,16 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
-        extra="ignore"
+        extra="ignore",
     )
-    
+
     moodle: MoodleConfig
     ai: AIConfig = Field(default_factory=AIConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     filters: FiltersConfig = Field(default_factory=FiltersConfig)
     health: HealthConfig = Field(default_factory=HealthConfig)
     web: WebConfig = Field(default_factory=WebConfig)
-    
+
     # Providers
     # To add a new provider, define its config model above and add it here.
     discord: DiscordConfig = Field(default_factory=DiscordConfig)

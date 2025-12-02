@@ -58,12 +58,7 @@ class MoodleMateApp:
             host = self.settings.web.host
             port = self.settings.web.port
             logging.info(f"Starting Web UI on http://{host}:{port}")
-            uvicorn.run(
-                app,
-                host=host,
-                port=port,
-                log_level="warning"
-            )
+            uvicorn.run(app, host=host, port=port, log_level="warning")
 
         self._web_server_thread = threading.Thread(target=run_server, daemon=True)
         self._web_server_thread.start()

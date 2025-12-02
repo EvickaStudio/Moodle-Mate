@@ -28,7 +28,7 @@ def main() -> None:
     args = parser.parse_args()
 
     setup_logging()
-    
+
     # Fast startup - just print the logo
     print_logo()
     logging.info("Starting Moodle Mate...")
@@ -38,7 +38,9 @@ def main() -> None:
         settings = Settings()
     except Exception as e:
         logging.critical(f"Failed to load configuration: {e}")
-        logging.critical("Please ensure .env file exists or environment variables are set.")
+        logging.critical(
+            "Please ensure .env file exists or environment variables are set."
+        )
         sys.exit(1)
 
     # Initialize Services
@@ -50,7 +52,7 @@ def main() -> None:
         moodle_api = MoodleAPI(
             url=settings.moodle.url,
             username=settings.moodle.username,
-            password=settings.moodle.password
+            password=settings.moodle.password,
         )
 
         # AI / Summarization
@@ -60,14 +62,16 @@ def main() -> None:
             gpt.api_key = settings.ai.api_key
             if settings.ai.endpoint:
                 gpt.endpoint = settings.ai.endpoint
-            
+
             summarizer = NotificationSummarizer(settings, gpt)
 
         # Notification Providers
         providers = initialize_providers(settings)
-        
+
         # Notification Processor
-        notification_processor = NotificationProcessor(settings, providers, state_manager, summarizer)
+        notification_processor = NotificationProcessor(
+            settings, providers, state_manager, summarizer
+        )
 
         # Moodle Handler
         moodle_handler = MoodleNotificationHandler(settings, moodle_api, state_manager)
@@ -78,7 +82,7 @@ def main() -> None:
             notification_processor=notification_processor,
             moodle_handler=moodle_handler,
             moodle_api=moodle_api,
-            state_manager=state_manager
+            state_manager=state_manager,
         )
 
         if args.test_notification:

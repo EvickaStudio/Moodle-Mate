@@ -1,7 +1,7 @@
 """Dependency injection container for Moodle Mate."""
 
 import logging
-from typing import Any, Dict, Optional, Type, TypeVar, Callable
+from typing import Any, Dict, Type, TypeVar
 from injector import Injector, Module, singleton, provider
 import uuid
 
@@ -13,7 +13,7 @@ from src.core.notification.processor import NotificationProcessor
 from src.core.state_manager import StateManager
 
 logger = logging.getLogger(__name__)
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ApplicationModule(Module):
@@ -120,15 +120,18 @@ class ApplicationContainer:
             return self._injector.get(service_type)
         except Exception as e:
             correlation_id = str(uuid.uuid4())[:8]
-            logger.error(f"Failed to resolve service {service_type.__name__} [{correlation_id}]: {e}")
+            logger.error(
+                f"Failed to resolve service {service_type.__name__} [{correlation_id}]: {e}"
+            )
             from src.core.exceptions import DependencyError
+
             raise DependencyError(
                 f"Cannot resolve service {service_type.__name__}",
                 correlation_id=correlation_id,
-                service_type=service_type.__name__
+                service_type=service_type.__name__,
             )
 
-    def create_scoped(self, scope_id: str = None) -> 'ScopedContainer':
+    def create_scoped(self, scope_id: str = None) -> "ScopedContainer":
         """Create a scoped container for request-scoped services.
 
         Args:
@@ -206,7 +209,9 @@ class ScopedContainer:
             interface = type(instance)
 
         self._scoped_instances[interface] = instance
-        logger.debug(f"Registered scoped instance of {interface.__name__} for scope {self._scope_id}")
+        logger.debug(
+            f"Registered scoped instance of {interface.__name__} for scope {self._scope_id}"
+        )
 
 
 # Global application container
@@ -262,7 +267,7 @@ def initialize_dependencies(config: Config = None) -> None:
 
         for service_type in services_to_verify:
             try:
-                instance = get_service(service_type)
+                get_service(service_type)
                 logger.debug(f"Initialized {service_type.__name__}")
             except Exception as e:
                 logger.error(f"Failed to initialize {service_type.__name__}: {e}")
@@ -274,7 +279,8 @@ def initialize_dependencies(config: Config = None) -> None:
         correlation_id = str(uuid.uuid4())[:8]
         logger.error(f"Failed to initialize dependencies [{correlation_id}]: {e}")
         from src.core.exceptions import DependencyError
+
         raise DependencyError(
             "Failed to initialize application dependencies",
-            correlation_id=correlation_id
+            correlation_id=correlation_id,
         )

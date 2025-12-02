@@ -30,4 +30,3 @@ def register_default_model(model: str, pricing: ModelPricing) -> None:
     before GPT is instantiated.
     """
     DEFAULT_MODEL_PRICING[model] = pricing
-

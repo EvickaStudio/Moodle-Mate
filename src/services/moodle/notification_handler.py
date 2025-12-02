@@ -57,7 +57,7 @@ class MoodleNotificationHandler:
             self.settings = settings
             self.api = api
             self.state_manager = state_manager
-            
+
             # Initial login
             self._login()
 

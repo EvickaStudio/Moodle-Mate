@@ -66,9 +66,12 @@ class PluginManager:
             try:
                 if hasattr(settings, name):
                     provider_settings = getattr(settings, name)
-                    if hasattr(provider_settings, 'enabled') and provider_settings.enabled:
+                    if (
+                        hasattr(provider_settings, "enabled")
+                        and provider_settings.enabled
+                    ):
                         # Get provider-specific config as dict, excluding 'enabled'
-                        config_dict = provider_settings.model_dump(exclude={'enabled'})
+                        config_dict = provider_settings.model_dump(exclude={"enabled"})
 
                         # Initialize the provider with its config
                         provider = provider_class(**config_dict)

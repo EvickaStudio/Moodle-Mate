@@ -1,14 +1,15 @@
 """Tests for security fixes implemented in Moodle Mate."""
 
 import pytest
-from unittest.mock import MagicMock
 
-from src.core.security import InputValidator, CredentialManager, rate_limiter_manager, RateLimiterManager
-from src.core.exceptions import ValidationError, RateLimitError
+from src.core.security import (
+    InputValidator,
+    CredentialManager,
+    rate_limiter_manager,
+    RateLimiterManager,
+)
 from src.core.container import get_service, initialize_dependencies
-from src.services.moodle.api import MoodleAPI
 from src.infrastructure.http.request_manager import RequestManager
-from src.core.notification.processor import NotificationProcessor
 from src.core.config.loader import Config
 
 
@@ -77,7 +78,7 @@ class TestInputValidation:
         notification_data = {
             "subject": "Test notification",
             "message": malicious_html,
-            "other_field": "safe content"
+            "other_field": "safe content",
         }
 
         sanitized = InputValidator.sanitize_notification_data(notification_data)
@@ -149,7 +150,9 @@ class TestRateLimiting:
         limiter_name = "test_limiter"
 
         # Register a test limiter with very strict limits
-        rate_limiter_manager.register_limiter(limiter_name, 2, 1)  # 2 requests per second
+        rate_limiter_manager.register_limiter(
+            limiter_name, 2, 1
+        )  # 2 requests per second
 
         # First two requests should be allowed
         assert rate_limiter_manager.is_allowed(limiter_name, identifier)
@@ -159,7 +162,9 @@ class TestRateLimiting:
         assert not rate_limiter_manager.is_allowed(limiter_name, identifier)
 
         # Should show remaining requests
-        remaining = rate_limiter_manager.get_remaining_requests(limiter_name, identifier)
+        remaining = rate_limiter_manager.get_remaining_requests(
+            limiter_name, identifier
+        )
         assert remaining == 0
 
         # Reset for future tests
@@ -218,7 +223,7 @@ class TestNotificationProcessorSecurity:
         malicious_notification = {
             "subject": "<script>alert('xss')</script>Important Notification",
             "fullmessagehtml": "<img src=x onerror=alert('xss')><p>Safe content</p>",
-            "other_field": "safe content"
+            "other_field": "safe content",
         }
 
         # Test the sanitizer that processor uses
@@ -275,7 +280,9 @@ class TestSecurityIntegration:
 
         # Test rate limiting
         assert rate_limiter_manager.is_allowed("test", "integration_test")
-        assert rate_limiter_manager.get_remaining_requests("test", "integration_test") >= 0
+        assert (
+            rate_limiter_manager.get_remaining_requests("test", "integration_test") >= 0
+        )
 
         print("All security integration tests passed!")
 
