@@ -4,6 +4,7 @@ from typing import List, Optional, TYPE_CHECKING
 from src.core.notification.base import NotificationProvider
 from src.core.notification.summarizer import NotificationSummarizer
 from src.core.security import InputValidator
+from src.core.state_manager import StateManager
 from src.services.markdown import convert
 
 if TYPE_CHECKING:
@@ -19,10 +20,12 @@ class NotificationProcessor:
         self,
         settings: "Settings",
         providers: List[NotificationProvider],
+        state_manager: StateManager,
         summarizer: Optional[NotificationSummarizer] = None,
     ):
         self.settings = settings
         self.providers = providers
+        self.state_manager = state_manager
         self.summarizer = summarizer
 
     def process(self, notification: dict) -> None:
@@ -45,8 +48,16 @@ class NotificationProcessor:
             # Generate summary if enabled
             summary = self._generate_summary(message) if self.summarizer else None
 
-            # Send through providers
-            self._send_to_providers(subject, message, summary)
+            # Send through providers and record history
+            providers_sent = self._send_to_providers(subject, message, summary)
+
+            # Add to history with message context
+            self.state_manager.add_notification_to_history(
+                sanitized_notification,
+                providers_sent,
+                message=message,
+                summary=summary,
+            )
 
         except Exception as e:
             logging.error(f"Failed to process notification: {str(e)}", exc_info=True)
@@ -94,14 +105,18 @@ class NotificationProcessor:
 
     def _send_to_providers(
         self, subject: str, message: str, summary: Optional[str]
-    ) -> None:
+    ) -> List[str]:
         """Send notification through all providers."""
+        sent_to = []
         for provider in self.providers:
             try:
                 success = provider.send(subject, message, summary)
-                if not success:
+                if success:
+                    sent_to.append(provider.__class__.__name__)
+                else:
                     logging.error(f"Failed to send via {provider.__class__.__name__}")
             except Exception as e:
                 logging.error(
                     f"Error with {provider.__class__.__name__}: {str(e)}", exc_info=True
                 )
+        return sent_to

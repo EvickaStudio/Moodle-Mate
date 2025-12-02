@@ -67,7 +67,7 @@ def main() -> None:
         providers = initialize_providers(settings)
         
         # Notification Processor
-        notification_processor = NotificationProcessor(settings, providers, summarizer)
+        notification_processor = NotificationProcessor(settings, providers, state_manager, summarizer)
 
         # Moodle Handler
         moodle_handler = MoodleNotificationHandler(settings, moodle_api, state_manager)

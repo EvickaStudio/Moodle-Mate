@@ -31,6 +31,12 @@ class HealthConfig(BaseModel):
     failure_alert_threshold: Optional[int] = None
     target_provider: Optional[str] = None
 
+class WebConfig(BaseModel):
+    enabled: bool = True
+    host: str = "0.0.0.0"
+    port: int = 9095
+    auth_secret: Optional[str] = None
+
 # Providers
 class DiscordConfig(BaseModel):
     enabled: bool = False
@@ -62,6 +68,7 @@ class Settings(BaseSettings):
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     filters: FiltersConfig = Field(default_factory=FiltersConfig)
     health: HealthConfig = Field(default_factory=HealthConfig)
+    web: WebConfig = Field(default_factory=WebConfig)
     
     # Providers
     # To add a new provider, define its config model above and add it here.

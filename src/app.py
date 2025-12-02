@@ -1,9 +1,12 @@
 import logging
+import threading
 import time
 from typing import TYPE_CHECKING
+import uvicorn
 
 from src.core.utils.retry import with_retry
 from src.infrastructure.http.request_manager import request_manager
+from src.web.api import WebUI
 
 if TYPE_CHECKING:
     from src.config import Settings
@@ -30,10 +33,14 @@ class MoodleMateApp:
         self.moodle_api = moodle_api
         self.state_manager = state_manager
         self._last_heartbeat_sent: float = 0.0
+        self._web_server_thread: threading.Thread = None
 
     def run(self) -> None:
         """Starts the main application loop."""
         try:
+            if self.settings.web.enabled:
+                self._start_web_ui()
+
             self._main_loop()
         except KeyboardInterrupt:
             logging.info("Shutting down gracefully...")
@@ -41,6 +48,25 @@ class MoodleMateApp:
         except Exception as e:
             logging.error(f"An unexpected error occurred: {str(e)}")
             raise
+
+    def _start_web_ui(self):
+        """Starts the Web UI server in a separate thread."""
+        web_ui = WebUI(self.settings, self.state_manager, self)
+        app = web_ui.get_app()
+
+        def run_server():
+            host = self.settings.web.host
+            port = self.settings.web.port
+            logging.info(f"Starting Web UI on http://{host}:{port}")
+            uvicorn.run(
+                app,
+                host=host,
+                port=port,
+                log_level="warning"
+            )
+
+        self._web_server_thread = threading.Thread(target=run_server, daemon=True)
+        self._web_server_thread.start()
 
     def _main_loop(self) -> None:
         """The main loop that continuously fetches and processes notifications."""

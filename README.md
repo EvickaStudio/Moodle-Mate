@@ -29,6 +29,12 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
   - Optional AI-based content summarization that creates quick TLDRs.
   - Converts HTML notifications to Markdown for improved readability using [turndown-python](https://github.com/EvickaStudio/turndown-python).
 
+- **Web Dashboard**
+  - Monitor system status, logs, and configuration.
+  - Live configuration editing.
+  - Test notifications.
+  - Protected by optional authentication.
+
 - **Multi-Platform Support**
   - Discord (via webhooks)
   - Pushbullet (send to all your devices)
@@ -84,11 +90,13 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    Edit `.env` with your settings. Configuration uses environment variables with the `MOODLEMATE_` prefix.
 
    Example `.env`:
-
    ```env
    MOODLEMATE_MOODLE__URL=https://moodle.example.com
    MOODLEMATE_MOODLE__USERNAME=your_username
    MOODLEMATE_MOODLE__PASSWORD=your_password
+
+   # Web UI Protection
+   MOODLEMATE_WEB__AUTH_SECRET=your_secure_password
 
    MOODLEMATE_DISCORD__ENABLED=true
    MOODLEMATE_DISCORD__WEBHOOK_URL=https://discord.com/api/webhooks/...
@@ -155,13 +163,30 @@ docker compose down
 When running, the application will:
 
 1. Validate your configuration.
-2. Connect to your Moodle instance.
-3. Continuously monitor for new notifications.
-4. Process and deliver notifications according to your settings.
+2. Start the Web Dashboard (default: http://localhost:9095).
+3. Connect to your Moodle instance.
+4. Continuously monitor for new notifications.
+5. Process and deliver notifications according to your settings.
+
+## Web Dashboard
+
+Moodle Mate includes a built-in web dashboard for monitoring and configuration.
+
+- **URL**: `http://0.0.0.0:9095` (default)
+- **Features**:
+  - View current status and metrics.
+  - Trigger test notifications.
+  - Edit configuration live (requires `MOODLEMATE_WEB__AUTH_SECRET` if set).
+
+**Security**: To protect the dashboard, set `MOODLEMATE_WEB__AUTH_SECRET` in your `.env` file. If this variable is set, you will be prompted to enter this password to access the dashboard.
 
 ## Screenshots
 
 *Colors between the screenshots are different because of different themes in Termius.*
+
+### v2.0.3 (Web UI)
+
+![v2.0.3](assets/webui_v2.0.3.png)
 
 ### v2.0.2 (Docker)
 

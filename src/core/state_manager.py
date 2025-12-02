@@ -1,13 +1,15 @@
 import json
 import logging
 import os
-from typing import Optional
+from typing import Optional, List, Dict, Deque, Any
+from collections import deque
+import time
 
 logger = logging.getLogger(__name__)
 
 
 class StateManager:
-    """Manages the application's persistent state."""
+    """Manages the application's persistent state and runtime history."""
 
     _instance = None
 
@@ -21,6 +23,8 @@ class StateManager:
         """Initialize the StateManager."""
         self.state_file = state_file
         self.last_notification_id: Optional[int] = None
+        # Runtime history (not persisted to disk to avoid IO thrashing)
+        self.notification_history: Deque[Dict] = deque(maxlen=50)
         self._load_state()
 
     def _load_state(self) -> None:
@@ -52,3 +56,61 @@ class StateManager:
         """Updates the last notification ID."""
         if notification_id > (self.last_notification_id or 0):
             self.last_notification_id = notification_id
+
+    def add_notification_to_history(
+        self,
+        notification: Dict[str, Any],
+        providers_sent: List[str],
+        message: str,
+        summary: Optional[str] = None,
+    ):
+        """Adds a notification with contextual details to the in-memory history."""
+        entry = {
+            "id": notification.get("id"),
+            "subject": notification.get("subject"),
+            "message": message,
+            "summary": summary,
+            "timestamp": self._extract_timestamp(notification),
+            "providers": providers_sent,
+            "context_url": notification.get("contexturl") or notification.get("url"),
+            "component": notification.get("component"),
+            "event_type": notification.get("eventtype"),
+            "course": notification.get("courseid"),
+            "author": self._extract_author(notification),
+        }
+        self.notification_history.appendleft(entry)
+
+    def _extract_timestamp(self, notification: Dict[str, Any]) -> float:
+        """Normalizes the timestamp for history entries."""
+        raw_timestamp = (
+            notification.get("timecreated")
+            or notification.get("created")
+            or notification.get("time")
+        )
+        if raw_timestamp is None:
+            return time.time()
+        try:
+            timestamp = float(raw_timestamp)
+            if timestamp > 1_000_000_000_000:  # milliseconds
+                timestamp /= 1000.0
+            return timestamp
+        except (TypeError, ValueError):
+            return time.time()
+
+    @staticmethod
+    def _extract_author(notification: Dict[str, Any]) -> Optional[str]:
+        """Best-effort extraction of the notification author."""
+        user_from = notification.get("userfrom")
+        if isinstance(user_from, dict):
+            return (
+                user_from.get("fullname")
+                or user_from.get("firstname")
+                or user_from.get("username")
+            )
+        elif isinstance(user_from, str):
+            return user_from
+        return None
+
+    def get_history(self) -> List[Dict]:
+        """Returns the notification history."""
+        return list(self.notification_history)

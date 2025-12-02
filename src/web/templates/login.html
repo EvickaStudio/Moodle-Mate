@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Moodle Mate</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        background: "#14120B",
+                        "card-bg": "#1B1913",
+                        border: "#2D281D",
+                        accent: "#F4B860",
+                        "accent-muted": "#DFA851",
+                        primary: "#E8E2D4",
+                        secondary: "#A89E8F",
+                        input: "#1E1A13",
+                        danger: "#F87171"
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="min-h-screen bg-background text-primary flex items-center justify-center p-6" x-data="login()" x-init="init()">
+
+    <div class="w-full max-w-sm bg-card-bg border border-border rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.35)] p-7 space-y-6">
+        <div class="flex flex-col items-center gap-1.5 text-center">
+            <img src="/static/logo.svg" alt="Moodle Mate Logo" class="w-9 h-9">
+            <h1 class="text-xl font-semibold tracking-tight text-primary">Moodle Mate</h1>
+            <p class="text-secondary text-xs uppercase tracking-[0.2em]">Secure Access</p>
+        </div>
+
+        <form @submit.prevent="submitLogin" class="space-y-5">
+            <div class="space-y-2">
+                <label class="text-xs uppercase tracking-wide text-secondary">Access Password</label>
+                <input type="password"
+                       x-model="password"
+                       placeholder="••••••••"
+                       class="w-full bg-input border border-border rounded-lg px-3 py-2.5 text-primary focus:outline-none focus:border-accent transition-colors"
+                       required>
+            </div>
+
+            <button type="submit"
+                    :disabled="loading"
+                    class="w-full bg-accent text-[#1A1510] font-semibold py-2.5 rounded-full transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(244,184,96,0.3)] hover:bg-accent-muted active:scale-95">
+                <span x-show="!loading">Access Dashboard</span>
+                <svg x-show="loading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+
+            <p x-show="error" x-text="error" class="text-danger text-sm text-center" x-cloak></p>
+        </form>
+    </div>
+
+    <script>
+        function login() {
+            return {
+                password: "",
+                loading: false,
+                error: "",
+
+                init() {
+                    document.documentElement.classList.add("dark");
+                },
+
+                async submitLogin() {
+                    this.loading = true;
+                    this.error = "";
+                    try {
+                        const res = await fetch("/api/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ password: this.password })
+                        });
+                        if (res.ok) {
+                            window.location.href = "/";
+                        } else {
+                            this.error = "Invalid password. Try again.";
+                        }
+                    } catch (e) {
+                        this.error = "Login failed. Please retry.";
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>
+
