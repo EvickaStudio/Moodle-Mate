@@ -184,9 +184,11 @@ Moodle Mate includes a built-in web dashboard for monitoring and configuration.
 
 *Colors between the screenshots are different because of different themes in Termius.*
 
+> Versions are messed up a bit, im sorry
+
 ### v2.0.3 (Web UI)
 
-![v2.0.3](assets/webui_v2.0.3.png)
+![v2.2.1](assets/webui_v2.0.3.png)
 
 ### v2.0.2 (Docker)
 

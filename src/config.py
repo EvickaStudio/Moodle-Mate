@@ -11,10 +11,10 @@ class MoodleConfig(BaseModel):
 class AIConfig(BaseModel):
     enabled: bool = True
     api_key: str = ""
-    model: str = "gpt-4"
+    model: str = "gpt-5-nano"
     temperature: float = 0.7
     max_tokens: int = 150
-    system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links."
+    system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links. Write in target language of the notification."
     endpoint: Optional[str] = None
 
 class NotificationConfig(BaseModel):
