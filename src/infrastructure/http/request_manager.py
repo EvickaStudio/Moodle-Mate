@@ -1,5 +1,5 @@
 import time
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -8,12 +8,26 @@ from urllib3.util.retry import Retry
 from src.core.version import __version__
 
 
+class TimeoutSession(requests.Session):
+    """requests.Session subclass that enforces a default timeout."""
+
+    def __init__(self, default_timeout: Union[float, Tuple[float, float]]) -> None:
+        super().__init__()
+        self._default_timeout = default_timeout
+
+    def request(self, method, url, **kwargs):  # type: ignore[override]
+        if "timeout" not in kwargs or kwargs["timeout"] is None:
+            kwargs["timeout"] = self._default_timeout
+        return super().request(method, url, **kwargs)
+
+
 class RequestManager:
     """Global request session manager with consistent headers."""
 
     _instance: Optional["RequestManager"] = None
     _session: Optional[requests.Session] = None
     _session_created_at: float = 0
+    _default_timeout: Union[float, Tuple[float, float]] = (10, 30)
 
     def __new__(cls) -> "RequestManager":
         if cls._instance is None:
@@ -27,7 +41,7 @@ class RequestManager:
         if self._session is not None:
             self._session.close()
 
-        self._session = requests.Session()
+        self._session = TimeoutSession(self._default_timeout)
 
         # Security headers
         self._session.headers.update(
@@ -43,8 +57,7 @@ class RequestManager:
         # Security: Enable SSL certificate verification
         self._session.verify = True
 
-        # Security: Set timeouts (connect=10s, read=30s)
-        self._session.timeout = (10, 30)
+        # Security: Default timeout enforced by TimeoutSession
 
         # Configure retry strategy with backoff
         retry_strategy = Retry(

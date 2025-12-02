@@ -374,7 +374,11 @@ class MoodleNotificationHandler:
         return None
 
     def _handle_new_notification(
-        self, message: str, current_id: int, notification: NotificationData
+        self,
+        message: str,
+        current_id: int,
+        notification: NotificationData,
+        update_state: bool = False,
     ) -> NotificationData:
         """Handle processing of a new notification.
 
@@ -382,14 +386,20 @@ class MoodleNotificationHandler:
             message: Log message prefix
             current_id: Current notification ID
             notification: Notification data
+            update_state: Flag indicating whether to persist the ID immediately
 
         Returns:
             The processed notification data
         """
         logger.info(f"{message}{current_id}")
-        self.last_notification_id = current_id
-        self.state_manager.set_last_notification_id(current_id)
+        if update_state:
+            self.mark_notification_processed(current_id)
         return notification
+
+    def mark_notification_processed(self, notification_id: int) -> None:
+        """Persist the last successfully processed notification ID."""
+        self.last_notification_id = notification_id
+        self.state_manager.set_last_notification_id(notification_id)
 
     def _log_and_return(self, processed, error_message, debug_message_prefix):
         if not processed:
@@ -453,7 +463,9 @@ class MoodleNotificationHandler:
         # Process in reverse order to handle oldest first
         for notification in reversed(notifications):
             self._handle_new_notification(
-                "Processing initial notification: ID ", notification["id"], notification
+                "Processing initial notification: ID ",
+                notification["id"],
+                notification,
             )
         return notifications
 

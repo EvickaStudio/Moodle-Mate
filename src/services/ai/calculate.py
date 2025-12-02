@@ -11,6 +11,10 @@ class ModelType(Enum):
     O1 = "o1"
     O1_MINI = "o1-mini"
     O3_MINI = "o3-mini"
+    GPT51 = "gpt-5.1"
+    GPT5 = "gpt-5"
+    GPT5_MINI = "gpt-5-mini"
+    GPT5_NANO = "gpt-5-nano"
 
 
 @dataclass

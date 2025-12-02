@@ -34,8 +34,8 @@ RUN groupadd -r moodlemate && useradd -r -g moodlemate moodlemate
 COPY --from=builder /venv /venv
 ENV PATH="/venv/bin:$PATH"
 
-# Create logs directory and set permissions
-RUN mkdir -p /app/logs && chown -R moodlemate:moodlemate /app
+# Create persistent directories and set permissions
+RUN mkdir -p /app/logs /app/state && chown -R moodlemate:moodlemate /app
 
 # Copy application code
 COPY . .

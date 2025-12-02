@@ -113,6 +113,9 @@ class MoodleMateApp:
         if notifications:
             for notification in notifications:
                 self.notification_processor.process(notification)
+                notification_id = notification.get("id")
+                if notification_id is not None:
+                    self.moodle_handler.mark_notification_processed(notification_id)
         return True
 
     def _handle_error(

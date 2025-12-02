@@ -9,6 +9,7 @@ from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
 from .calculate import ModelPricing, ModelType
+from .model_registry import get_default_model_pricing
 from .errors import (
     APIConnectionError,
     APITimeoutError,
@@ -45,13 +46,7 @@ class GPT:
         """Initialize GPT instance."""
         self._api_key = None
         self._endpoint = None
-        self.PRICING = {
-            ModelType.GPT4O.value: ModelPricing(2.50, 10.00),
-            ModelType.GPT4O_MINI.value: ModelPricing(0.15, 0.60),
-            ModelType.O1.value: ModelPricing(15.00, 60.00),
-            ModelType.O1_MINI.value: ModelPricing(1.10, 4.40),
-            ModelType.O3_MINI.value: ModelPricing(1.10, 4.40),
-        }
+        self.PRICING = get_default_model_pricing()
         self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
     @property
@@ -103,6 +98,10 @@ class GPT:
         """
         self._endpoint = url
         openai.base_url = url
+
+    def register_model(self, model: str, pricing: ModelPricing) -> None:
+        """Register or override pricing information for a model at runtime."""
+        self.PRICING[model] = pricing
 
     def count_tokens(self, text: str, model: str = ModelType.GPT4O_MINI.value) -> int:
         """

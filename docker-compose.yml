@@ -4,11 +4,12 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ./config.ini:/app/config.ini:ro
+      - ./state:/app/state
       - moodlemate_logs:/app/logs
     restart: unless-stopped
     environment:
       - TZ=UTC
+      - MOODLE_SESSION_FILE=/app/state/moodle_session.json
 
 volumes:
   moodlemate_logs:

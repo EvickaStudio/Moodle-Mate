@@ -1,8 +1,10 @@
+import json
 import logging
 import os
-from typing import Optional, Dict, Any
+from typing import Optional
 
 from requests.exceptions import RequestException
+from requests.utils import cookiejar_from_dict, dict_from_cookiejar
 
 from src.infrastructure.http.request_manager import request_manager
 from src.core.security import InputValidator, rate_limiter_manager
@@ -20,6 +22,10 @@ class MoodleAPI:
         self.url = url.rstrip("/")
         self.username = username
         self.password = password
+        self.session_state_file = os.path.abspath(
+            os.getenv("MOODLE_SESSION_FILE", "moodle_session.json")
+        )
+        self._session_restored_from_disk = False
         self.session = request_manager.session
         request_manager.update_headers(
             {
@@ -38,10 +44,20 @@ class MoodleAPI:
         if not InputValidator.validate_moodle_url(self.url):
             raise ValueError("Invalid Moodle URL")
 
+        self._session_restored_from_disk = self._restore_session_state()
+
     def login(self) -> bool:
         """
         Logs in to the Moodle instance using the stored credentials.
         """
+        if self.token and self._session_restored_from_disk:
+            if self._cached_session_is_valid():
+                logger.info("Re-using cached Moodle session from disk.")
+                return True
+
+            logger.info("Cached Moodle session invalid. Performing full login.")
+            self._clear_session_state()
+
         login_data = {
             "username": self.username,
             "password": self.password,
@@ -50,26 +66,33 @@ class MoodleAPI:
 
         # Rate limiting check
         if not rate_limiter_manager.is_allowed("moodle_api", f"{self.url}_login"):
-            remaining = rate_limiter_manager.get_remaining_requests("moodle_api", f"{self.url}_login")
-            reset_time = rate_limiter_manager.get_reset_time("moodle_api", f"{self.url}_login")
-            logger.warning(f"Login rate limit exceeded for {self.url}. Remaining: {remaining}, Reset: {reset_time}")
+            remaining = rate_limiter_manager.get_remaining_requests(
+                "moodle_api", f"{self.url}_login"
+            )
+            reset_time = rate_limiter_manager.get_reset_time(
+                "moodle_api", f"{self.url}_login"
+            )
+            logger.warning(
+                f"Login rate limit exceeded for {self.url}. Remaining: {remaining}, Reset: {reset_time}"
+            )
             raise ValueError("Too many login attempts. Please try again later.")
 
         try:
             response = self.session.post(f"{self.url}/login/token.php", data=login_data)
             response.raise_for_status()
-            
+
             json_resp = response.json()
             if "token" in json_resp:
                 self.token = json_resp["token"]
                 logger.info("Login successful")
+                self._save_session_state()
                 return True
-            
+
             if "error" in json_resp:
-                 logger.error(f"Login failed: {json_resp['error']}")
+                logger.error(f"Login failed: {json_resp['error']}")
             else:
-                 logger.error("Login failed: Invalid credentials or unexpected response")
-            
+                logger.error("Login failed: Invalid credentials or unexpected response")
+
             return False
 
         except RequestException as e:
@@ -89,7 +112,7 @@ class MoodleAPI:
         self.session = request_manager.session
 
         # Re-login with stored credentials
-        self.token = None
+        self._clear_session_state()
         return self.login()
 
     def get_site_info(self) -> Optional[dict]:
@@ -114,6 +137,7 @@ class MoodleAPI:
             response.raise_for_status()
             data = response.json()
             self.userid = data.get("userid")
+            self._save_session_state()
             return data
         except RequestException as e:
             logger.error(f"Failed to get site info: {e}")
@@ -160,7 +184,9 @@ class MoodleAPI:
                 f"{self.url}/webservice/rest/server.php", params=params
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            self._save_session_state()
+            return result
         except RequestException as e:
             logger.error(f"Failed to get user by field: {e}")
             return None
@@ -186,7 +212,9 @@ class MoodleAPI:
             params["limit"] = limit
 
         # Rate limiting check
-        if not rate_limiter_manager.is_allowed("moodle_api", f"{self.url}_{wsfunction}"):
+        if not rate_limiter_manager.is_allowed(
+            "moodle_api", f"{self.url}_{wsfunction}"
+        ):
             logger.warning(f"API rate limit exceeded for {self.url} - {wsfunction}")
             return None
 
@@ -195,7 +223,89 @@ class MoodleAPI:
                 f"{self.url}/webservice/rest/server.php", params=params
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            self._save_session_state()
+            return result
         except RequestException as e:
             logger.error(f"Request to Moodle failed: {e}")
             return None
+
+    def _restore_session_state(self) -> bool:
+        """Attempt to restore a previously saved Moodle session."""
+        if not os.path.exists(self.session_state_file):
+            return False
+
+        try:
+            with open(self.session_state_file, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning(
+                "Failed to read cached Moodle session from %s: %s",
+                self.session_state_file,
+                exc,
+            )
+            return False
+
+        token = data.get("token")
+        cookies = data.get("cookies", {})
+        userid = data.get("userid")
+
+        if token:
+            self.token = token
+        if userid:
+            self.userid = userid
+        if cookies:
+            self.session.cookies.update(cookiejar_from_dict(cookies))
+
+        logger.info("Loaded cached Moodle session from disk.")
+        return True
+
+    def _cached_session_is_valid(self) -> bool:
+        """Validate the cached session by performing a lightweight API call."""
+        if not self.token:
+            return False
+        result = self.get_site_info()
+        return result is not None
+
+    def _save_session_state(self) -> None:
+        """Persist the current Moodle session (token + cookies) to disk."""
+        if not self.token:
+            return
+
+        state = {
+            "token": self.token,
+            "userid": self.userid,
+            "cookies": dict_from_cookiejar(self.session.cookies),
+        }
+
+        directory = os.path.dirname(self.session_state_file)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+
+        try:
+            with open(self.session_state_file, "w", encoding="utf-8") as fh:
+                json.dump(state, fh, indent=4)
+            self._session_restored_from_disk = True
+        except OSError as exc:
+            logger.error(
+                "Failed to persist Moodle session to %s: %s",
+                self.session_state_file,
+                exc,
+            )
+
+    def _clear_session_state(self) -> None:
+        """Remove cached session details from memory and disk."""
+        self.token = None
+        self.userid = None
+        self.session.cookies.clear()
+        self._session_restored_from_disk = False
+
+        try:
+            if os.path.exists(self.session_state_file):
+                os.remove(self.session_state_file)
+        except OSError as exc:
+            logger.warning(
+                "Failed to delete cached Moodle session %s: %s",
+                self.session_state_file,
+                exc,
+            )
