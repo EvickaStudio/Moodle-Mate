@@ -1,127 +1,55 @@
-from pathlib import Path
-from textwrap import dedent
 
-import pytest
-from urllib.parse import urlparse
-from src.core.config.loader import Config
+from src.config import Settings
 
 
-def write_cfg(tmp_path: Path, content: str) -> Path:
-    cfg = tmp_path / "config.ini"
-    cfg.write_text(dedent(content))
-    return cfg
+def _set_required_env(monkeypatch) -> None:
+    monkeypatch.setenv("MOODLEMATE_MOODLE__URL", "https://example.com")
+    monkeypatch.setenv("MOODLEMATE_MOODLE__USERNAME", "user")
+    monkeypatch.setenv("MOODLEMATE_MOODLE__PASSWORD", "pass")
 
 
-def test_config_initialization(tmp_path: Path):
-    path = write_cfg(
-        tmp_path,
-        """
-        [moodle]
-        url = https://example.com
-        username = u
-        password = p
-        initial_fetch_count = 2
-        """,
-    )
-    cfg = Config(str(path))
-    assert urlparse(cfg.moodle.url).hostname == "example.com"
+def test_settings_loads_required_moodle(monkeypatch):
+    _set_required_env(monkeypatch)
+    settings = Settings()
+    assert settings.moodle.url == "https://example.com"
+    assert settings.moodle.username == "user"
+    assert settings.moodle.password == "pass"
 
 
-def test_ai_defaults_and_overrides(tmp_path: Path):
-    path = write_cfg(
-        tmp_path,
-        """
-        [moodle]
-        url = x
-        username = u
-        password = p
-
-        [ai]
-        enabled = 0
-        model = gpt-4o-mini
-        temperature = 0.9
-        max_tokens = 256
-        system_prompt = Hello
-        """,
-    )
-    cfg = Config(str(path))
-    assert cfg.ai.enabled is False
-    assert cfg.ai.model == "gpt-4o-mini"
-    assert cfg.ai.temperature == 0.9
-    assert cfg.ai.max_tokens == 256
-    assert cfg.ai.system_prompt == "Hello"
+def test_settings_defaults_are_applied(monkeypatch):
+    _set_required_env(monkeypatch)
+    settings = Settings()
+    assert settings.ai.enabled is True
+    assert settings.notification.fetch_interval == 60
+    assert settings.notification.max_retries == 5
+    assert settings.filters.ignore_subjects_containing == []
 
 
-def test_filters_lists_parsed(tmp_path: Path):
-    path = write_cfg(
-        tmp_path,
-        """
-        [moodle]
-        url = x
-        username = u
-        password = p
+def test_settings_env_overrides(monkeypatch):
+    _set_required_env(monkeypatch)
+    monkeypatch.setenv("MOODLEMATE_AI__ENABLED", "0")
+    monkeypatch.setenv("MOODLEMATE_AI__MODEL", "gpt-4o-mini")
+    monkeypatch.setenv("MOODLEMATE_AI__TEMPERATURE", "0.9")
+    monkeypatch.setenv("MOODLEMATE_AI__MAX_TOKENS", "256")
+    monkeypatch.setenv("MOODLEMATE_AI__SYSTEM_PROMPT", "Hello")
+    settings = Settings()
 
-        [filters]
-        ignore_subjects_containing = spam, eggs ,  ham
-        ignore_courses_by_id = 1,2, 3
-        """,
-    )
-    cfg = Config(str(path))
-    assert cfg.filters.ignore_subjects_containing == ["spam", "eggs", "ham"]
-    assert cfg.filters.ignore_courses_by_id == [1, 2, 3]
+    assert settings.ai.enabled is False
+    assert settings.ai.model == "gpt-4o-mini"
+    assert settings.ai.temperature == 0.9
+    assert settings.ai.max_tokens == 256
+    assert settings.ai.system_prompt == "Hello"
 
 
-def test_missing_config_file_raises(tmp_path: Path):
-    with pytest.raises(FileNotFoundError):
-        Config(str(tmp_path / "missing.ini"))
+def test_health_config_optional_ints(monkeypatch):
+    _set_required_env(monkeypatch)
+    monkeypatch.setenv("MOODLEMATE_HEALTH__ENABLED", "true")
+    monkeypatch.setenv("MOODLEMATE_HEALTH__HEARTBEAT_INTERVAL", "60")
+    monkeypatch.setenv("MOODLEMATE_HEALTH__FAILURE_ALERT_THRESHOLD", "5")
+    monkeypatch.setenv("MOODLEMATE_HEALTH__TARGET_PROVIDER", "discord")
 
-
-def test_webhook_and_discord_sections(tmp_path: Path):
-    path = write_cfg(
-        tmp_path,
-        """
-        [moodle]
-        url = x
-        username = u
-        password = p
-
-        [discord]
-        enabled = 1
-        webhook_url = https://discord
-        bot_name = Bot
-        thumbnail_url = https://img
-
-        [webhook_site]
-        enabled = yes
-        webhook_url = https://webhook.site/abc
-        include_summary = 0
-        """,
-    )
-    cfg = Config(str(path))
-    assert cfg.discord.enabled is True
-    assert cfg.discord.webhook_url.startswith("https://discord")
-    assert cfg.webhook_site.enabled is True
-    assert cfg.webhook_site.include_summary is False
-
-
-def test_health_config_optional_ints(tmp_path: Path):
-    path = write_cfg(
-        tmp_path,
-        """
-        [moodle]
-        url = x
-        username = u
-        password = p
-
-        [health]
-        enabled = true
-        heartbeat_interval = 60
-        failure_alert_threshold = 5
-        target_provider = discord
-        """,
-    )
-    cfg = Config(str(path))
-    assert cfg.health.enabled is True
-    assert cfg.health.heartbeat_interval == 60
-    assert cfg.health.failure_alert_threshold == 5
-    assert cfg.health.target_provider == "discord"
+    settings = Settings()
+    assert settings.health.enabled is True
+    assert settings.health.heartbeat_interval == 60
+    assert settings.health.failure_alert_threshold == 5
+    assert settings.health.target_provider == "discord"

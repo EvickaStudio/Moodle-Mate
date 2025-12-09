@@ -6,6 +6,7 @@ import pytest
 
 from src.core.notification.base import NotificationProvider
 from src.core.notification.processor import NotificationProcessor
+from src.core.state_manager import StateManager
 
 
 class DummyProvider(NotificationProvider):
@@ -20,7 +21,7 @@ class DummyProvider(NotificationProvider):
 
 
 @pytest.fixture
-def fake_config(tmp_path):
+def fake_config():
     """Minimal config-like object for processor tests."""
     cfg = Mock()
     # filters
@@ -36,8 +37,17 @@ def provider():
 
 
 @pytest.fixture
-def processor(fake_config, provider):
-    return NotificationProcessor(fake_config, [provider])
+def state_manager(monkeypatch, tmp_path):
+    StateManager._instance = None  # reset singleton for tests
+    monkeypatch.setenv("MOODLE_STATE_DIR", str(tmp_path))
+    manager = StateManager()
+    yield manager
+    StateManager._instance = None
+
+
+@pytest.fixture
+def processor(fake_config, provider, state_manager):
+    return NotificationProcessor(fake_config, [provider], state_manager)
 
 
 def test_happy_path_converts_and_sends(processor, provider):
@@ -77,3 +87,33 @@ def test_missing_message_raises_and_is_logged(processor, provider, caplog):
     assert any(
         "Failed to process notification" in rec.message for rec in caplog.records
     )
+
+
+def test_summary_is_included_when_summarizer_provided(
+    fake_config, provider, state_manager
+):
+    summarizer = Mock()
+    summarizer.summarize.return_value = "short"
+    processor = NotificationProcessor(
+        fake_config, [provider], state_manager, summarizer
+    )
+
+    processor.process({"subject": "Hello", "fullmessagehtml": "<p>Content</p>"})
+
+    assert provider.sent[0][2] == "short"
+    history = state_manager.get_history()
+    assert history and history[0]["summary"] == "short"
+
+
+def test_summary_errors_are_swallowed(fake_config, provider, state_manager, caplog):
+    caplog.set_level(logging.ERROR)
+    summarizer = Mock()
+    summarizer.summarize.side_effect = RuntimeError("boom")
+    processor = NotificationProcessor(
+        fake_config, [provider], state_manager, summarizer
+    )
+
+    processor.process({"subject": "Hi", "fullmessagehtml": "<p>Body</p>"})
+
+    assert provider.sent[0][2] is None
+    assert any("Failed to generate summary" in rec.message for rec in caplog.records)
