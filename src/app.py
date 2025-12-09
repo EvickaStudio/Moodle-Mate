@@ -44,7 +44,7 @@ class MoodleMateApp:
             self._main_loop()
         except KeyboardInterrupt:
             logging.info("Shutting down gracefully...")
-            self.state_manager.save_state()
+            self.state_manager.maybe_save_state(force=True)
         except Exception as e:
             logging.error(f"An unexpected error occurred: {str(e)}")
             raise
@@ -74,6 +74,7 @@ class MoodleMateApp:
 
                 if self._fetch_and_process_notifications():
                     consecutive_errors = 0
+                    self.state_manager.maybe_save_state()
 
                 self._send_heartbeat_if_due()
 

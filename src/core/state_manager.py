@@ -25,6 +25,9 @@ class StateManager:
         self.state_file = state_file
         self.last_notification_id: Optional[int] = None
         self.notification_history: Deque[Dict] = deque(maxlen=50)
+        self._save_interval_seconds = 15.0
+        self._last_saved_at: float = 0.0
+        self._dirty = False
         self._load_state()
 
     def _resolve_state_file(self, provided_path: Optional[str]) -> str:
@@ -32,8 +35,7 @@ class StateManager:
         if provided_path:
             return os.path.abspath(provided_path)
 
-        env_path = os.getenv("MOODLE_STATE_FILE")
-        if env_path:
+        if env_path := os.getenv("MOODLE_STATE_FILE"):
             return os.path.abspath(env_path)
 
         state_dir = os.getenv("MOODLE_STATE_DIR", "/app/state")
@@ -66,6 +68,8 @@ class StateManager:
             with open(self.state_file, "w") as f:
                 json.dump(state, f, indent=4)
             logger.info(f"Successfully saved state to {self.state_file}.")
+            self._dirty = False
+            self._last_saved_at = time.time()
         except IOError as e:
             logger.error(f"Could not write to state file {self.state_file}: {e}")
 
@@ -73,6 +77,21 @@ class StateManager:
         """Updates the last notification ID."""
         if notification_id > (self.last_notification_id or 0):
             self.last_notification_id = notification_id
+            self._dirty = True
+
+    def maybe_save_state(self, force: bool = False) -> None:
+        """Persist state when dirty and the interval has elapsed, or when forced."""
+        if force:
+            self.save_state()
+            return
+
+        if not self._dirty:
+            return
+
+        if time.time() - self._last_saved_at < self._save_interval_seconds:
+            return
+
+        self.save_state()
 
     def add_notification_to_history(
         self,
