@@ -196,7 +196,10 @@ class MoodleMateApp:
 
         target_provider_name = self.settings.health.target_provider.lower()
         for provider in self.notification_processor.providers:
-            if provider.provider_name.lower() == target_provider_name:
+            provider_name = (
+                getattr(provider, "provider_name", None) or provider.__class__.__name__
+            ).lower()
+            if provider_name == target_provider_name:
                 try:
                     provider.send(subject, message)
                     logging.info(

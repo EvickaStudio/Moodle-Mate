@@ -21,8 +21,13 @@ class AIConfig(BaseModel):
 
 
 class NotificationConfig(BaseModel):
-    max_retries: int = 5
-    fetch_interval: int = 60
+    max_retries: int = Field(default=5, ge=0, le=10)
+    fetch_interval: int = Field(default=60, ge=10, le=3600)
+    connect_timeout: float = Field(default=10.0, gt=0, le=60)
+    read_timeout: float = Field(default=30.0, gt=0, le=180)
+    retry_total: int = Field(default=3, ge=0, le=10)
+    retry_backoff_factor: float = Field(default=1.0, ge=0.0, le=5.0)
+    max_payload_bytes: int = Field(default=65536, ge=1024, le=262144)
 
 
 class FiltersConfig(BaseModel):

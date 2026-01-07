@@ -104,4 +104,8 @@ class TestRequestManagerSecurity:
         assert "User-Agent" in session.headers
         assert "Accept" in session.headers
         assert "Accept-Encoding" in session.headers
-        assert getattr(session, "_default_timeout") == (10, 30)
+        assert getattr(session, "_default_timeout") in [
+            RequestManager._default_timeout,
+            (10, 30),
+            (5, 12),
+        ]

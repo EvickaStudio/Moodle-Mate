@@ -28,6 +28,8 @@ class RequestManager:
     _session: Optional[requests.Session] = None
     _session_created_at: float = 0
     _default_timeout: Union[float, Tuple[float, float]] = (10, 30)
+    _retry_total: int = 3
+    _backoff_factor: float = 1.0
 
     def __new__(cls) -> "RequestManager":
         if cls._instance is None:
@@ -61,8 +63,8 @@ class RequestManager:
 
         # Configure retry strategy with backoff
         retry_strategy = Retry(
-            total=3,
-            backoff_factor=1,
+            total=self._retry_total,
+            backoff_factor=self._backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=[
                 "HEAD",
@@ -86,6 +88,19 @@ class RequestManager:
         self._session.mount("https://", adapter)
 
         self._session_created_at = time.time()
+
+    def configure(
+        self,
+        connect_timeout: float,
+        read_timeout: float,
+        retry_total: int,
+        backoff_factor: float,
+    ) -> None:
+        """Configure timeouts and retries, rebuilding the session."""
+        self._default_timeout = (connect_timeout, read_timeout)
+        self._retry_total = retry_total
+        self._backoff_factor = backoff_factor
+        self._setup_session()
 
     @property
     def session(self) -> requests.Session:

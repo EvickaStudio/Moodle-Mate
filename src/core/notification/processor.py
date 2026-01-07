@@ -48,6 +48,18 @@ class NotificationProcessor:
             # Generate summary if enabled
             summary = self._generate_summary(message) if self.summarizer else None
 
+            # Enforce payload limits
+            max_bytes = getattr(self.settings.notification, "max_payload_bytes", 65536)
+            message, message_trimmed = self._trim_to_limit(message, max_bytes)
+            summary, summary_trimmed = self._trim_to_limit(summary, max_bytes)
+            if message_trimmed or summary_trimmed:
+                logger.warning(
+                    "Notification payload trimmed to %d bytes (message_trimmed=%s, summary_trimmed=%s)",
+                    max_bytes,
+                    message_trimmed,
+                    summary_trimmed,
+                )
+
             # Send through providers and record history
             providers_sent = self._send_to_providers(subject, message, summary)
 
@@ -64,20 +76,11 @@ class NotificationProcessor:
 
     def _should_ignore_notification(self, subject: str, notification: dict) -> bool:
         """Checks if a notification should be ignored based on configured filters."""
-        # Subject filtering
-        for phrase in self.settings.filters.ignore_subjects_containing:
-            if phrase.lower() in subject.lower():
-                return True
-
-        # Course ID filtering (assuming notification contains 'courseid' or similar)
-        # Moodle's message_popup_get_popup_notifications does not return courseid directly.
-        # If course ID filtering is needed, MoodleAPI would need to be extended
-        # to fetch more detailed notification info or course info.
-        # For now, this part is a placeholder or can be removed if not feasible.
-        # if 'courseid' in notification and notification['courseid'] in self.settings.filters.ignore_courses_by_id:
-        #     return True
-
-        return False
+        lowered_subject = subject.lower()
+        return any(
+            phrase.lower() in lowered_subject
+            for phrase in self.settings.filters.ignore_subjects_containing
+        )
 
     def _get_notification_subject(self, notification: dict) -> str:
         """Extract and validate notification subject."""
@@ -103,6 +106,18 @@ class NotificationProcessor:
             logging.error(f"Failed to generate summary: {str(e)}")
             return None
 
+    def _trim_to_limit(
+        self, text: Optional[str], max_bytes: int
+    ) -> tuple[Optional[str], bool]:
+        """Trim text to a byte limit, returning the trimmed text and whether trimming occurred."""
+        if text is None:
+            return None, False
+        encoded = text.encode("utf-8")
+        if len(encoded) <= max_bytes:
+            return text, False
+        trimmed = encoded[:max_bytes].decode("utf-8", errors="ignore")
+        return trimmed, True
+
     def _send_to_providers(
         self, subject: str, message: str, summary: Optional[str]
     ) -> List[str]:
@@ -110,13 +125,14 @@ class NotificationProcessor:
         sent_to = []
         for provider in self.providers:
             try:
-                success = provider.send(subject, message, summary)
-                if success:
-                    sent_to.append(provider.__class__.__name__)
-                else:
-                    logging.error(f"Failed to send via {provider.__class__.__name__}")
-            except Exception as e:
-                logging.error(
-                    f"Error with {provider.__class__.__name__}: {str(e)}", exc_info=True
+                name = (
+                    getattr(provider, "provider_name", None)
+                    or provider.__class__.__name__
                 )
+                if provider.send(subject, message, summary):
+                    sent_to.append(name)
+                else:
+                    logging.error(f"Failed to send via {name}")
+            except Exception as e:
+                logging.error(f"Error with {name}: {str(e)}", exc_info=True)
         return sent_to

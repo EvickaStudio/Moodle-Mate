@@ -75,7 +75,7 @@ class PluginManager:
 
                         # Initialize the provider with its config
                         provider = provider_class(**config_dict)
-                        provider.provider_name = name
+                        provider.provider_name = name.lower()
                         providers.append(provider)
                         logger.info(f"Loaded enabled provider: {name}")
             except Exception as e:

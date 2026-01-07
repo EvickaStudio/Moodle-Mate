@@ -454,11 +454,35 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-border">
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Fetch Interval (sec)</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.notification.fetch_interval" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" min="10" x-model.number="config.notification.fetch_interval" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder=">=10">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Max Retries</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.notification.max_retries" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" x-model.number="config.notification.max_retries" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="0-10">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <div>
+                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Connect Timeout (s)</label>
+                                    <input type="text" inputmode="decimal" x-model.number="config.notification.connect_timeout" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="<=60">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Read Timeout (s)</label>
+                                    <input type="text" inputmode="decimal" x-model.number="config.notification.read_timeout" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="<=180">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Max Payload (bytes)</label>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.notification.max_payload_bytes" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="1024-262144">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Retry Total</label>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" x-model.number="config.notification.retry_total" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="0-10">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Retry Backoff Factor</label>
+                                    <input type="text" inputmode="decimal" x-model.number="config.notification.retry_backoff_factor" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="0-5">
                                 </div>
                             </div>
                         </div>
@@ -520,8 +544,8 @@
     <script>
         const defaultConfigState = () => ({
             moodle: { url: "", username: "", password: "", initial_fetch_count: 1 },
-            ai: { enabled: true, api_key: "", model: "gpt-4", temperature: 0.7, max_tokens: 150, system_prompt: "", endpoint: "" },
-            notification: { max_retries: 5, fetch_interval: 60 },
+            ai: { enabled: true, api_key: "", model: "gpt-5-nano", temperature: 0.7, max_tokens: 150, system_prompt: "", endpoint: "" },
+            notification: { max_retries: 5, fetch_interval: 60, connect_timeout: 10, read_timeout: 30, retry_total: 3, retry_backoff_factor: 1, max_payload_bytes: 65536 },
             health: { enabled: false, heartbeat_interval: null, failure_alert_threshold: null, target_provider: "" },
             web: { enabled: true, host: "0.0.0.0", port: 9095, auth_secret: "" },
             discord: { enabled: false, webhook_url: "", bot_name: "MoodleMate", thumbnail_url: "" },
@@ -697,6 +721,11 @@
                     payload.moodle.initial_fetch_count = Number(payload.moodle.initial_fetch_count) || 1;
                     payload.notification.fetch_interval = Number(payload.notification.fetch_interval) || 60;
                     payload.notification.max_retries = Number(payload.notification.max_retries) || 5;
+                    payload.notification.connect_timeout = Math.max(0.1, Number(payload.notification.connect_timeout) || 10);
+                    payload.notification.read_timeout = Math.max(0.1, Number(payload.notification.read_timeout) || 30);
+                    payload.notification.retry_total = Math.max(0, Math.floor(Number(payload.notification.retry_total) || 3));
+                    payload.notification.retry_backoff_factor = Math.max(0, Number(payload.notification.retry_backoff_factor) || 1);
+                    payload.notification.max_payload_bytes = Math.max(1024, Math.floor(Number(payload.notification.max_payload_bytes) || 65536));
                     payload.web.port = Number(payload.web.port) || 9095;
                     const heartbeat = payload.health.heartbeat_interval;
                     payload.health.heartbeat_interval = heartbeat === "" || heartbeat === null ? null : Number(heartbeat);
@@ -715,13 +744,24 @@
                             body: JSON.stringify(payload)
                         });
                         if (!res.ok) {
-                            throw new Error("Failed to save config");
+                            let detail = "Failed to save config";
+                            try {
+                                const body = await res.json();
+                                if (body?.detail) {
+                                    detail = Array.isArray(body.detail)
+                                        ? body.detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
+                                        : body.detail;
+                                }
+                            } catch (e) {
+                                // ignore parse errors
+                            }
+                            throw new Error(detail);
                         }
                         this.showToast("Success", "Configuration saved successfully.", "success");
                         await this.refreshData(true);
                     } catch (err) {
                         console.error(err);
-                        this.showToast("Error", "Failed to save configuration.", "error");
+                        this.showToast("Error", err?.message || "Failed to save configuration.", "error");
                     } finally {
                         this.saving = false;
                     }

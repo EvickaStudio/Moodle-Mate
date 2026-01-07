@@ -24,3 +24,11 @@ def test_reset_session_creates_new_instance():
 
 def test_global_instance():
     assert request_manager.session is RequestManager().session
+
+
+def test_configure_updates_timeouts_and_retries():
+    rm = RequestManager()
+    rm.configure(connect_timeout=5, read_timeout=12, retry_total=2, backoff_factor=0.5)
+    assert rm._default_timeout == (5, 12)
+    assert rm._retry_total == 2
+    assert rm._backoff_factor == 0.5

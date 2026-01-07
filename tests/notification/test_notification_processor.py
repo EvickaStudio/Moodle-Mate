@@ -24,10 +24,10 @@ class DummyProvider(NotificationProvider):
 def fake_config():
     """Minimal config-like object for processor tests."""
     cfg = Mock()
-    # filters
     cfg.filters.ignore_subjects_containing = ["ignore-me"]
-    # ai
     cfg.ai.enabled = False
+    cfg.notification = Mock()
+    cfg.notification.max_payload_bytes = 65536
     return cfg
 
 

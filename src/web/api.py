@@ -6,9 +6,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import APIKeyCookie
+from pydantic import ValidationError
 
 from src.config import Settings
 from src.core.state_manager import StateManager
+from src.infrastructure.http.request_manager import request_manager
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +58,25 @@ class WebUI:
     def _setup_routes(self):
         @self.app.get("/login", response_class=HTMLResponse)
         async def login_page(request: Request):
+            if not self.settings.web.auth_secret:
+                return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
             return self.templates.TemplateResponse("login.html", {"request": request})
 
         @self.app.post("/api/login")
-        async def login(response: Response, password: str = Body(..., embed=True)):
+        async def login(response: Response, payload: Any = Body(...)):
             if not self.settings.web.auth_secret:
                 return {"message": "Auth not enabled"}
 
-            if password == self.settings.web.auth_secret:
+            password = None
+            if isinstance(payload, dict):
+                password = payload.get("password")
+            elif isinstance(payload, str):
+                password = payload
+
+            if password is None:
+                raise HTTPException(status_code=400, detail="Password required")
+
+            if str(password) == str(self.settings.web.auth_secret):
                 # Set cookie
                 response.set_cookie(
                     key=COOKIE_NAME,
@@ -120,24 +133,36 @@ class WebUI:
         async def update_config(new_config: Dict[str, Any] = Body(...)):
             try:
 
-                def update_recursive(original_model, new_values):
-                    for key, value in new_values.items():
-                        if not hasattr(original_model, key):
-                            continue
-
-                        # Protected fields that cannot be changed via web
+                def merge_dict(target: Dict[str, Any], updates: Dict[str, Any]) -> None:
+                    for key, value in updates.items():
                         if key == "auth_secret":
                             continue
-
-                        attr = getattr(original_model, key)
-                        if hasattr(attr, "model_dump") and isinstance(value, dict):
-                            update_recursive(attr, value)
+                        if isinstance(value, dict) and isinstance(
+                            target.get(key), dict
+                        ):
+                            merge_dict(target[key], value)
                         else:
                             if value == "********":
                                 continue
-                            setattr(original_model, key, value)
+                            target[key] = value
 
-                update_recursive(self.settings, new_config)
+                current_config = self.settings.model_dump()
+                merge_dict(current_config, new_config)
+
+                try:
+                    validated = Settings.model_validate(current_config)
+                except ValidationError as exc:
+                    raise HTTPException(status_code=400, detail=exc.errors()) from exc
+
+                for field_name, value in validated.model_dump().items():
+                    setattr(self.settings, field_name, value)
+
+                request_manager.configure(
+                    connect_timeout=self.settings.notification.connect_timeout,
+                    read_timeout=self.settings.notification.read_timeout,
+                    retry_total=self.settings.notification.retry_total,
+                    backoff_factor=self.settings.notification.retry_backoff_factor,
+                )
 
                 logger.info("Configuration updated via WebUI")
                 return {"message": "Configuration updated successfully."}
