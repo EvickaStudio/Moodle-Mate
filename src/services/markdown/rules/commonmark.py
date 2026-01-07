@@ -114,20 +114,24 @@ def horizontal_rule_rule(content, node, options):
 
 def inline_link_rule(content, node, options):
     """
-    Converts an <a href="..."> to an inline Markdown link [text](url "title").
+    Converts an <a href="..."> to an inline Markdown link [text](url).
+    Titles are removed as they are not supported by most notification providers (e.g. Discord).
     """
     href = node.get_attribute("href")
     if href:
+        # Escape parentheses in URLs
         href = href.replace("(", r"\(").replace(")", r"\)")
-    title = clean_attribute(node.get_attribute("title"))
 
-    # Replace problematic f-string with string concatenation
-    title_part = ""
-    if title:
-        escaped_title = title.replace('"', '\\"')
-        title_part = f' "{escaped_title}"'
+    # Discord and other providers don't support link titles in markdown
+    # and often fail to render the link if a title is present.
+    # We also check if the content is the same as the href to avoid redundant [url](url)
+    clean_href = href.replace(r"\(", "(").replace(r"\)", ")")
+    if content.strip() == clean_href.strip() and href.startswith(
+        ("http://", "https://")
+    ):
+        return clean_href
 
-    return f"[{content}]({href}{title_part})"
+    return f"[{content}]({href})"
 
 
 class ReferenceLinkStore:
@@ -155,24 +159,21 @@ reference_link_store = ReferenceLinkStore()
 def reference_link_rule(content, node, options):
     """
     Converts <a> to a reference-style link: [text][id].
-    Actual reference appended at the bottom: [id]: href "title"
+    Actual reference appended at the bottom: [id]: href
+    Titles are removed for compatibility.
     """
     href = node.get_attribute("href") or ""
-    title = clean_attribute(node.get_attribute("title")) or ""
-    if title:
-        title = f' "{title}"'
-
     style = options["linkReferenceStyle"]
     if style == "collapsed":
         replacement = f"[{content}][]"
-        ref = f"[{content}]: {href}{title}"
+        ref = f"[{content}]: {href}"
     elif style == "shortcut":
         replacement = f"[{content}]"
-        ref = f"[{content}]: {href}{title}"
+        ref = f"[{content}]: {href}"
     else:
         idx = len(reference_link_store.references) + 1
         replacement = f"[{content}][{idx}]"
-        ref = f"[{idx}]: {href}{title}"
+        ref = f"[{idx}]: {href}"
 
     reference_link_store.add_reference(ref)
     return replacement
@@ -218,23 +219,17 @@ def code_rule(content, node, options):
     while delimiter in matches:
         delimiter += "`"
 
-    # Use string concatenation instead of f-string for the escaped quote
-    title = clean_attribute(node.get_attribute("title"))
-    if title:
-        title = ' "' + title.replace('"', '\\"') + '"'
-
     return delimiter + extra_space + content + extra_space + delimiter
 
 
 def image_rule(content, node, options):
     """
-    Converts <img src="..." alt="..." title="..."> into ![alt](src "title").
+    Converts <img src="..." alt="..."> into ![alt](src).
+    Titles are removed as they are not supported by most notification providers.
     """
     alt = clean_attribute(node.get_attribute("alt") or "")
     src = node.get_attribute("src") or ""
-    title = clean_attribute(node.get_attribute("title") or "")
-    title_part = f' "{title}"' if title else ""
-    return f"![{alt}]({src}{title_part})" if src else ""
+    return f"![{alt}]({src})" if src else ""
 
 
 COMMONMARK_RULES = {

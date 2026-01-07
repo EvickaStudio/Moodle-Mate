@@ -154,8 +154,8 @@ class WebUI:
                 except ValidationError as exc:
                     raise HTTPException(status_code=400, detail=exc.errors()) from exc
 
-                for field_name, value in validated.model_dump().items():
-                    setattr(self.settings, field_name, value)
+                for field_name in validated.__class__.model_fields:
+                    setattr(self.settings, field_name, getattr(validated, field_name))
 
                 request_manager.configure(
                     connect_timeout=self.settings.notification.connect_timeout,

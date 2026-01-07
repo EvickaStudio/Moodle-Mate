@@ -179,6 +179,7 @@ Moodle Mate includes a built-in web dashboard for monitoring and configuration.
   - Edit configuration live (requires `MOODLEMATE_WEB__AUTH_SECRET` if set).
 
 **Security**: To protect the dashboard, set `MOODLEMATE_WEB__AUTH_SECRET` in your `.env` file. If this variable is set, you will be prompted to enter this password to access the dashboard.
+To disable the login screen, leave `MOODLEMATE_WEB__AUTH_SECRET` empty or remove it.
 
 ## Screenshots
 
