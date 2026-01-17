@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.providers.notification.discord.provider import DiscordProvider
+from moodlemate.providers.notification.discord.provider import DiscordProvider
 
 
 @pytest.fixture

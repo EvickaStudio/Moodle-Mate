@@ -20,10 +20,9 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --dev --frozen
 
       - name: Run tests
         env:
           PYTHONPATH: src
         run: uv run pytest -q
-

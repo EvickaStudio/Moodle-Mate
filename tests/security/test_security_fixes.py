@@ -1,7 +1,7 @@
 import pytest
 
-from src.core.security import InputValidator, RateLimiterManager
-from src.infrastructure.http.request_manager import RequestManager
+from moodlemate.core.security import InputValidator, RateLimiterManager
+from moodlemate.infrastructure.http.request_manager import RequestManager
 
 
 class TestInputValidation:
@@ -104,7 +104,7 @@ class TestRequestManagerSecurity:
         assert "User-Agent" in session.headers
         assert "Accept" in session.headers
         assert "Accept-Encoding" in session.headers
-        assert getattr(session, "_default_timeout") in [
+        assert session._default_timeout in [
             RequestManager._default_timeout,
             (10, 30),
             (5, 12),

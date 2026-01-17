@@ -1,6 +1,5 @@
-flake8 
-pytest 
-coverage 
-black 
-isort 
-types-requests
+pre-commit>=4.2.0
+pytest>=8.4.1
+pytest-cov>=4.0.0
+ruff>=0.12.1
+types-requests>=2.32.4.20250611

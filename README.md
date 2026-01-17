@@ -65,17 +65,18 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 2. **Install Dependencies**
 
-   You can optionally use a virtual environment to install the dependencies:
+   Recommended (uv):
+
+   ```bash
+   uv sync --extra dev
+   ```
+
+   If you prefer a virtualenv:
 
    ```bash
    python -m venv venv
    source venv/bin/activate
    # source venv/bin/activate.fish for fish shell
-   ```
-
-   Then install the dependencies:
-
-   ```bash
    pip install -r requirements.txt
    ```
 
@@ -90,6 +91,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    Edit `.env` with your settings. Configuration uses environment variables with the `MOODLEMATE_` prefix.
 
    Example `.env`:
+
    ```env
    MOODLEMATE_MOODLE__URL=https://moodle.example.com
    MOODLEMATE_MOODLE__USERNAME=your_username
@@ -140,10 +142,10 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
 
 ### Standard Usage
 
-To start Moodle Mate, simply run:
+To start Moodle Mate, run:
 
 ```bash
-python main.py
+uv run moodlemate
 ```
 
 ### Docker Usage
@@ -163,7 +165,7 @@ docker compose down
 When running, the application will:
 
 1. Validate your configuration.
-2. Start the Web Dashboard (default: http://localhost:9095).
+2. Start the Web Dashboard (default: <http://localhost:9095>).
 3. Connect to your Moodle instance.
 4. Continuously monitor for new notifications.
 5. Process and deliver notifications according to your settings.
@@ -203,6 +205,10 @@ Running as Docker daemon, to see the logs run `docker compose logs -f`
 
 Running as standard python application, you will automatically see the logs in the terminal you ran the command in. For KVMs running MoodleMate in the background, docker is the recommended way to run it, but you can also use tmux, screen or tmuxinator to run it in the background.
 
+## Documentation
+
+See the Diataxis-based docs index at `docs/README.md`.
+
 ### Discord notification
 
 ![v2.0.2](assets/preview.png)
@@ -213,8 +219,8 @@ MoodleMate now supports a plugin system that allows you to easily create and add
 
 ### Quick Start
 
-1. Start from the template at `src/templates/notification_service_template.py`.
-2. Copy it to `src/providers/notification/your_service_name/provider.py` and rename the class (e.g., `YourServiceNameProvider`).
+1. Start from the template at `src/moodlemate/templates/notification_service_template.py`.
+2. Copy it to `src/moodlemate/providers/notification/your_service_name/provider.py` and rename the class (e.g., `YourServiceNameProvider`).
 3. Implement `send(self, subject, message, summary=None) -> bool` with your service’s API.
 4. Add configuration to your `.env` file:
 
@@ -223,9 +229,9 @@ MoodleMate now supports a plugin system that allows you to easily create and add
    MOODLEMATE_YOUR_SERVICE_NAME__API_KEY=your_key
    ```
 
-5. Optionally verify with `python main.py --test-notification`.
+5. Optionally verify with `uv run moodlemate --test-notification`.
 
-See detailed steps in [Creating Custom Notification Providers](docs/CUSTOM_PROVIDERS.md).
+See detailed steps in [How to add a custom notification provider](docs/how-to/add-custom-provider.md).
 
 ## Contributing
 

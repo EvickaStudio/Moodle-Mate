@@ -1,14 +1,10 @@
 """Shared test fixtures and configuration."""
 
 import logging
-import os
-import sys
-from typing import Generator
+from collections.abc import Generator
 from unittest.mock import Mock
 
 import pytest
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 @pytest.fixture(autouse=True)
@@ -26,28 +22,20 @@ def setup_logging() -> Generator[None, None, None]:
 def reset_singletons() -> Generator[None, None, None]:
     """Reset global/singleton state between tests to avoid cross-test leakage."""
     try:
-        from src.core.notification.processor import NotificationProcessor
-        from src.core.config.loader import Config
-        from src.core.service_locator import ServiceLocator
-        from src.infrastructure.http.request_manager import (
+        from moodlemate.infrastructure.http.request_manager import (
             RequestManager,
             request_manager,
         )
+        from moodlemate.notifications.processor import NotificationProcessor
     except Exception:
         NotificationProcessor = None  # type: ignore
-        Config = None  # type: ignore
-        ServiceLocator = None  # type: ignore
         RequestManager = None  # type: ignore
         request_manager = None  # type: ignore
 
     if NotificationProcessor is not None:
         NotificationProcessor._instance = None
-    if Config is not None:
-        Config._instance = None
-    if ServiceLocator is not None:
-        ServiceLocator._services.clear()
     if RequestManager is not None:
-        RequestManager._instance = None
+        RequestManager._instance = request_manager
         RequestManager._default_timeout = (10, 30)
         RequestManager._retry_total = 3
         RequestManager._backoff_factor = 1.0
@@ -61,12 +49,8 @@ def reset_singletons() -> Generator[None, None, None]:
 
     if NotificationProcessor is not None:
         NotificationProcessor._instance = None
-    if Config is not None:
-        Config._instance = None
-    if ServiceLocator is not None:
-        ServiceLocator._services.clear()
     if RequestManager is not None:
-        RequestManager._instance = None
+        RequestManager._instance = request_manager
         RequestManager._default_timeout = (10, 30)
         RequestManager._retry_total = 3
         RequestManager._backoff_factor = 1.0

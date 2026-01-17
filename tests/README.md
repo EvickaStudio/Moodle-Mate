@@ -7,12 +7,13 @@ This directory contains the test suite for Moodle Mate. The tests are written us
 ```
 tests/
 ├── conftest.py              # Shared fixtures and configuration
-├── utils/                   # Tests for utility modules
-│   ├── test_config.py      # Tests for configuration management
-├── notification/           # Tests for notification modules
+├── config/                  # Tests for configuration management
+│   ├── test_config.py
+├── notifications/           # Tests for notification modules
 │   ├── test_notification_processor.py
-│   ├── test_notification_sender.py
 │   └── test_notification_summarizer.py
+├── markdown/                # Tests for markdown conversion
+│   └── test_markdown_converter.py
 └── README.md               # This file
 ```
 
@@ -21,23 +22,23 @@ tests/
 To run the tests, first install the test dependencies:
 
 ```bash
-pip install -e ".[test]"
+uv sync --dev
 ```
 
 Then run the tests using pytest:
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run with coverage report
-pytest --cov=src --cov-report=term-missing
+uv run pytest --cov=src/moodlemate --cov-report=term-missing
 
 # Run specific test file
-pytest tests/utils/test_config.py
+uv run pytest tests/config/test_config.py
 
 # Run tests matching a pattern
-pytest -k "test_config"
+uv run pytest -k "test_config"
 ```
 
 ## Test Organization
