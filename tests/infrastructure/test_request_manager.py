@@ -1,4 +1,7 @@
-from src.infrastructure.http.request_manager import RequestManager, request_manager
+from moodlemate.infrastructure.http.request_manager import (
+    RequestManager,
+    request_manager,
+)
 
 
 def test_singleton_and_headers():

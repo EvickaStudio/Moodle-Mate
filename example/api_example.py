@@ -1,14 +1,18 @@
-from src.core.config.loader import Config
-from src.services.moodle.api import MoodleAPI
+from moodlemate.config import Settings
+from moodlemate.moodle.api import MoodleAPI
 
-# Create a Config object
-config = Config("config.ini")
+# Create a Settings object (loads from .env)
+settings = Settings()
 
-# Initialize MoodleAPI with config
-api = MoodleAPI(config.moodle.url)
+# Initialize MoodleAPI with settings
+api = MoodleAPI(
+    url=settings.moodle.url,
+    username=settings.moodle.username,
+    password=settings.moodle.password,
+)
 
-# Login using credentials from config
-api.login(config.moodle.username, config.moodle.password)
+# Login using credentials from settings
+api.login()
 
 # Get site information
 site_info = api.get_site_info()
