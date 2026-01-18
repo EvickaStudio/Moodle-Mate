@@ -33,7 +33,7 @@ jobs:
         enable-cache: true
 
     - name: Sync dependencies
-      run: uv sync --dev --frozen
+      run: uv sync --extra dev --frozen
 
     - name: Ruff lint (no fixes)
       run: uv run ruff check --output-format=concise .
