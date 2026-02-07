@@ -67,6 +67,14 @@ class StateManager:
             state = {"last_notification_id": self.last_notification_id}
             with open(self.state_file, "w") as f:
                 json.dump(state, f, indent=4)
+            try:
+                os.chmod(self.state_file, 0o600)
+            except OSError as e:
+                logger.warning(
+                    "Could not set restrictive permissions on state file %s: %s",
+                    self.state_file,
+                    e,
+                )
             logger.info(f"Successfully saved state to {self.state_file}.")
             self._dirty = False
             self._last_saved_at = time.time()

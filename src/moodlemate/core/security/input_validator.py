@@ -128,8 +128,13 @@ class InputValidator:
         # Remove on* event handlers
         text = re.sub(r"on\w+\s*=", "", text, flags=re.IGNORECASE)
 
-        # Remove data: URLs that could be malicious
-        text = re.sub(r"data\s*:", "", text, flags=re.IGNORECASE)
+        # Remove data: protocol only in URL attribute contexts.
+        text = re.sub(
+            r'((?:href|src)\s*=\s*["\'])\s*data\s*:',
+            r"\1",
+            text,
+            flags=re.IGNORECASE,
+        )
 
         return text
 

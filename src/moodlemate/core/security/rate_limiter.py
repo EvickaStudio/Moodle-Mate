@@ -4,6 +4,7 @@ import hashlib
 import logging
 import time
 from collections import defaultdict, deque
+from functools import wraps
 from threading import Lock
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class TokenBucketRateLimiter:
             Consistent bucket key
         """
         # Use hash to create consistent keys and prevent key length issues
-        return hashlib.md5(identifier.encode()).hexdigest()
+        return hashlib.sha256(identifier.encode()).hexdigest()
 
     def is_allowed(self, identifier: str) -> bool:
         """Check if a request is allowed for the given identifier.
@@ -144,6 +145,9 @@ class RateLimiterManager:
         # General HTTP requests: 120 requests per minute
         self.register_limiter("http_general", 120, 60)
 
+        # Web UI login attempts: 5 attempts per minute per identifier
+        self.register_limiter("web_login", 5, 60)
+
     def register_limiter(self, name: str, max_requests: int, time_window: int) -> None:
         """Register a new rate limiter.
 
@@ -240,6 +244,7 @@ def rate_limit_limiter(limiter_name: str, identifier_key: str | None = None):
     """
 
     def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             # Generate identifier
             if identifier_key:
@@ -273,8 +278,6 @@ def rate_limit_limiter(limiter_name: str, identifier_key: str | None = None):
 
             return func(*args, **kwargs)
 
-        wrapper.__name__ = func.__name__
-        wrapper.__doc__ = func.__doc__
         return wrapper
 
     return decorator

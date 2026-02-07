@@ -27,9 +27,9 @@ def with_retry(
         on_failure: Optional callback function to execute when all retries fail
     """
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T | None]:
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
-        def wrapper(*args, **kwargs) -> T | None:
+        def wrapper(*args, **kwargs) -> T:
             retries = 0
             delay = base_delay
 
@@ -44,7 +44,7 @@ def with_retry(
                         )
                         if on_failure:
                             return on_failure()
-                        return None
+                        raise
 
                     logger.warning(
                         f"Attempt {retries}/{max_retries} failed for {func.__name__}: {e!s}"

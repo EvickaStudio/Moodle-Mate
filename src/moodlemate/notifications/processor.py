@@ -77,10 +77,23 @@ class NotificationProcessor:
     def _should_ignore_notification(self, subject: str, notification: dict) -> bool:
         """Checks if a notification should be ignored based on configured filters."""
         lowered_subject = subject.lower()
-        return any(
+        subject_match = any(
             phrase.lower() in lowered_subject
             for phrase in self.settings.filters.ignore_subjects_containing
         )
+        if subject_match:
+            return True
+
+        course_id = notification.get("courseid")
+        try:
+            if course_id is not None and int(course_id) in set(
+                self.settings.filters.ignore_courses_by_id
+            ):
+                return True
+        except (TypeError, ValueError):
+            logger.debug("Skipping invalid course id in notification: %r", course_id)
+
+        return False
 
     def _get_notification_subject(self, notification: dict) -> str:
         """Extract and validate notification subject."""

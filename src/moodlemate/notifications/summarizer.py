@@ -24,8 +24,9 @@ class NotificationSummarizer:
             return
 
         if not self.config.api_key:
-            # This might be valid if endpoint doesn't need key, but generally required for OpenAI
-            pass
+            logging.warning(
+                "AI enabled without API key. This is only valid for endpoints that do not require a key."
+            )
 
         if self.config.enabled and not self.ai_provider:
             raise ValueError("AI is enabled but no AI provider was injected.")

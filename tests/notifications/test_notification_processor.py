@@ -24,6 +24,7 @@ def fake_config():
     """Minimal config-like object for processor tests."""
     cfg = Mock()
     cfg.filters.ignore_subjects_containing = ["ignore-me"]
+    cfg.filters.ignore_courses_by_id = []
     cfg.ai.enabled = False
     cfg.notification = Mock()
     cfg.notification.max_payload_bytes = 65536
@@ -66,6 +67,17 @@ def test_ignored_by_subject_filter(processor, provider, caplog):
     processor.process(notification)
     assert provider.sent == []
     assert any("ignored by filter" in rec.message for rec in caplog.records)
+
+
+def test_ignored_by_course_filter(processor, provider):
+    processor.settings.filters.ignore_courses_by_id = [42]
+    notification = {
+        "subject": "Important update",
+        "fullmessagehtml": "<p>Course notice</p>",
+        "courseid": 42,
+    }
+    processor.process(notification)
+    assert provider.sent == []
 
 
 def test_missing_subject_raises_and_is_logged(processor, provider, caplog):

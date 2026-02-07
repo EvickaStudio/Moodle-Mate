@@ -337,7 +337,25 @@ class MoodleNotificationHandler:
                     logger.info(f"No user found with ID {user_id}")
                     return None
 
-                user_data = response[0]
+                user_data = None
+                if isinstance(response, list):
+                    if response:
+                        user_data = response[0]
+                elif isinstance(response, dict):
+                    users = response.get("users")
+                    if isinstance(users, list) and users:
+                        user_data = users[0]
+                    elif "id" in response:
+                        user_data = response
+
+                if not isinstance(user_data, dict):
+                    logger.warning(
+                        "Unexpected user lookup response format for user_id=%s: %r",
+                        user_id,
+                        type(response).__name__,
+                    )
+                    return None
+
                 processed = self._process_user_data(user_data)
                 return self._log_and_return(
                     processed, "Failed to process user data", "User data fetched: "

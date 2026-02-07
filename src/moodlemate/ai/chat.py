@@ -2,7 +2,7 @@ import logging
 import re
 import time
 
-import openai  # version 1.5
+import openai
 import tiktoken
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
@@ -72,9 +72,9 @@ class GPT:
         if not key:
             raise InvalidAPIKeyError("API key cannot be empty")
 
-        if not self._api_key_pattern.match(key):
+        if not self._api_key_pattern.match(key) and not self._endpoint:
             raise InvalidAPIKeyError(
-                "Invalid API key format. Expected format: 'sk-' followed by 48+ alphanumeric characters"
+                "Invalid API key format for default OpenAI endpoint. Expected format: 'sk-' followed by 48+ alphanumeric characters"
             )
 
         self._api_key = key
@@ -350,5 +350,4 @@ class GPT:
         Returns:
             Empty string (feature not implemented)
         """
-        logging.warning("Assistant API support is not implemented")
-        return ""
+        raise NotImplementedError("Assistant API support is not implemented yet.")
