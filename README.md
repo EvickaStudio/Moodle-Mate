@@ -250,6 +250,16 @@ We welcome contributions! Please:
 3. Make your changes
 4. Submit a pull request
 
+## Release Process
+
+- Releases are automated via `.github/workflows/release-please.yml`.
+- On pushes to `main`, Release Please opens or updates a release PR.
+- Merging that PR creates a new Git tag (`vX.Y.Z`), GitHub Release, and `CHANGELOG.md` entry.
+- Version bumps follow Conventional Commits:
+  - `fix:` -> patch
+  - `feat:` -> minor
+  - `type!:` or `BREAKING CHANGE:` -> major
+
 ## License
 
 Moodle Mate is licensed under the Apache License 2.0. See [LICENSE.md](LICENSE.md) for more details.
