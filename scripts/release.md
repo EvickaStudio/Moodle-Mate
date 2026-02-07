@@ -98,14 +98,16 @@ Without this, Release Please cannot open release PRs.
 
 Use these after triggering release:
 
-1. Workflow runs:
-   1. `curl -s "https://api.github.com/repos/EvickaStudio/Moodle-Mate/actions/workflows/release-please.yml/runs?per_page=5" | jq -r '.workflow_runs[] | "run=\(.id) status=\(.status) conclusion=\(.conclusion) head=\(.head_sha[0:7]) created=\(.created_at)"'`
-2. Open release PR:
-   1. `curl -s "https://api.github.com/repos/EvickaStudio/Moodle-Mate/pulls?state=open&per_page=100" | jq -r '.[] | select(.head.ref|startswith("release-please--")) | "#\(.number) | \(.title) | head=\(.head.ref)"'`
-3. Tags:
-   1. `curl -s "https://api.github.com/repos/EvickaStudio/Moodle-Mate/tags?per_page=20" | jq -r '.[].name'`
-4. Releases:
-   1. `curl -s "https://api.github.com/repos/EvickaStudio/Moodle-Mate/releases?per_page=20" | jq -r '.[] | "\(.tag_name) | \(.name // "") | draft=\(.draft) prerelease=\(.prerelease)"'`
+1. GitHub CLI auth:
+   1. `gh auth status`
+2. Workflow runs (Release Please):
+   1. `gh run list --workflow release-please.yml --limit 5 --json databaseId,status,conclusion,headSha,createdAt,url --jq '.[] | "run=\(.databaseId) status=\(.status) conclusion=\(.conclusion) head=\(.headSha[0:7]) created=\(.createdAt) url=\(.url)"'`
+3. Open release PR:
+   1. `gh pr list --state open --search "head:release-please--branches--main--components--moodle-mate" --json number,title,headRefName,url --jq '.[] | "#\(.number) | \(.title) | head=\(.headRefName) | \(.url)"'`
+4. Tags:
+   1. `gh api "repos/EvickaStudio/Moodle-Mate/tags?per_page=20" --jq '.[].name'`
+5. Releases:
+   1. `gh api "repos/EvickaStudio/Moodle-Mate/releases?per_page=20" --jq '.[] | "\(.tag_name) | \(.name // "") | draft=\(.draft) prerelease=\(.prerelease)"'`
 
 ## 8. Troubleshooting
 
