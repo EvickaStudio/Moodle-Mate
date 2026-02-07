@@ -36,7 +36,10 @@ class NotificationConfig(BaseModel):
 
 
 class FiltersConfig(BaseModel):
-    """Notification filtering rules."""
+    """
+    Notification filtering rules.
+    TODO: Implement subject/course-based filtering and differentiate between global notifications and personal ones.
+    """
 
     ignore_subjects_containing: list[str] = Field(default_factory=list)
     ignore_courses_by_id: list[int] = Field(default_factory=list)
@@ -52,7 +55,7 @@ class HealthConfig(BaseModel):
 
 
 class WebConfig(BaseModel):
-    """Embedded Web UI settings."""
+    """Web UI settings."""
 
     enabled: bool = True
     host: str = "127.0.0.1"
@@ -86,6 +89,14 @@ class PushbulletConfig(BaseModel):
     include_summary: bool = True
 
 
+# class TemplateConfig(BaseModel):
+#     """Message template settings."""
+#
+#     enabled: bool = False
+#     api_key: str = ""
+#     include_summary: bool = True
+
+
 class Settings(BaseSettings):
     """Application settings loaded from environment variables and `.env`."""
 
@@ -106,9 +117,10 @@ class Settings(BaseSettings):
 
     # Providers
     # To add a new provider, define its config model above and add it here.
+    # template: TemplateConfig = Field(default_factory=TemplateConfig)
     discord: DiscordConfig = Field(default_factory=DiscordConfig)
     webhook_site: WebhookSiteConfig = Field(default_factory=WebhookSiteConfig)
     pushbullet: PushbulletConfig = Field(default_factory=PushbulletConfig)
 
-    # Runtime/session security
+    # Runtime/session security for encrypting moodle session data.
     session_encryption_key: str | None = None

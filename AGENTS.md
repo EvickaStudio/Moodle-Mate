@@ -35,6 +35,23 @@
 - PRs should include a short summary, linked issue (if applicable), and test results.
 - For UI changes (web dashboard), include screenshots or a brief screen recording.
 
+## Commit Workflow (Agents)
+- Default working branch is `dev`; keep `main` release/stable.
+- For feature work, create a short-lived branch (for example `feat/<name>` or `fix/<name>`).
+- Feature branches must be merged into `dev` first.
+- Only promote to `main` from `dev` via PR after `dev` has the approved changes.
+- Use Conventional Commits only:
+  - `fix:` = patch release
+  - `feat:` = minor release
+  - `type!:` or `BREAKING CHANGE:` = major release
+  - `docs:`, `chore:`, `test:` usually do not trigger a release
+- Group related changes into focused commits; avoid mixing unrelated refactors/docs/deps.
+- Before committing, run:
+  - `make check`
+  - `make test`
+- Push feature branches and open PRs against `dev`.
+- Release promotion happens by merging `dev` into `main`, then running the release flow.
+
 ## Configuration & Security Notes
 - Copy `example.env` to `.env` and set `MOODLEMATE_` variables (see `docs/how-to/setup-dev-environment.md`).
 - Do not commit secrets or real Moodle credentials.

@@ -4,6 +4,7 @@ bun.lockb
 ./test.py
 describe-commit
 state.json
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
