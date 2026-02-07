@@ -1,12 +1,12 @@
 # Moodle Mate
 
-<div align="center">
-  <img src="assets/moodlematev_gh_preview.png" alt="Moodle Mate Logo">
+<div>
+  <img src="assets/moodlematev_gh_preview.png" alt="Moodle Mate logo hero image with an orange background" title="Hero">
   <h1>Moodle Mate</h1>
   <p><strong>Your Smart Moodle Notification Assistant</strong></p>
 </div>
 
-<p align="center">
+<p>
   <a href="https://github.com/EvickaStudio/Moodle-Mate/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/EvickaStudio/Moodle-Mate/ci.yml?+label=Build%20Status"></a>
   <a href="https://github.com/EvickaStudio/Moodle-Mate/blob/main/LICENSE.md"><img alt="GitHub license" src="https://img.shields.io/github/license/EvickaStudio/Moodle-Mate"></a>
   <a href="https://github.com/EvickaStudio/Moodle-Mate/commits"><img alt="Commits" src="https://img.shields.io/github/commit-activity/m/EvickaStudio/Moodle-Mate?label=commits"></a>
@@ -18,21 +18,27 @@
 
 ## What is Moodle Mate?
 
-Moodle Mate is a Python application that fetches notifications from a Moodle instance (eg. a school or university) and delivers them to a notification platform (eg. Discord). This will allow you to stay up to date with all your courses and activities without having to manually check your E-Mail or Moodle.
+Moodle Mate is a Python application that fetches notifications from a Moodle instance (e.g. a school or university) and
+delivers them to a notification platform (e.g. Discord). This allows you to stay up to date with your courses and
+activities without manually checking your email or Moodle.
 
-Moodle Mate comes with an optional AI-powered summarization feature that will summarize the notifications for you and add it as an small TLDR to the notification. BYOK - Bring your own key, you can use any AI provider you want that supports the openai api structure, so if you have privacy concerns you can use an local hosted model (e.g. with [Ollama](https://ollama.ai/)).
+Moodle Mate includes an optional AI-powered summarization feature that summarizes notifications and adds a short TL;DR.
+BYOK (Bring Your Own Key): you can use any AI provider that supports an OpenAI-compatible API. If you have privacy
+concerns, you can use a locally hosted model (e.g. with
+[Ollama](https://ollama.com/) or other tools like LMStudio, vLLM etc. that have OpenAI-compatible APIs).
 
 ## Key Features
 
-- **Smart Notification Management**
-  - Automatically fetch and process notifications from Moodle.
-  - Optional AI-based content summarization that creates quick TLDRs.
-  - Converts HTML notifications to Markdown for improved readability using [turndown-python](https://github.com/EvickaStudio/turndown-python).
+- **Notification Management**
+  - Automatically fetches and processes notifications from Moodle, and saves current state on shutdown.
+  - Optional AI-based summarization creates quick TL;DRs for easier review.
+  - Converts HTML notifications to Markdown for improved readability using [turndown-python](https://github.com/EvickaStudio/turndown-python) for notification
+  providers that do not support HTML.
 
-- **Web Dashboard**
+- **Web Dashboard (Optional, currently in beta)**
   - Monitor system status, logs, and configuration.
-  - Live configuration editing.
-  - Test notifications.
+  - Planned live configuration editing for some settings.
+  - Send test notifications.
   - Protected by optional authentication.
 
 - **Multi-Platform Support**
@@ -42,15 +48,15 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
   - Modular architecture for easy integration of new platforms
 
 - **AI Integration**
-  - Support for multiple AI providers (OpenAI API like)
+  - Support for multiple OpenAI-API-compatible providers.
   - Configurable models and parameters
   - Optional summarization feature
 
 ## Requirements
 
 - Python 3.11 or higher
-- Internet connection
-- Moodle instance with REST API access enabled
+- Internet connection (when your Moodle server or AI provider is not locally hosted)
+- Moodle instance with REST API access enabled (this is not enabled by default)
 
 ## Installation
 
@@ -74,7 +80,7 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    Optional (Make shortcuts):
 
    ```bash
-   make install-dev
+   make install
    make run
    make test
    make help
@@ -98,20 +104,6 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    ```
 
    Edit `.env` with your settings. Configuration uses environment variables with the `MOODLEMATE_` prefix.
-
-   Example `.env`:
-
-   ```env
-   MOODLEMATE_MOODLE__URL=https://moodle.example.com
-   MOODLEMATE_MOODLE__USERNAME=your_username
-   MOODLEMATE_MOODLE__PASSWORD=your_password
-
-   # Web UI Protection
-   MOODLEMATE_WEB__AUTH_SECRET=your_secure_password
-
-   MOODLEMATE_DISCORD__ENABLED=true
-   MOODLEMATE_DISCORD__WEBHOOK_URL=https://discord.com/api/webhooks/...
-   ```
 
 ### Option 2: Docker Installation
 
@@ -174,7 +166,7 @@ docker compose down
 When running, the application will:
 
 1. Validate your configuration.
-2. Start the Web Dashboard (default: <http://localhost:9095>).
+2. Start the Web Dashboard if enabled (default: <http://localhost:9095>).
 3. Connect to your Moodle instance.
 4. Continuously monitor for new notifications.
 5. Process and deliver notifications according to your settings.
@@ -193,9 +185,9 @@ Moodle Mate includes a built-in web dashboard for monitoring and configuration.
 
 ## Screenshots
 
-*Colors between the screenshots are different because of different themes in Termius.*
+*Colors differ across screenshots because different Termius themes were used.*
 
-> Versions are messed up a bit, im sorry
+> Versions are slightly mixed up, sorry.
 
 ### v2.0.3 (Web UI)
 
@@ -211,7 +203,8 @@ Running as Docker daemon, to see the logs run `docker compose logs -f`
 
 ![v2.0.1](assets/running_v2.0.1.webp)
 
-Running as standard python application, you will automatically see the logs in the terminal you ran the command in. For KVMs running MoodleMate in the background, docker is the recommended way to run it, but you can also use tmux, screen or tmuxinator to run it in the background.
+When running as a standard Python application, logs appear in the terminal where you start the command. For KVM setups
+running Moodle Mate in the background, Docker is recommended, but you can also use tmux, screen, or tmuxinator.
 
 ## Documentation
 
@@ -249,16 +242,6 @@ We welcome contributions! Please:
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
-
-## Release Process
-
-- Releases are automated via `.github/workflows/release-please.yml`.
-- On pushes to `main`, Release Please opens or updates a release PR.
-- Merging that PR creates a new Git tag (`vX.Y.Z`), GitHub Release, and `CHANGELOG.md` entry.
-- Version bumps follow Conventional Commits:
-  - `fix:` -> patch
-  - `feat:` -> minor
-  - `type!:` or `BREAKING CHANGE:` -> major
 
 ## License
 
