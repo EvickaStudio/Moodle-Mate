@@ -14,11 +14,13 @@
 - `docker compose build` / `docker compose up -d`: build and run the Docker image.
 - `docker compose logs -f`: follow container logs.
 - `uv run ruff format .` / `uv run ruff check --fix .`: format and lint.
-- `./cleaner.sh`: remove `__pycache__` and bytecode files.
+- `make help`: list available project shortcuts.
+- `make install-dev`, `make run`, `make test`, `make check`: common local workflows.
+- `make clean`: remove `__pycache__` and bytecode files.
 
 ## Coding Style & Naming Conventions
 - Python code uses 4-space indentation and PEP 8 conventions.
-- Format and lint using Ruff (`./format.sh`), which runs `ruff format` then `ruff check --fix`.
+- Format and lint using Ruff (`make check`), which runs `ruff format` then `ruff check --fix`.
 - File and module names are `snake_case`; classes use `CamelCase`.
 
 ## Testing Guidelines

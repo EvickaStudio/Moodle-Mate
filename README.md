@@ -71,6 +71,15 @@ Moodle Mate comes with an optional AI-powered summarization feature that will su
    uv sync --extra dev
    ```
 
+   Optional (Make shortcuts):
+
+   ```bash
+   make install-dev
+   make run
+   make test
+   make help
+   ```
+
    If you prefer a virtualenv:
 
    ```bash
