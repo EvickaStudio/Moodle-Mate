@@ -8,7 +8,9 @@ LOG_DIR="${MOODLE_LOG_DIR:-/app/logs}"
 mkdir -p "$STATE_DIR" "$LOG_DIR" "$(dirname "$SESSION_FILE")"
 touch "$SESSION_FILE"
 
-chown -R moodlemate:moodlemate "$STATE_DIR" "$LOG_DIR" "$(dirname "$SESSION_FILE")" "$SESSION_FILE"
+if [ "$(id -u)" -eq 0 ]; then
+  chown -R moodlemate:moodlemate "$STATE_DIR" "$LOG_DIR" "$(dirname "$SESSION_FILE")" "$SESSION_FILE"
+  exec gosu moodlemate "$@"
+fi
 
-exec gosu moodlemate "$@"
-
+exec "$@"

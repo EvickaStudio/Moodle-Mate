@@ -63,7 +63,7 @@ docker-build: ## Build Docker image
 	docker compose build
 
 docker-up: ## Start Docker stack in background
-	docker compose up -d --force-recreate --remove-orphans
+	HOST_UID=$$(id -u) HOST_GID=$$(id -g) docker compose up -d --force-recreate --remove-orphans
 
 docker-down: ## Stop Docker stack
 	docker compose down
