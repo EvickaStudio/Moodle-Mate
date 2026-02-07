@@ -18,7 +18,7 @@ class WebhookSiteProvider(NotificationProvider):
         """
         self.webhook_url = webhook_url
         self.include_summary = include_summary
-        self.session = request_manager.session
+        self.session = request_manager.get_session("provider_webhook_site")
 
     def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """Send a notification to Webhook.site.
@@ -42,9 +42,12 @@ class WebhookSiteProvider(NotificationProvider):
             if summary and self.include_summary:
                 payload["summary"] = summary
 
-            # Send the request
-            request_manager.update_headers({"Content-Type": "application/json"})
-            response = self.session.post(self.webhook_url, json=payload)
+            # Send the request with per-request headers to avoid header leakage.
+            response = self.session.post(
+                self.webhook_url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+            )
 
             if 200 <= response.status_code < 300:
                 logger.info("Successfully sent Webhook.site notification")

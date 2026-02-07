@@ -26,7 +26,7 @@ class PushbulletProvider(NotificationProvider):
         self.api_key = api_key
         self.include_summary = include_summary
         self.base_url = "https://api.pushbullet.com/v2"
-        self.session = request_manager.session
+        self.session = request_manager.get_session("provider_pushbullet")
 
     def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """Send a notification via Pushbullet.
@@ -53,9 +53,12 @@ class PushbulletProvider(NotificationProvider):
                 "Content-Type": "application/json",
             }
 
-            # Send the request
-            request_manager.update_headers(headers)
-            response = self.session.post(f"{self.base_url}/pushes", json=payload)
+            # Send the request with per-request headers to avoid cross-provider leakage.
+            response = self.session.post(
+                f"{self.base_url}/pushes",
+                json=payload,
+                headers=headers,
+            )
 
             if 200 <= response.status_code < 300:
                 logger.info("Successfully sent Pushbullet notification")

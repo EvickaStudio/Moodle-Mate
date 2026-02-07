@@ -96,7 +96,7 @@ class DiscordProvider(NotificationProvider):
         self.webhook_url = webhook_url
         self.bot_name = bot_name
         self.thumbnail_url = thumbnail_url
-        self.session = request_manager.session
+        self.session = request_manager.get_session("provider_discord")
 
     def create_notification_embed(
         self, subject: str, content: str, summary: str | None = None
@@ -141,9 +141,12 @@ class DiscordProvider(NotificationProvider):
                 ],
             }
 
-            # Send the webhook request
-            request_manager.update_headers({"Content-Type": "application/json"})
-            response = self.session.post(self.webhook_url, json=payload)
+            # Send the webhook request with per-request headers to avoid header leakage.
+            response = self.session.post(
+                self.webhook_url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+            )
 
             if response.status_code == 204:
                 logger.info("Successfully sent Discord notification")

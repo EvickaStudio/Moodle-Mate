@@ -31,7 +31,7 @@ class TemplateNotificationProvider(NotificationProvider):
         """
         self.api_key = api_key
         self.some_setting = some_setting
-        self.session = request_manager.session
+        self.session = request_manager.get_session("provider_template")
 
     def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         """
@@ -59,9 +59,12 @@ class TemplateNotificationProvider(NotificationProvider):
             # if summary:
             #     payload["summary"] = summary
 
-            # 3. Send request using shared session
-            # request_manager.update_headers({"Authorization": f"Bearer {self.api_key}"})
-            # response = self.session.post("https://api.example.com/send", json=payload)
+            # 3. Send request using a provider-scoped session and per-request headers
+            # response = self.session.post(
+            #     "https://api.example.com/send",
+            #     json=payload,
+            #     headers={"Authorization": f"Bearer {self.api_key}"},
+            # )
 
             # 4. Check response
             # if response.status_code == 200:
