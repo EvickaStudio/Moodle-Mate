@@ -1,7 +1,7 @@
 [project]
 name = "moodle-mate"
 version = "2.2.1"
-description = "An Python application that fetches notifications from a Moodle instance (eg. a school or university) and delivers them to a notification platform like Discord. "
+description = "A Python application that fetches notifications from a Moodle instance (eg. a school or university) and delivers them to a notification platform like Discord. "
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
