@@ -54,7 +54,7 @@ ENV PYTHONPATH=/app/src
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD python -c "import moodlemate"
+    CMD python -c "import os, urllib.request; enabled=os.getenv('MOODLEMATE_WEB__ENABLED', 'true').lower() not in {'0','false','no'}; port=int(os.getenv('MOODLEMATE_WEB__PORT', '9095')); urllib.request.urlopen(f'http://127.0.0.1:{port}/healthz', timeout=3) if enabled else 0"
 
 # Entrypoint ensures permissions then drops to non-root user
 ENTRYPOINT ["/entrypoint.sh"]
