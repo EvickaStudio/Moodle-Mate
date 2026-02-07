@@ -153,3 +153,17 @@ Tasks:
    - created release
    - final origin/main and origin/dev commit SHAs
 ```
+
+## 10. How to Get Better Release Notes
+
+Release notes are generated from commit subjects. If commits are small or generic, notes look empty.
+
+Do this:
+
+1. Use meaningful Conventional Commit subjects:
+   1. Good: `fix(web): block config updates for credential fields`
+   2. Weak: `fix: update stuff`
+2. Keep related changes grouped in one PR so release entries are coherent.
+3. Prefer `feat:` and `fix:` for user-visible changes.
+4. Use `docs:` for notable docs updates (now visible in changelog sections).
+5. Add a short manual "Highlights" paragraph when publishing a major/minor release.
