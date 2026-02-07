@@ -39,6 +39,7 @@ def test_settings_env_overrides(monkeypatch):
     monkeypatch.setenv("MOODLEMATE_AI__TEMPERATURE", "0.9")
     monkeypatch.setenv("MOODLEMATE_AI__MAX_TOKENS", "256")
     monkeypatch.setenv("MOODLEMATE_AI__SYSTEM_PROMPT", "Hello")
+    monkeypatch.setenv("MOODLEMATE_SESSION_ENCRYPTION_KEY", "change-me")
     settings = Settings()
 
     assert settings.ai.enabled is False
@@ -46,6 +47,7 @@ def test_settings_env_overrides(monkeypatch):
     assert settings.ai.temperature == 0.9
     assert settings.ai.max_tokens == 256
     assert settings.ai.system_prompt == "Hello"
+    assert settings.session_encryption_key == "change-me"
 
 
 def test_health_config_optional_ints(monkeypatch):

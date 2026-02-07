@@ -50,7 +50,7 @@ This reference lists settings read from `.env` or environment variables with the
 - `ENABLED` (bool, default: `true`): Enable the Web UI.
 - `HOST` (string, default: `127.0.0.1`): Bind address (localhost only).
 - `PORT` (int, default: `9095`): Bind port.
-- `AUTH_SECRET` (string, optional): Enables Web UI auth when set.
+- `AUTH_SECRET` (string, required when `ENABLED=true`): Web UI login secret.
 
 ## Providers (`MOODLEMATE_<PROVIDER>__*`)
 
@@ -84,6 +84,7 @@ Custom providers use the same pattern:
 
 These are read directly from the environment:
 
-- `MOODLE_SESSION_FILE` (default: `moodle_session.json`): Cached session token.
+- `MOODLE_SESSION_FILE` (default: `moodle_session.json`): Encrypted cached session token file.
+- `MOODLEMATE_SESSION_ENCRYPTION_KEY` (optional): Enables encrypted Moodle session caching when set.
 - `MOODLE_STATE_FILE` (optional): Full path for `state.json`.
 - `MOODLE_STATE_DIR` (default: `/app/state`): Directory for `state.json`.

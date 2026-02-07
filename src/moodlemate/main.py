@@ -69,6 +69,7 @@ def initialize_and_run_app(settings: Settings, args: argparse.Namespace) -> None
         url=settings.moodle.url,
         username=settings.moodle.username,
         password=settings.moodle.password,
+        session_encryption_key=settings.session_encryption_key,
     )
 
     # AI / Summarization

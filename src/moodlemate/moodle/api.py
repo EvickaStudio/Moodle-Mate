@@ -1,9 +1,17 @@
+import base64
+import hashlib
 import json
 import logging
 import os
+from typing import Any
 
 from requests.exceptions import RequestException
-from requests.utils import cookiejar_from_dict, dict_from_cookiejar
+
+try:
+    from cryptography.fernet import Fernet, InvalidToken
+except ImportError:  # pragma: no cover - dependency is expected in production
+    Fernet = None
+    InvalidToken = Exception
 
 from moodlemate.core.security import InputValidator, rate_limiter_manager
 from moodlemate.infrastructure.http.request_manager import request_manager
@@ -16,7 +24,13 @@ class MoodleAPI:
     A simple Moodle API wrapper for Python.
     """
 
-    def __init__(self, url: str, username: str, password: str):
+    def __init__(
+        self,
+        url: str,
+        username: str,
+        password: str,
+        session_encryption_key: str | None = None,
+    ):
         """Initialize the API with credentials."""
         self.url = url.rstrip("/")
         self.username = username
@@ -25,12 +39,9 @@ class MoodleAPI:
             os.getenv("MOODLE_SESSION_FILE", "moodle_session.json")
         )
         self._session_restored_from_disk = False
-        self.session = request_manager.session
-        request_manager.update_headers(
-            {
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-        )
+        self.session = request_manager.get_session("moodle")
+        self._session_encryption_key = session_encryption_key
+        self._session_fernet = self._build_session_cipher()
         self.token: str | None = None
         self.userid: int | None = None
 
@@ -105,10 +116,10 @@ class MoodleAPI:
         logger.info("Refreshing Moodle session...")
 
         # Reset the request manager's session
-        request_manager.reset_session()
+        request_manager.reset_session("moodle")
 
         # Update our session reference
-        self.session = request_manager.session
+        self.session = request_manager.get_session("moodle")
 
         # Re-login with stored credentials
         self._clear_session_state()
@@ -161,7 +172,9 @@ class MoodleAPI:
         """
         return self._post("message_popup_get_popup_notifications", user_id, limit=limit)
 
-    def core_user_get_users_by_field(self, field: str, value: str) -> dict | None:
+    def core_user_get_users_by_field(
+        self, field: str, value: str
+    ) -> list[dict[str, Any]] | dict[str, Any] | None:
         """
         Retrieves user info based on a specific field and value.
         """
@@ -230,7 +243,10 @@ class MoodleAPI:
             return None
 
     def _restore_session_state(self) -> bool:
-        """Attempt to restore a previously saved Moodle session."""
+        """Attempt to restore a previously saved encrypted Moodle session."""
+        if self._session_fernet is None:
+            return False
+
         if not os.path.exists(self.session_state_file):
             return False
 
@@ -245,16 +261,32 @@ class MoodleAPI:
             )
             return False
 
-        token = data.get("token")
-        cookies = data.get("cookies", {})
-        userid = data.get("userid")
+        ciphertext = data.get("ciphertext")
+        if not isinstance(ciphertext, str):
+            logger.warning(
+                "Ignoring legacy or invalid Moodle session cache at %s.",
+                self.session_state_file,
+            )
+            return False
+
+        try:
+            decrypted_data = self._session_fernet.decrypt(ciphertext.encode("utf-8"))
+            payload = json.loads(decrypted_data.decode("utf-8"))
+        except (InvalidToken, json.JSONDecodeError) as exc:
+            logger.warning(
+                "Failed to decrypt cached Moodle session from %s: %s",
+                self.session_state_file,
+                exc,
+            )
+            return False
+
+        token = payload.get("token")
+        userid = payload.get("userid")
 
         if token:
             self.token = token
         if userid:
             self.userid = userid
-        if cookies:
-            self.session.cookies.update(cookiejar_from_dict(cookies))
 
         logger.info("Loaded cached Moodle session from disk.")
         return True
@@ -267,23 +299,31 @@ class MoodleAPI:
         return result is not None
 
     def _save_session_state(self) -> None:
-        """Persist the current Moodle session (token + cookies) to disk."""
+        """Persist the current Moodle session token encrypted at rest."""
         if not self.token:
+            return
+
+        if self._session_fernet is None:
             return
 
         state = {
             "token": self.token,
             "userid": self.userid,
-            "cookies": dict_from_cookiejar(self.session.cookies),
         }
 
         directory = os.path.dirname(self.session_state_file)
         if directory:
             os.makedirs(directory, exist_ok=True)
 
+        encrypted_state = self._session_fernet.encrypt(
+            json.dumps(state).encode("utf-8")
+        ).decode("utf-8")
+
+        payload = {"version": 1, "ciphertext": encrypted_state}
+
         try:
             with open(self.session_state_file, "w", encoding="utf-8") as fh:
-                json.dump(state, fh, indent=4)
+                json.dump(payload, fh, indent=2)
             try:
                 os.chmod(self.session_state_file, 0o600)
             except OSError as exc:
@@ -299,6 +339,30 @@ class MoodleAPI:
                 self.session_state_file,
                 exc,
             )
+
+    def _build_session_cipher(self) -> Any | None:
+        """Build a cipher used to encrypt/decrypt cached Moodle session state."""
+        if Fernet is None:
+            logger.info(
+                "cryptography is not installed; Moodle session persistence is disabled."
+            )
+            return None
+
+        encryption_secret = (self._session_encryption_key or "").strip()
+        if not encryption_secret:
+            # Backward-compatible fallback for direct MoodleAPI usage.
+            encryption_secret = os.getenv(
+                "MOODLEMATE_SESSION_ENCRYPTION_KEY", ""
+            ).strip()
+        if not encryption_secret:
+            logger.info(
+                "MOODLEMATE_SESSION_ENCRYPTION_KEY is not set; Moodle session persistence is disabled."
+            )
+            return None
+
+        key_material = hashlib.sha256(encryption_secret.encode("utf-8")).digest()
+        fernet_key = base64.urlsafe_b64encode(key_material)
+        return Fernet(fernet_key)
 
     def _clear_session_state(self) -> None:
         """Remove cached session details from memory and disk."""

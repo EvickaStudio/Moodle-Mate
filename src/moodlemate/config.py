@@ -3,6 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class MoodleConfig(BaseModel):
+    """Moodle connection and notification bootstrap settings."""
+
     url: str
     username: str
     password: str
@@ -10,6 +12,8 @@ class MoodleConfig(BaseModel):
 
 
 class AIConfig(BaseModel):
+    """AI summarization configuration."""
+
     enabled: bool = True
     api_key: str = ""
     model: str = "gpt-5-nano"
@@ -20,6 +24,8 @@ class AIConfig(BaseModel):
 
 
 class NotificationConfig(BaseModel):
+    """Polling and HTTP retry behavior for notification fetching/sending."""
+
     max_retries: int = Field(default=5, ge=0, le=10)
     fetch_interval: int = Field(default=60, ge=10, le=3600)
     connect_timeout: float = Field(default=10.0, gt=0, le=60)
@@ -30,11 +36,15 @@ class NotificationConfig(BaseModel):
 
 
 class FiltersConfig(BaseModel):
+    """Notification filtering rules."""
+
     ignore_subjects_containing: list[str] = Field(default_factory=list)
     ignore_courses_by_id: list[int] = Field(default_factory=list)
 
 
 class HealthConfig(BaseModel):
+    """Health monitoring and alert routing settings."""
+
     enabled: bool = False
     heartbeat_interval: int | None = None
     failure_alert_threshold: int | None = None
@@ -42,6 +52,8 @@ class HealthConfig(BaseModel):
 
 
 class WebConfig(BaseModel):
+    """Embedded Web UI settings."""
+
     enabled: bool = True
     host: str = "127.0.0.1"
     port: int = 9095
@@ -50,6 +62,8 @@ class WebConfig(BaseModel):
 
 # Providers
 class DiscordConfig(BaseModel):
+    """Discord provider settings."""
+
     enabled: bool = False
     webhook_url: str = ""
     bot_name: str = "MoodleMate"
@@ -57,18 +71,24 @@ class DiscordConfig(BaseModel):
 
 
 class WebhookSiteConfig(BaseModel):
+    """Webhook.site provider settings."""
+
     enabled: bool = False
     webhook_url: str = ""
     include_summary: bool = True
 
 
 class PushbulletConfig(BaseModel):
+    """Pushbullet provider settings."""
+
     enabled: bool = False
     api_key: str = ""
     include_summary: bool = True
 
 
 class Settings(BaseSettings):
+    """Application settings loaded from environment variables and `.env`."""
+
     model_config = SettingsConfigDict(
         env_prefix="MOODLEMATE_",
         env_file=".env",
@@ -89,3 +109,6 @@ class Settings(BaseSettings):
     discord: DiscordConfig = Field(default_factory=DiscordConfig)
     webhook_site: WebhookSiteConfig = Field(default_factory=WebhookSiteConfig)
     pushbullet: PushbulletConfig = Field(default_factory=PushbulletConfig)
+
+    # Runtime/session security
+    session_encryption_key: str | None = None

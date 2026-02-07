@@ -35,6 +35,7 @@ moodle_api = MoodleAPI(
     url=settings.moodle.url,
     username=settings.moodle.username,
     password=settings.moodle.password,
+    session_encryption_key=settings.session_encryption_key,
 )
 
 # Login
@@ -69,6 +70,7 @@ moodle_api = MoodleAPI(
     url=settings.moodle.url,
     username=settings.moodle.username,
     password=settings.moodle.password,
+    session_encryption_key=settings.session_encryption_key,
 )
 handler = MoodleNotificationHandler(settings, moodle_api, state_manager)
 
