@@ -11,7 +11,7 @@
     <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -338,18 +338,19 @@
                             Moodle Connection
                         </h2>
                         <div class="grid grid-cols-1 gap-4">
+                            <p class="text-xs text-tertiary">Sensitive connection credentials are read-only in the UI and must be changed via environment variables.</p>
                             <div>
                                 <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Moodle URL</label>
-                                <input type="text" x-model="config.moodle.url" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="https://moodle.example.edu">
+                                <input type="text" x-model="config.moodle.url" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed" placeholder="https://moodle.example.edu">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Username</label>
-                                    <input type="text" x-model="config.moodle.username" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                    <input type="text" x-model="config.moodle.username" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Password</label>
-                                    <input type="password" x-model="config.moodle.password" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="••••••••">
+                                    <input type="password" x-model="config.moodle.password" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed" placeholder="••••••••">
                                 </div>
                             </div>
                             <div>
@@ -383,7 +384,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-200" :class="{'opacity-40 pointer-events-none': !config.ai.enabled}">
                             <div class="md:col-span-2">
                                 <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Endpoint</label>
-                                <input type="text" x-model="config.ai.endpoint" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                <input type="text" x-model="config.ai.endpoint" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
                             </div>
                             <div>
                                 <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Model</label>
@@ -391,7 +392,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">API Key</label>
-                                <input type="password" x-model="config.ai.api_key" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="sk-...">
+                                <input type="password" x-model="config.ai.api_key" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed" placeholder="sk-...">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">System Prompt</label>
@@ -416,7 +417,7 @@
                         <div class="grid grid-cols-1 gap-4 transition-opacity duration-200" :class="{'opacity-40 pointer-events-none': !config.discord.enabled}">
                             <div>
                                 <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Webhook URL</label>
-                                <input type="password" x-model="config.discord.webhook_url" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                <input type="password" x-model="config.discord.webhook_url" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -440,15 +441,15 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Host</label>
-                                    <input type="text" x-model="config.web.host" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                    <input type="text" x-model="config.web.host" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Port</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.web.port" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.web.port" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Auth Secret</label>
-                                    <input type="password" x-model="config.web.auth_secret" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
+                                    <input type="password" x-model="config.web.auth_secret" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-border">
@@ -547,7 +548,7 @@
             ai: { enabled: true, api_key: "", model: "gpt-5-nano", temperature: 0.7, max_tokens: 150, system_prompt: "", endpoint: "" },
             notification: { max_retries: 5, fetch_interval: 60, connect_timeout: 10, read_timeout: 30, retry_total: 3, retry_backoff_factor: 1, max_payload_bytes: 65536 },
             health: { enabled: false, heartbeat_interval: null, failure_alert_threshold: null, target_provider: "" },
-            web: { enabled: true, host: "0.0.0.0", port: 9095, auth_secret: "" },
+            web: { enabled: true, host: "127.0.0.1", port: 9095, auth_secret: "" },
             discord: { enabled: false, webhook_url: "", bot_name: "MoodleMate", thumbnail_url: "" },
             webhook_site: { enabled: false, webhook_url: "", include_summary: true },
             pushbullet: { enabled: false, api_key: "", include_summary: true }
@@ -694,13 +695,32 @@
                     return res.json();
                 },
 
+                getCookie(name) {
+                    const value = `; ${document.cookie}`;
+                    const parts = value.split(`; ${name}=`);
+                    if (parts.length === 2) return parts.pop().split(";").shift();
+                    return null;
+                },
+
+                async apiFetch(url, options = {}) {
+                    const init = { ...options };
+                    const method = (init.method || "GET").toUpperCase();
+                    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+                        init.headers = {
+                            ...(init.headers || {}),
+                            "X-CSRF-Token": this.getCookie("moodlemate_csrf") || ""
+                        };
+                    }
+                    return fetch(url, init);
+                },
+
                 async refreshData(silent = false) {
                     if (!silent) this.loading = true;
                     try {
                         const [statusRes, configRes, historyRes] = await Promise.all([
-                            fetch("/api/status"),
-                            fetch("/api/config"),
-                            fetch("/api/history")
+                            this.apiFetch("/api/status"),
+                            this.apiFetch("/api/config"),
+                            this.apiFetch("/api/history")
                         ]);
                         const statusData = await this.parseResponse(statusRes);
                         const configData = await this.parseResponse(configRes);
@@ -738,7 +758,7 @@
                     this.saving = true;
                     try {
                         const payload = this.prepareConfigPayload();
-                        const res = await fetch("/api/config", {
+                        const res = await this.apiFetch("/api/config", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(payload)
@@ -770,7 +790,9 @@
                 async triggerTestNotification() {
                     this.loading = true;
                     try {
-                        const res = await fetch("/api/test-notification", { method: "POST" });
+                        const res = await this.apiFetch("/api/test-notification", {
+                            method: "POST"
+                        });
                         if (!res.ok) {
                             throw new Error("Request failed");
                         }
@@ -785,7 +807,7 @@
 
                 async logout() {
                     try {
-                        await fetch("/api/logout", { method: "POST" });
+                        await this.apiFetch("/api/logout", { method: "POST" });
                     } catch (err) {
                         console.error(err);
                     } finally {

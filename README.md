@@ -183,14 +183,13 @@ When running, the application will:
 
 Moodle Mate includes a built-in web dashboard for monitoring and configuration.
 
-- **URL**: `http://0.0.0.0:9095` (default)
+- **URL**: `http://127.0.0.1:9095` (default)
 - **Features**:
   - View current status and metrics.
   - Trigger test notifications.
-  - Edit configuration live (requires `MOODLEMATE_WEB__AUTH_SECRET` if set).
+  - Edit non-sensitive configuration live (Web UI auth required).
 
-**Security**: To protect the dashboard, set `MOODLEMATE_WEB__AUTH_SECRET` in your `.env` file. If this variable is set, you will be prompted to enter this password to access the dashboard.
-To disable the login screen, leave `MOODLEMATE_WEB__AUTH_SECRET` empty or remove it.
+**Security**: `MOODLEMATE_WEB__AUTH_SECRET` is required when Web UI is enabled. The dashboard always requires login and sets secure session/CSRF cookies.
 
 ## Screenshots
 

@@ -34,7 +34,7 @@ class MoodleMateApp:
         self.moodle_api = moodle_api
         self.state_manager = state_manager
         self._last_heartbeat_sent: float = 0.0
-        self._web_server_thread: threading.Thread = None
+        self._web_server_thread: threading.Thread | None = None
 
     def run(self) -> None:
         """Starts the main application loop."""
@@ -52,6 +52,11 @@ class MoodleMateApp:
 
     def _start_web_ui(self):
         """Starts the Web UI server in a separate thread."""
+        if not self.settings.web.auth_secret:
+            raise ValueError(
+                "Web UI requires `MOODLEMATE_WEB__AUTH_SECRET` for secure access."
+            )
+
         web_ui = WebUI(self.settings, self.state_manager, self)
         app = web_ui.get_app()
 
@@ -97,10 +102,9 @@ class MoodleMateApp:
 
     def _check_and_refresh_session(self, interval: float) -> None:
         """Checks if the session needs to be refreshed and does so if necessary."""
-        if request_manager.session_age_hours >= interval:
-            logging.info(
-                f"Session is {request_manager.session_age_hours:.2f} hours old. Refreshing..."
-            )
+        session_age = request_manager.get_session_age_hours("moodle")
+        if session_age >= interval:
+            logging.info(f"Session is {session_age:.2f} hours old. Refreshing...")
             if self.moodle_api.refresh_session():
                 logging.info("Session successfully refreshed")
             else:
