@@ -50,11 +50,12 @@ RUN chmod +x /entrypoint.sh
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0 if True else 1)"
+    CMD python -c "import moodlemate"
 
 # Entrypoint ensures permissions then drops to non-root user
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["python", "main.py"]
+CMD ["python", "-m", "moodlemate"]

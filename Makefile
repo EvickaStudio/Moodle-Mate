@@ -50,7 +50,7 @@ lock: ## Refresh uv.lock
 export-requirements: export-requirements-runtime ## Backward-compatible alias for runtime requirements export
 
 export-requirements-runtime: ## Export runtime requirements.txt from uv lock
-	$(UV) export --no-emit-project --no-dev -o requirements.txt
+	$(UV) export --package moodle-mate --no-dev --no-emit-project -o requirements.txt
 
 export-requirements-dev: ## Export additive requirements-dev.txt from pyproject dev extras
 	./scripts/export_requirements_dev.sh requirements-dev.txt
@@ -63,7 +63,7 @@ docker-build: ## Build Docker image
 	docker compose build
 
 docker-up: ## Start Docker stack in background
-	docker compose up -d
+	docker compose up -d --force-recreate --remove-orphans
 
 docker-down: ## Stop Docker stack
 	docker compose down
