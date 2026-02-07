@@ -339,10 +339,9 @@ class GPT:
 
     def context_assistant(self, prompt: str) -> str:
         """
-        Generate a response using the assistant API.
+        Generate a response using the assistant API (deprecated).
 
         Note: This is a placeholder for future implementation.
-        Currently returns an empty string as the feature is not implemented.
 
         Args:
             prompt: The input prompt

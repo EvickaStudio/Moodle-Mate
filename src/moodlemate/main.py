@@ -17,7 +17,7 @@ from moodlemate.ui.cli.screen import print_logo
 
 
 def main() -> None:
-    """Main entry point of the application."""
+    """Entry point for the package. Initializes and starts the application."""
     parser = argparse.ArgumentParser(
         description="Moodle Mate - Your Smart Moodle Notification Assistant"
     )
@@ -28,13 +28,12 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # Initialize logging and print the Moodle Mate logo.
     setup_logging()
-
-    # Fast startup - just print the logo
     print_logo()
     logging.info("Starting Moodle Mate...")
 
-    # Initialize Configuration
+    # Initialize settings for all components and services.
     try:
         settings = Settings()
     except Exception as e:
@@ -44,7 +43,6 @@ def main() -> None:
         )
         sys.exit(1)
 
-    # Initialize Services
     try:
         initialize_and_run_app(settings, args)
     except Exception as e:
@@ -53,7 +51,7 @@ def main() -> None:
 
 
 def initialize_and_run_app(settings: Settings, args: argparse.Namespace) -> None:
-    # Apply network defaults early
+    # Apply network defaults
     request_manager.configure(
         connect_timeout=settings.notification.connect_timeout,
         read_timeout=settings.notification.read_timeout,
