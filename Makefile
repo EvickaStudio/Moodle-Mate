@@ -4,7 +4,7 @@ SHELL := /bin/sh
 UV ?= uv
 APP ?= moodlemate
 
-.PHONY: help install install-dev bootstrap run run-module test test-cov format lint lint-check check clean lock export-requirements export-requirements-runtime export-requirements-dev sync refresh docker-build docker-up docker-down docker-logs docker-restart test-notification
+.PHONY: help install install-dev bootstrap run run-module test test-cov test-ci format format-check lint lint-check check ci-lint ci-test ci-local clean lock export-requirements export-requirements-runtime export-requirements-dev sync refresh docker-build docker-up docker-down docker-logs docker-restart test-notification
 
 help: ## Show available targets
 	@echo "Available targets:"
@@ -30,16 +30,28 @@ test: ## Run pytest test suite
 test-cov: ## Run tests with coverage report
 	$(UV) run pytest --cov=src/moodlemate --cov-report=term-missing
 
+test-ci: ## Run CI-aligned tests (quiet output)
+	$(UV) run pytest -q
+
 format: ## Format code with Ruff
 	$(UV) run ruff format .
+
+format-check: ## Check formatting without modifying files
+	$(UV) run ruff format --check .
 
 lint: ## Lint and auto-fix with Ruff
 	$(UV) run ruff check --fix .
 
 lint-check: ## Lint without auto-fixes
-	$(UV) run ruff check .
+	$(UV) run ruff check --output-format=concise .
 
 check: format lint ## Run formatter + linter
+
+ci-lint: lint-check format-check ## CI-aligned lint checks (non-mutating)
+
+ci-test: test-ci ## CI-aligned test checks
+
+ci-local: ci-lint ci-test ## Run the same lint+test checks used by CI workflows
 
 clean: ## Remove Python cache artifacts
 	./scripts/clean.sh

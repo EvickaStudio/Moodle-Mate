@@ -35,11 +35,8 @@ jobs:
     - name: Sync dependencies
       run: uv sync --extra dev --frozen
 
-    - name: Ruff lint (no fixes)
-      run: uv run ruff check --output-format=concise .
-
-    - name: Ruff format check
-      run: uv run ruff format --check .
+    - name: CI lint checks
+      run: make ci-lint
 
     - name: Minimize uv cache
       if: always()
