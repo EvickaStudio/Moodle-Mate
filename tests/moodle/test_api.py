@@ -53,6 +53,25 @@ def test_login_returns_false_when_api_returns_error(api: MoodleAPI, monkeypatch)
     assert api.token is None
 
 
+def test_login_returns_false_on_request_exception(api: MoodleAPI, monkeypatch):
+    response = Mock()
+    response.raise_for_status.side_effect = moodle_api_module.RequestException(
+        "network error"
+    )
+    api.session = Mock()
+    api.session.post.return_value = response
+    api._save_session_state = Mock()
+    monkeypatch.setattr(
+        moodle_api_module.rate_limiter_manager,
+        "is_allowed",
+        lambda *_args, **_kwargs: True,
+    )
+
+    assert api.login() is False
+    assert api.token is None
+    api._save_session_state.assert_not_called()
+
+
 def test_login_raises_when_rate_limited(api: MoodleAPI, monkeypatch):
     monkeypatch.setattr(
         moodle_api_module.rate_limiter_manager,

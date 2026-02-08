@@ -63,6 +63,25 @@ def test_fetch_latest_notification_returns_processed_notification():
     }
 
 
+def test_ensure_connection_reconnects_when_session_is_expired():
+    handler = _build_handler()
+    handler.last_successful_connection = time.time() - handler.session_timeout - 5
+    handler._reconnect = Mock()
+
+    handler._ensure_connection()
+
+    handler._reconnect.assert_called_once()
+
+
+def test_ensure_connection_propagates_reconnect_failure_when_expired():
+    handler = _build_handler()
+    handler.last_successful_connection = time.time() - handler.session_timeout - 5
+    handler._reconnect = Mock(side_effect=MoodleConnectionError("reconnect failed"))
+
+    with pytest.raises(MoodleConnectionError, match="reconnect failed"):
+        handler._ensure_connection()
+
+
 def test_fetch_newest_notification_uses_initial_fetch_when_no_state():
     handler = _build_handler(last_notification_id=None)
     handler._handle_initial_fetch = Mock(return_value=[{"id": 1}])

@@ -103,6 +103,25 @@ async def test_login_requires_csrf_token(client: httpx.AsyncClient):
 
 
 @pytest.mark.anyio
+async def test_login_with_invalid_password_keeps_client_unauthenticated(
+    client: httpx.AsyncClient,
+):
+    await client.get("/login")
+    csrf_token = client.cookies.get(CSRF_COOKIE_NAME)
+    assert csrf_token
+
+    login_response = await client.post(
+        "/api/login",
+        json={"password": "wrong-password"},
+        headers={CSRF_HEADER_NAME: csrf_token},
+    )
+    assert login_response.status_code == 401
+
+    status_response = await client.get("/api/status")
+    assert status_response.status_code == 401
+
+
+@pytest.mark.anyio
 async def test_authenticated_user_can_fetch_status_history_and_config(
     client: httpx.AsyncClient,
 ):
