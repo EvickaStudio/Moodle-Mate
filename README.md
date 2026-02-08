@@ -83,6 +83,7 @@ concerns, you can use a locally hosted model (e.g. with
    make install
    make run
    make test
+   make ci-local
    make help
    ```
 
