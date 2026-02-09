@@ -194,5 +194,5 @@ async def test_logout_invalidates_session(client: httpx.AsyncClient):
 
 def test_webui_refuses_to_start_without_auth_secret(settings: Settings):
     settings.web.auth_secret = None
-    with pytest.raises(ValueError, match="requires 'web.auth_secret'"):
+    with pytest.raises(ValueError, match=r"requires 'web.auth_secret'"):
         WebUI(settings, DummyStateManager(), DummyAppInstance())
