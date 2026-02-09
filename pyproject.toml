@@ -8,6 +8,7 @@ dependencies = [
     "openai>=1.92.2",
     "requests>=2.32.4",
     "tiktoken>=0.9.0",
+    "zipp>=3.19.1",
     "bleach==6.3.0",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.0.0",

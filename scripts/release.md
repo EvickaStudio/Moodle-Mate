@@ -59,9 +59,12 @@ Without this, Release Please cannot open release PRs.
    1. `uv run ruff check --output-format=concise .`
    2. `uv run ruff format --check .`
    3. `uv run pytest -q`
-4. Commit with Conventional Commit message.
-5. `git push origin dev`
-6. Merge `dev` -> `main` when ready for release.
+4. To refresh to latest compatible dependencies for development:
+   1. `make sync-dev`
+   2. This runs: `uv lock --upgrade`, `uv sync --extra dev`, and regenerates `requirements.txt` + `requirements-dev.txt`.
+5. Commit with Conventional Commit message.
+6. `git push origin dev`
+7. Merge `dev` -> `main` when ready for release.
 
 ## 6. Release Workflow (Agent Execution)
 
@@ -87,12 +90,25 @@ Without this, Release Please cannot open release PRs.
 2. Merge release PR.
 3. Verify new tag and GitHub Release were created.
 
-### D) Sync Back
+### D) Sync Back (Required)
 
 1. `git checkout dev`
 2. `git pull --ff-only origin dev`
 3. `git merge --ff-only origin/main`
 4. `git push origin dev`
+5. Verify both remote branches point to the same commit:
+   1. `git fetch origin`
+   2. `git rev-parse --short origin/main`
+   3. `git rev-parse --short origin/dev`
+
+### E) Keep `CHANGELOG.md` Conflict-Free
+
+1. Do not edit `CHANGELOG.md` manually in regular feature commits.
+2. Let Release Please own version files and changelog updates.
+3. After each release PR merge, always run section **D) Sync Back (Required)** before starting new work.
+4. If you also work locally on `main`, refresh it before switching back to `dev`:
+   1. `git checkout main`
+   2. `git pull --ff-only origin main`
 
 ## 7. Verification Commands
 

@@ -25,4 +25,4 @@ jobs:
       - name: Run tests
         env:
           PYTHONPATH: src
-        run: uv run pytest -q
+        run: make ci-test
