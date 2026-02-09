@@ -1,6 +1,23 @@
 # Changelog
 
 Release history is managed by Release Please and published in GitHub Releases.
+## [2.3.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.2.4...v2.3.0) (2026-02-09)
+
+
+### Features
+
+* **make:** add sync-dev upgrade and export workflow ([7486757](https://github.com/EvickaStudio/Moodle-Mate/commit/7486757fc6c0941d4a462c6e095ae12b5bcaeeaa))
+
+
+### Bug Fixes
+
+* **deps:** pin zipp to patched version ([c7f2d27](https://github.com/EvickaStudio/Moodle-Mate/commit/c7f2d275bb3cb1a78577c6066a2eeea7d70c0eff))
+
+
+### Documentation
+
+* **release:** add changelog conflict prevention sync steps ([91bef0e](https://github.com/EvickaStudio/Moodle-Mate/commit/91bef0ed02aefea162e5c134d1f5c7c018abbfc7))
+
 ## [2.2.4](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.2.3...v2.2.4) (2026-02-07)
 
 
