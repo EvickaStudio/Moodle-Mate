@@ -59,9 +59,12 @@ Without this, Release Please cannot open release PRs.
    1. `uv run ruff check --output-format=concise .`
    2. `uv run ruff format --check .`
    3. `uv run pytest -q`
-4. Commit with Conventional Commit message.
-5. `git push origin dev`
-6. Merge `dev` -> `main` when ready for release.
+4. To refresh to latest compatible dependencies for development:
+   1. `make sync-dev`
+   2. This runs: `uv lock --upgrade`, `uv sync --extra dev`, and regenerates `requirements.txt` + `requirements-dev.txt`.
+5. Commit with Conventional Commit message.
+6. `git push origin dev`
+7. Merge `dev` -> `main` when ready for release.
 
 ## 6. Release Workflow (Agent Execution)
 

@@ -4,7 +4,7 @@ SHELL := /bin/sh
 UV ?= uv
 APP ?= moodlemate
 
-.PHONY: help install install-dev bootstrap run run-module test test-cov test-ci format format-check lint lint-check check ci-lint ci-test ci-local clean lock export-requirements export-requirements-runtime export-requirements-dev sync refresh docker-build docker-up docker-down docker-logs docker-restart test-notification
+.PHONY: help install install-dev bootstrap run run-module test test-cov test-ci format format-check lint lint-check check ci-lint ci-test ci-local clean lock lock-upgrade export-requirements export-requirements-runtime export-requirements-dev sync sync-dev refresh docker-build docker-up docker-down docker-logs docker-restart test-notification
 
 help: ## Show available targets
 	@echo "Available targets:"
@@ -59,6 +59,9 @@ clean: ## Remove Python cache artifacts
 lock: ## Refresh uv.lock
 	$(UV) lock
 
+lock-upgrade: ## Upgrade dependencies to latest compatible versions and refresh uv.lock
+	$(UV) lock --upgrade
+
 export-requirements: export-requirements-runtime ## Backward-compatible alias for runtime requirements export
 
 export-requirements-runtime: ## Export runtime requirements.txt from uv lock
@@ -68,6 +71,8 @@ export-requirements-dev: ## Export additive requirements-dev.txt from pyproject 
 	./scripts/export_requirements_dev.sh requirements-dev.txt
 
 sync: lock export-requirements-runtime export-requirements-dev ## Refresh lockfile and both requirements files
+
+sync-dev: lock-upgrade install-dev export-requirements-runtime export-requirements-dev ## Upgrade lockfile, sync runtime+dev deps, and refresh both requirements files
 
 refresh: sync check ## Refresh lockfile/requirements and run format+lint
 
