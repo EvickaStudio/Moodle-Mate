@@ -4,7 +4,7 @@ SHELL := /bin/sh
 UV ?= uv
 APP ?= moodlemate
 
-.PHONY: help install install-dev bootstrap run run-module test test-cov test-ci format format-check lint lint-check check ci-lint ci-test ci-local clean lock lock-upgrade export-requirements export-requirements-runtime export-requirements-dev sync sync-dev refresh docker-build docker-up docker-down docker-logs docker-restart test-notification
+.PHONY: help install install-dev bootstrap run run-module test test-cov test-ci format format-check lint lint-check typecheck typecheck-warnings check ci-lint ci-test ci-local clean lock lock-upgrade export-requirements export-requirements-runtime export-requirements-dev sync sync-dev refresh docker-build docker-up docker-down docker-logs docker-restart test-notification
 
 help: ## Show available targets
 	@echo "Available targets:"
@@ -44,6 +44,12 @@ lint: ## Lint and auto-fix with Ruff
 
 lint-check: ## Lint without auto-fixes
 	$(UV) run ruff check --output-format=concise .
+
+typecheck: ## Type-check source code with Pyright
+	$(UV) run pyright
+
+typecheck-warnings: ## Type-check source code with Pyright and include warnings
+	$(UV) run pyright --level warning
 
 check: format lint ## Run formatter + linter
 

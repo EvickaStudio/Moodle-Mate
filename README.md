@@ -83,6 +83,7 @@ concerns, you can use a locally hosted model (e.g. with
    make install
    make run
    make test
+   make typecheck
    make ci-local
    make help
    ```
@@ -148,6 +149,20 @@ To start Moodle Mate, run:
 
 ```bash
 uv run moodlemate
+```
+
+### Type Checking
+
+Run static type checking with Pyright:
+
+```bash
+uv run pyright
+```
+
+or with Make:
+
+```bash
+make typecheck
 ```
 
 ### Docker Usage
