@@ -813,6 +813,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "filelock" },
+    { name = "mkdocs-material" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -822,11 +823,6 @@ dev = [
     { name = "virtualenv" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "mkdocs-material" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "bleach", specifier = "==6.3.0" },
@@ -834,6 +830,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.109.0" },
     { name = "filelock", marker = "extra == 'dev'", specifier = ">=3.20.3" },
     { name = "jinja2", specifier = ">=3.1.0" },
+    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.7.2" },
     { name = "openai", specifier = ">=1.92.2" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.2.0" },
     { name = "pydantic", specifier = ">=2.10.0" },
@@ -852,9 +849,6 @@ requires-dist = [
     { name = "zipp", specifier = ">=3.19.1" },
 ]
 provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "mkdocs-material", specifier = ">=9.7.2" }]
 
 [[package]]
 name = "nodeenv"
