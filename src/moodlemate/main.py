@@ -35,7 +35,7 @@ def main() -> None:
 
     # Initialize settings for all components and services.
     try:
-        settings = Settings()
+        settings = Settings()  # pyright: ignore[reportCallIssue]
     except Exception as e:
         logging.critical(f"Failed to load configuration: {e}")
         logging.critical(

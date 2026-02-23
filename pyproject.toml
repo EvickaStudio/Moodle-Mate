@@ -26,9 +26,10 @@ dev = [
     "filelock>=3.20.3",
     "pytest>=8.4.1",
     "pytest-cov>=4.0.0",
-    "ruff>=0.12.1",
+    "pyright>=1.1.407",
+    "ruff>=0.15.2",
     "types-requests>=2.32.4.20250611",
-    "virtualenv>=20.36.1",
+    "virtualenv>=20.38.0",
 ]
 
 [project.scripts]
@@ -64,3 +65,31 @@ quote-style = "double"
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
+
+[tool.pyright]
+include = ["src/moodlemate"]
+exclude = [
+    "**/__pycache__",
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.11"
+pythonPlatform = "Linux"
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingTypeStubs = "none"
+reportMissingModuleSource = "warning"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownMemberType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownParameterType = "none"
+
+executionEnvironments = [{ root = "src", extraPaths = ["src"] }]
