@@ -93,3 +93,8 @@ reportUnknownLambdaType = "none"
 reportUnknownParameterType = "none"
 
 executionEnvironments = [{ root = "src", extraPaths = ["src"] }]
+
+[dependency-groups]
+dev = [
+    "mkdocs-material>=9.7.2",
+]
