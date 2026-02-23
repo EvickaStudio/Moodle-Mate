@@ -1,6 +1,18 @@
 # Changelog
 
 Release history is managed by Release Please and published in GitHub Releases.
+## [2.4.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.3.0...v2.4.0) (2026-02-23)
+
+
+### Features
+
+* **moodle:** process newest notifications as ordered batches ([ad05637](https://github.com/EvickaStudio/Moodle-Mate/commit/ad05637ef3fcedbb059fe049c0f0207f9eaa22ea))
+
+
+### Bug Fixes
+
+* **moodle:** harden site info parsing and pass pyright ([48064e4](https://github.com/EvickaStudio/Moodle-Mate/commit/48064e44fc0edaf8a7d3051a71ad8d09d51ba4cc))
+
 ## [2.3.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.2.4...v2.3.0) (2026-02-09)
 
 
