@@ -1,43 +1,70 @@
-# How to set up a local dev environment
+# How to set up a local development environment
 
-This guide shows you how to prepare a local environment for development.
+This guide sets up Moodle Mate for local development and testing.
 
-## Steps (uv recommended)
+## Prerequisites
 
-1. From the repo root, install dependencies:
+- Python `3.11+`
+- `uv` installed
+- Project cloned locally
+
+## Recommended path (uv)
+
+1. Install runtime + dev dependencies:
 
    ```bash
    uv sync --extra dev
    ```
 
-2. Run the app or the test suite:
+2. Run the app:
 
    ```bash
    uv run moodlemate
-   uv run pytest
    ```
 
-## Steps (manual venv)
-
-1. Create and activate a virtual environment.
-
-   Windows:
-
-   ```powershell
-   py -m venv venv
-   venv\Scripts\activate
-   ```
-
-   Linux / macOS:
+3. Run tests and checks:
 
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   make test
+   make check
    ```
 
-2. Install dependencies and run:
+!!! tip
 
-   ```bash
-   pip install -r requirements.txt -r requirements-dev.txt
-   python -m moodlemate
-   ```
+    `make ci-local` runs the same lint/test checks used in CI workflows.
+
+## Alternative path (venv + pip)
+
+=== "Linux / macOS"
+
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt -r requirements-dev.txt
+    python -m moodlemate
+    ```
+
+=== "Windows (PowerShell)"
+
+    ```powershell
+    py -m venv venv
+    .\venv\Scripts\Activate.ps1
+    pip install -r requirements.txt -r requirements-dev.txt
+    python -m moodlemate
+    ```
+
+## Verify installation
+
+Run:
+
+```bash
+uv run moodlemate --test-notification
+```
+
+If provider credentials are configured and at least one provider is enabled, a test notification is sent.
+
+## Related
+
+- Next: [Configure Web UI](configure-web-ui.md)
+- Before pushing: [Prepare changes before committing](prepare-commit.md)
+- Reference: [Configuration](../reference/configuration.md)

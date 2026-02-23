@@ -1,21 +1,20 @@
 # Tutorial: send your first notification
 
-In this tutorial, we will run Moodle Mate locally and send a test
-notification to a Webhook.site endpoint.
+In this tutorial, you will run Moodle Mate locally and confirm a test notification at Webhook.site.
 
-## Before we start
+__Time required__: ~10 minutes
 
-You need a Webhook.site URL. Open Webhook.site in your browser and copy the
-unique URL it gives you.
+## Prerequisites
 
-## 1) Get the code
+- `uv` installed
+- A Webhook.site URL
+
+## 1) Clone the repository
 
 ```bash
 git clone https://github.com/EvickaStudio/Moodle-Mate.git
 cd Moodle-Mate
 ```
-
-You should now be in the project root directory.
 
 ## 2) Install dependencies
 
@@ -23,34 +22,40 @@ You should now be in the project root directory.
 uv sync --extra dev
 ```
 
-The command should finish without errors.
-
 ## 3) Create `.env`
 
 ```bash
 cp example.env .env
 ```
 
-Open `.env` and set the following values:
+Set at minimum:
 
 ```env
 MOODLEMATE_MOODLE__URL=https://example.com
 MOODLEMATE_MOODLE__USERNAME=demo_user
 MOODLEMATE_MOODLE__PASSWORD=demo_password
 
-MOODLEMATE_WEBHOOK_SITE__ENABLED=1
+MOODLEMATE_WEBHOOK_SITE__ENABLED=true
 MOODLEMATE_WEBHOOK_SITE__WEBHOOK_URL=https://webhook.site/your-unique-id
 ```
 
-## 4) Run a test notification
+## 4) Send a test notification
 
 ```bash
 uv run moodlemate --test-notification
 ```
 
-You should see a log line about sending a test notification.
+Expected result: log output indicating the test notification was sent.
 
 ## 5) Confirm delivery
 
-Open your Webhook.site page. You should see a new request appear. If you do,
-we have successfully sent your first notification.
+Open your Webhook.site page and verify a new incoming request appears.
+
+!!! success "Done"
+
+    You have verified a working provider pipeline end-to-end.
+
+## Next
+
+- Configure local dashboard access: [Configure Web UI](../how-to/configure-web-ui.md)
+- Add another destination: [Add custom provider](../how-to/add-custom-provider.md)
