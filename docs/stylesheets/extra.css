@@ -1,0 +1,26 @@
+:root {
+  --md-primary-fg-color: #e65100;
+  --md-primary-fg-color--light: #ff8a50;
+  --md-primary-fg-color--dark: #ac1900;
+  --md-accent-fg-color: #ff8f00;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #14171a;
+  --md-default-fg-color: #e9edf1;
+  --md-code-bg-color: #1e2328;
+}
+
+.md-typeset .grid.cards > :is(ul, ol) > li,
+.md-typeset .grid > .card {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(230, 81, 0, 0.25);
+}
+
+.md-typeset a.md-button--primary {
+  box-shadow: 0 6px 20px rgba(230, 81, 0, 0.28);
+}
+
+.md-typeset code {
+  border-radius: 0.35rem;
+}

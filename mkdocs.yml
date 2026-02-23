@@ -1,0 +1,102 @@
+site_name: Moodle Mate Docs
+site_description: Documentation for Moodle Mate, the smart Moodle notification assistant.
+repo_name: EvickaStudio/Moodle-Mate
+repo_url: https://github.com/EvickaStudio/Moodle-Mate
+edit_uri: edit/dev/docs/
+
+theme:
+  name: material
+  language: en
+  logo: assets/moodlematev_gh_preview.png
+  favicon: assets/moodlematev_gh_preview.png
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+      primary: deep orange
+      accent: amber
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+      primary: deep orange
+      accent: amber
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+    - content.tabs.link
+    - content.tooltips
+    - content.footnote.tooltips
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Tutorials:
+      - tutorials/index.md
+      - Send Your First Notification: tutorials/first-notification.md
+  - How-to Guides:
+      - how-to/index.md
+      - Set Up Dev Environment: how-to/setup-dev-environment.md
+      - Configure Web UI: how-to/configure-web-ui.md
+      - Add Custom Provider: how-to/add-custom-provider.md
+      - Prepare Before Commit: how-to/prepare-commit.md
+  - Reference:
+      - reference/index.md
+      - Configuration: reference/configuration.md
+      - CLI: reference/cli.md
+      - Make Targets: reference/make-targets.md
+  - Explanation:
+      - explanation/index.md
+      - Architecture: explanation/architecture.md
+      - Security Model: explanation/security.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - tables
+  - def_list
+  - abbr
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.caret
+  - pymdownx.tilde
+  - pymdownx.critic
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/EvickaStudio/Moodle-Mate
+      name: Moodle Mate on GitHub
+
+exclude_docs: README.md
