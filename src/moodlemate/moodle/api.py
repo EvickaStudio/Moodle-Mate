@@ -125,7 +125,7 @@ class MoodleAPI:
         self._clear_session_state()
         return self.login()
 
-    def get_site_info(self) -> dict | None:
+    def get_site_info(self) -> dict[str, Any] | None:
         """
         Retrieves site information from the Moodle instance.
         """
@@ -146,7 +146,22 @@ class MoodleAPI:
             )
             response.raise_for_status()
             data = response.json()
-            self.userid = data.get("userid")
+            if not isinstance(data, dict):
+                logger.error(
+                    "Unexpected site info response type: %s", type(data).__name__
+                )
+                return None
+
+            # Moodle webservice failures are often returned as JSON payloads with
+            # `exception`/`errorcode` instead of HTTP errors.
+            if any(key in data for key in ("exception", "errorcode", "error")):
+                logger.error(
+                    "Failed to get site info from Moodle API: %s",
+                    data.get("message") or data.get("error") or data,
+                )
+                return None
+
+            self.userid = self._extract_user_id(data)
             self._save_session_state()
             return data
         except RequestException as e:
@@ -162,7 +177,29 @@ class MoodleAPI:
             return None
 
         result = self.get_site_info()
-        return result["userid"] if result else None
+        if result is None:
+            return None
+
+        user_id = self._extract_user_id(result)
+        if user_id is None:
+            logger.error(
+                "Site info response does not include 'userid'. Response keys: %s",
+                sorted(result.keys()),
+            )
+            return None
+        return user_id
+
+    @staticmethod
+    def _extract_user_id(site_info: dict[str, Any]) -> int | None:
+        """Extract user id from site info response payload."""
+        raw_user_id = site_info.get("userid")
+        if raw_user_id is None:
+            return None
+        try:
+            return int(raw_user_id)
+        except (TypeError, ValueError):
+            logger.error("Invalid userid in site info response: %r", raw_user_id)
+            return None
 
     def get_popup_notifications(
         self, user_id: int, limit: int | None = None

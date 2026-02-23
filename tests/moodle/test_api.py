@@ -88,6 +88,28 @@ def test_get_site_info_requires_token(api: MoodleAPI):
     assert api.get_site_info() is None
 
 
+def test_get_site_info_returns_none_for_moodle_error_payload(api: MoodleAPI):
+    api.token = "token"
+    response = Mock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {
+        "exception": "invalid_parameter_exception",
+        "errorcode": "invalidtoken",
+        "message": "Invalid token - token not found",
+    }
+    api.session = Mock()
+    api.session.post.return_value = response
+
+    assert api.get_site_info() is None
+
+
+def test_get_user_id_returns_none_when_userid_missing(api: MoodleAPI):
+    api.token = "token"
+    api.get_site_info = Mock(return_value={"sitename": "Demo"})
+
+    assert api.get_user_id() is None
+
+
 def test_refresh_session_resets_session_and_reauthenticates(
     api: MoodleAPI, monkeypatch
 ):

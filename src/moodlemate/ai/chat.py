@@ -310,11 +310,12 @@ class GPT:
                 ) from e
 
             except openai.APIError as e:
-                if e.status_code and 500 <= e.status_code < 600:  # Server errors
+                status_code = getattr(e, "status_code", None)
+                if isinstance(status_code, int) and 500 <= status_code < 600:
                     if attempt < max_retries:
                         wait_time = retry_delay * (2 ** (attempt - 1))
                         logging.warning(
-                            f"Server error (status {e.status_code}) on attempt {attempt}/{max_retries}. "
+                            f"Server error (status {status_code}) on attempt {attempt}/{max_retries}. "
                             f"Retrying in {wait_time} seconds..."
                         )
                         time.sleep(wait_time)
@@ -322,9 +323,9 @@ class GPT:
                     raise ServerError(
                         f"Server error after {max_retries} attempts: {e!s}"
                     ) from e
-                elif e.status_code == 401:
+                elif status_code == 401:
                     raise InvalidAPIKeyError("Invalid API key provided") from e
-                elif e.status_code and 400 <= e.status_code < 500:
+                elif isinstance(status_code, int) and 400 <= status_code < 500:
                     raise ClientError(f"Client error: {e!s}") from e
                 else:
                     raise ChatCompletionError(f"API error: {e!s}") from e

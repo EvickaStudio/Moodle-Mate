@@ -1,5 +1,6 @@
 import logging
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 from moodlemate.core.security import InputValidator
 from moodlemate.core.state_manager import StateManager
@@ -28,12 +29,12 @@ class NotificationProcessor:
         self.state_manager = state_manager
         self.summarizer = summarizer
 
-    def process(self, notification: dict) -> None:
+    def process(self, notification: Mapping[str, Any]) -> None:
         """Process and send a notification through all enabled providers."""
         try:
             # Security: Sanitize notification data first
             sanitized_notification = InputValidator.sanitize_notification_data(
-                notification
+                dict(notification)
             )
 
             # Extract notification data
@@ -51,6 +52,8 @@ class NotificationProcessor:
             # Enforce payload limits
             max_bytes = getattr(self.settings.notification, "max_payload_bytes", 65536)
             message, message_trimmed = self._trim_to_limit(message, max_bytes)
+            if message is None:
+                raise ValueError("Notification message is empty after trimming")
             summary, summary_trimmed = self._trim_to_limit(summary, max_bytes)
             if message_trimmed or summary_trimmed:
                 logger.warning(
@@ -74,7 +77,9 @@ class NotificationProcessor:
         except Exception as e:
             logging.error(f"Failed to process notification: {e!s}", exc_info=True)
 
-    def _should_ignore_notification(self, subject: str, notification: dict) -> bool:
+    def _should_ignore_notification(
+        self, subject: str, notification: Mapping[str, Any]
+    ) -> bool:
         """Checks if a notification should be ignored based on configured filters."""
         lowered_subject = subject.lower()
         subject_match = any(
@@ -95,14 +100,14 @@ class NotificationProcessor:
 
         return False
 
-    def _get_notification_subject(self, notification: dict) -> str:
+    def _get_notification_subject(self, notification: Mapping[str, Any]) -> str:
         """Extract and validate notification subject."""
         if subject := notification.get("subject", "").strip():
             return subject
         else:
             raise ValueError("Notification subject is empty")
 
-    def _get_notification_message(self, notification: dict) -> str:
+    def _get_notification_message(self, notification: Mapping[str, Any]) -> str:
         """Extract and convert notification message."""
         if message := notification.get("fullmessagehtml", "").strip():
             return convert(message)  # Convert HTML to Markdown
