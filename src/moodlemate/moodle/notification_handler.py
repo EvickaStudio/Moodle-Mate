@@ -187,12 +187,12 @@ class MoodleNotificationHandler:
                     current_delay * 2, max_delay
                 )  # Exponential backoff with cap
 
-    def fetch_latest_notification(self) -> NotificationData | None:
+    def fetch_latest_notifications(self) -> list[NotificationData] | None:
         """
-        Fetch the most recent notification from Moodle.
+        Fetch the most recent batch of notifications from Moodle.
 
         Returns:
-            The latest notification if available, None otherwise
+            The latest notification batch if available, None otherwise
 
         Raises:
             MoodleConnectionError: If connection fails repeatedly
@@ -227,13 +227,20 @@ class MoodleNotificationHandler:
                     return None
 
                 # Validate notification format
-                notification = notifications[0]
-                processed = self._process_notification(notification)
-                return self._log_and_return(
-                    processed,
-                    "Failed to process notification",
-                    "Latest notification: ",
+                processed_notifications = []
+                for notification in notifications:
+                    if processed := self._process_notification(notification):
+                        processed_notifications.append(processed)
+
+                if not processed_notifications:
+                    logger.error("Failed to process notification batch")
+                    return None
+
+                logger.debug(
+                    "Latest notification batch fetched: %s",
+                    processed_notifications,
                 )
+                return processed_notifications
 
             except MoodleAuthenticationError as e:
                 # Authentication issues should trigger a reconnection attempt
@@ -262,6 +269,21 @@ class MoodleNotificationHandler:
 
         return None
 
+    def fetch_latest_notification(self) -> NotificationData | None:
+        """
+        Fetch the single most recent notification from Moodle.
+
+        Returns:
+            The latest notification if available, None otherwise
+
+        Raises:
+            MoodleConnectionError: If connection fails repeatedly
+        """
+        notifications = self.fetch_latest_notifications()
+        if not notifications:
+            return None
+        return notifications[0]
+
     def fetch_newest_notification(self) -> list[NotificationData] | None:
         """
         Fetch only notifications newer than the last processed one.
@@ -277,21 +299,31 @@ class MoodleNotificationHandler:
             if self.last_notification_id is None:
                 return self._handle_initial_fetch()
 
-            notification = self.fetch_latest_notification()
-            if not notification:
+            notifications = self.fetch_latest_notifications()
+            if not notifications:
                 return None
 
-            current_id = notification["id"]
+            unseen_notifications = [
+                notification
+                for notification in notifications
+                if notification["id"] > self.last_notification_id
+            ]
+            unseen_notifications.sort(key=lambda notification: notification["id"])
 
-            if current_id > self.last_notification_id:
+            if unseen_notifications:
                 return [
                     self._handle_new_notification(
-                        "New notification found: ID ", current_id, notification
+                        "New notification found: ID ",
+                        notification["id"],
+                        notification,
                     )
+                    for notification in unseen_notifications
                 ]
 
             logger.debug(
-                f"No new notifications. Current ID: {current_id}, Last ID: {self.last_notification_id}"
+                "No new notifications. Current IDs: %s, Last ID: %s",
+                [notification["id"] for notification in notifications],
+                self.last_notification_id,
             )
             return None
 

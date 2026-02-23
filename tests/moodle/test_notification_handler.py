@@ -63,6 +63,44 @@ def test_fetch_latest_notification_returns_processed_notification():
     }
 
 
+def test_fetch_latest_notifications_returns_processed_batch():
+    handler = _build_handler()
+    handler._ensure_connection = Mock()
+    handler.api.get_popup_notifications.return_value = {
+        "notifications": [
+            {
+                "id": 99,
+                "useridfrom": 7,
+                "subject": "Update",
+                "fullmessagehtml": "<p>body</p>",
+            },
+            {
+                "id": 98,
+                "useridfrom": 8,
+                "subject": "Older",
+                "fullmessagehtml": "<p>older</p>",
+            },
+        ]
+    }
+
+    result = handler.fetch_latest_notifications()
+
+    assert result == [
+        {
+            "id": 99,
+            "useridfrom": 7,
+            "subject": "Update",
+            "fullmessagehtml": "<p>body</p>",
+        },
+        {
+            "id": 98,
+            "useridfrom": 8,
+            "subject": "Older",
+            "fullmessagehtml": "<p>older</p>",
+        },
+    ]
+
+
 def test_ensure_connection_reconnects_when_session_is_expired():
     handler = _build_handler()
     handler.last_successful_connection = time.time() - handler.session_timeout - 5
@@ -94,16 +132,49 @@ def test_fetch_newest_notification_uses_initial_fetch_when_no_state():
 
 def test_fetch_newest_notification_returns_none_when_latest_is_not_newer():
     handler = _build_handler(last_notification_id=20)
-    handler.fetch_latest_notification = Mock(
-        return_value={
-            "id": 20,
-            "useridfrom": 1,
-            "subject": "Same",
-            "fullmessagehtml": "x",
-        }
+    handler.fetch_latest_notifications = Mock(
+        return_value=[
+            {
+                "id": 20,
+                "useridfrom": 1,
+                "subject": "Same",
+                "fullmessagehtml": "x",
+            }
+        ]
     )
 
     assert handler.fetch_newest_notification() is None
+
+
+def test_fetch_newest_notification_returns_all_new_notifications_oldest_first():
+    handler = _build_handler(last_notification_id=100)
+    handler.fetch_latest_notifications = Mock(
+        return_value=[
+            {
+                "id": 103,
+                "useridfrom": 1,
+                "subject": "Newest",
+                "fullmessagehtml": "n3",
+            },
+            {
+                "id": 102,
+                "useridfrom": 1,
+                "subject": "Middle",
+                "fullmessagehtml": "n2",
+            },
+            {
+                "id": 101,
+                "useridfrom": 1,
+                "subject": "Oldest unseen",
+                "fullmessagehtml": "n1",
+            },
+        ]
+    )
+
+    result = handler.fetch_newest_notification()
+
+    assert result is not None
+    assert [notification["id"] for notification in result] == [101, 102, 103]
 
 
 def test_mark_notification_processed_updates_state_manager():
