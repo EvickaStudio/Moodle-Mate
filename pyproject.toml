@@ -30,6 +30,7 @@ dev = [
     "ruff>=0.15.2",
     "types-requests>=2.32.4.20250611",
     "virtualenv>=20.38.0",
+    "mkdocs-material>=9.7.2",
 ]
 
 [project.scripts]
@@ -93,8 +94,3 @@ reportUnknownLambdaType = "none"
 reportUnknownParameterType = "none"
 
 executionEnvironments = [{ root = "src", extraPaths = ["src"] }]
-
-[dependency-groups]
-dev = [
-    "mkdocs-material>=9.7.2",
-]

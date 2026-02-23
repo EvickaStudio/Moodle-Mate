@@ -10,3 +10,4 @@ pyright>=1.1.407
 ruff>=0.15.2
 types-requests>=2.32.4.20250611
 virtualenv>=20.38.0
+mkdocs-material>=9.7.2
