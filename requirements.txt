@@ -399,9 +399,9 @@ markupsafe==3.0.3 \
     --hash=sha256:f9e130248f4462aaa8e2552d547f36ddadbeaa573879158d721bbd33dfe4743a \
     --hash=sha256:fed51ac40f757d41b7c48425901843666a6677e3e8eb0abcff09e4ba6e664f50
     # via jinja2
-openai==2.21.0 \
-    --hash=sha256:0bc1c775e5b1536c294eded39ee08f8407656537ccc71b1004104fe1602e267c \
-    --hash=sha256:81b48ce4b8bbb2cc3af02047ceb19561f7b1dc0d4e52d1de7f02abfd15aa59b7
+openai==2.24.0 \
+    --hash=sha256:1e5769f540dbd01cb33bc4716a23e67b9d695161a734aff9c5f925e2bf99a673 \
+    --hash=sha256:fed30480d7d6c884303287bde864980a4b137b60553ffbcf9ab4a233b7a73d94
     # via moodle-mate
 pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy' \
     --hash=sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29 \
