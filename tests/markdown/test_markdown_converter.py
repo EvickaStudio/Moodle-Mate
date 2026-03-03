@@ -142,3 +142,17 @@ def test_cleaner_fixes_multiple_split_bold_email_segments():
     assert "**" not in cleaned
     assert "a@example.com\nInfos A" in cleaned
     assert "b@example.com\nInfos B" in cleaned
+
+
+def test_cleaner_keeps_compact_spacing_after_bold_marker_removal():
+    """Avoid reintroducing extra blank lines after removing orphan bold markers."""
+    text = "Hello\n\n**\n\nWorld"
+    cleaned = apply_custom_rules(text)
+    assert cleaned == "Hello\n\nWorld"
+
+
+def test_cleaner_preserves_separator_after_converted_pseudo_list():
+    """Keep one blank line between converted list and following paragraph."""
+    text = "Was Dich erwartet:\n\nPunkt A\n\nPunkt B\n\nDanach folgt ein Absatz."
+    cleaned = apply_custom_rules(text)
+    assert "- Punkt A\n- Punkt B\n\nDanach folgt ein Absatz." in cleaned

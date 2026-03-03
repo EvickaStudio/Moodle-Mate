@@ -95,6 +95,8 @@ def apply_custom_rules(text: str) -> str:
 
     # Ensure there are no blank lines between list items.
     text = compact_list_item_spacing(text)
+    # Final pass to preserve compact paragraph spacing after all rewrites.
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text
 
@@ -130,6 +132,7 @@ def normalize_spaced_list_blocks(text: str) -> str:
 
         items: list[str] = []
         scan_idx = item_idx
+        consumed_separator = False
         while scan_idx < len(lines):
             candidate = lines[scan_idx].strip()
             if not _is_list_item_candidate(candidate):
@@ -138,7 +141,9 @@ def normalize_spaced_list_blocks(text: str) -> str:
             scan_idx += 1
             if scan_idx < len(lines) and not lines[scan_idx].strip():
                 scan_idx += 1
+                consumed_separator = True
             else:
+                consumed_separator = False
                 break
 
         if len(items) < 2:
@@ -148,6 +153,13 @@ def normalize_spaced_list_blocks(text: str) -> str:
 
         normalized.extend([line, ""])
         normalized.extend(f"- {item}" for item in items)
+        if (
+            consumed_separator
+            and scan_idx < len(lines)
+            and lines[scan_idx].strip()
+            and not _is_list_item_candidate(lines[scan_idx].strip())
+        ):
+            normalized.append("")
         idx = scan_idx
         continue
 
