@@ -136,8 +136,7 @@ def test_cleaner_preserves_non_email_multiline_bold():
 def test_cleaner_fixes_multiple_split_bold_email_segments():
     """Fix each split email-bold segment in the same text."""
     text = (
-        "Kontakt A: **a@example.com\n**Infos A\n\n"
-        "Kontakt B: **b@example.com\n**Infos B"
+        "Kontakt A: **a@example.com\n**Infos A\n\nKontakt B: **b@example.com\n**Infos B"
     )
     cleaned = apply_custom_rules(text)
     assert "**" not in cleaned
