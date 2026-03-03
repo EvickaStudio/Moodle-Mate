@@ -104,9 +104,42 @@ def test_cleaner_normalizes_spaced_pseudo_list():
     assert "- Workshops, Events und Networking" in cleaned
 
 
+def test_cleaner_compacts_raw_bullet_list_spacing():
+    """Collapse blank lines between bullet list items on raw markdown."""
+    text = "* Item 1\n\n* Item 2\n\n* Item 3"
+    cleaned = apply_custom_rules(text)
+    assert cleaned == "* Item 1\n* Item 2\n* Item 3"
+
+
+def test_cleaner_compacts_raw_numbered_list_spacing():
+    """Collapse blank lines between numbered list items on raw markdown."""
+    text = "1. Item 1\n\n2. Item 2\n\n3. Item 3"
+    cleaned = apply_custom_rules(text)
+    assert cleaned == "1. Item 1\n2. Item 2\n3. Item 3"
+
+
 def test_cleaner_fixes_split_bold_email():
     """Remove broken bold markers split around an email line."""
     text = "Sende alle Unterlagen an: **info@example.com\n**Weitere Infos hier."
     cleaned = apply_custom_rules(text)
     assert "**" not in cleaned
     assert "info@example.com" in cleaned
+
+
+def test_cleaner_preserves_non_email_multiline_bold():
+    """Do not alter multiline bold text when it is not an email split."""
+    text = "**Wichtiger Hinweis\n**Weitere Informationen folgen."
+    cleaned = apply_custom_rules(text)
+    assert cleaned == text
+
+
+def test_cleaner_fixes_multiple_split_bold_email_segments():
+    """Fix each split email-bold segment in the same text."""
+    text = (
+        "Kontakt A: **a@example.com\n**Infos A\n\n"
+        "Kontakt B: **b@example.com\n**Infos B"
+    )
+    cleaned = apply_custom_rules(text)
+    assert "**" not in cleaned
+    assert "a@example.com\nInfos A" in cleaned
+    assert "b@example.com\nInfos B" in cleaned

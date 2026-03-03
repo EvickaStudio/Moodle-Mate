@@ -38,7 +38,7 @@ def apply_custom_rules(text: str) -> str:
     Makes the output Discord-embed safe.
 
     Args:
-        text (str): The markdowntext to be cleaned.
+        text (str): The Markdown text to be cleaned.
 
     Returns:
         str: The cleaned markdown text.
