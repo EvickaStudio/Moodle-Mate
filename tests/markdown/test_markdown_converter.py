@@ -1,4 +1,4 @@
-from moodlemate.markdown.converter import clean_converted_text, convert
+from moodlemate.markdown.converter import apply_custom_rules, convert
 
 
 def test_convert_basic_html_to_markdown():
@@ -54,36 +54,59 @@ def test_convert_formatting():
     md_list = convert("<ul><li>Item 1</li><li>Item 2</li></ul>")
     assert "* Item 1" in md_list
     assert "* Item 2" in md_list
+    assert "\n\n* Item 2" not in md_list
 
 
 def test_cleaner_patterns():
-    """Test regex cleaning patterns in clean_converted_text."""
+    """Test regex cleaning patterns in apply_custom_rules."""
     # Navigation breadcrumbs
     text = "[Home](/) » [Course](/c) » Lesson"
-    assert clean_converted_text(text) == "Lesson"
+    assert apply_custom_rules(text) == "Lesson"
 
     # Images (should all be removed)
     images = "![alt](x.png) Some text [![x](y)](z) [](/img.jpg)"
-    assert clean_converted_text(images) == "Some text"
+    assert apply_custom_rules(images) == "Some text"
 
     # Forum management links
     forum_links = "Some content\n[Forum abbestellen]\nMore footer info"
-    assert clean_converted_text(forum_links) == "Some content"
+    assert apply_custom_rules(forum_links) == "Some content"
 
     forum_links_2 = "Discussion text\n[Diskussion im Forum zeigen]\nMore footer info"
-    assert clean_converted_text(forum_links_2) == "Discussion text"
+    assert apply_custom_rules(forum_links_2) == "Discussion text"
 
 
 def test_cleaner_whitespace():
     """Test whitespace and newline normalization."""
     # Multiple newlines
     text = "Line 1\n\n\n\nLine 2"
-    assert clean_converted_text(text) == "Line 1\n\nLine 2"
+    assert apply_custom_rules(text) == "Line 1\n\nLine 2"
 
     # Multiple spaces
     text = "Too    many      spaces"
-    assert clean_converted_text(text) == "Too many spaces"
+    assert apply_custom_rules(text) == "Too many spaces"
 
     # Trailing/leading whitespace
     text = "   \n   Surrounded   \n   "
-    assert clean_converted_text(text) == "Surrounded"
+    assert apply_custom_rules(text) == "Surrounded"
+
+
+def test_cleaner_normalizes_spaced_pseudo_list():
+    """Convert heading + spaced lines into compact markdown bullets."""
+    text = (
+        "Was Dich erwartet:\n\n"
+        "Individuelle Gruendungsberatung\n\n"
+        "Persoenliches Mentoring\n\n"
+        "Workshops, Events und Networking"
+    )
+    cleaned = apply_custom_rules(text)
+    assert "- Individuelle Gruendungsberatung" in cleaned
+    assert "- Persoenliches Mentoring" in cleaned
+    assert "- Workshops, Events und Networking" in cleaned
+
+
+def test_cleaner_fixes_split_bold_email():
+    """Remove broken bold markers split around an email line."""
+    text = "Sende alle Unterlagen an: **info@example.com\n**Weitere Infos hier."
+    cleaned = apply_custom_rules(text)
+    assert "**" not in cleaned
+    assert "info@example.com" in cleaned
