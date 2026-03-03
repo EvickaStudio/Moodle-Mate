@@ -88,7 +88,7 @@ Pattern:
 
 ## Runtime/state/session variables
 
-These are read directly from environment (outside the `MOODLEMATE_` nested model in two cases):
+These are read directly from the environment (outside the `MOODLEMATE_` nested model):
 
 - `MOODLEMATE_SESSION_ENCRYPTION_KEY` (optional): enables encrypted Moodle session cache.
 - `MOODLE_SESSION_FILE` (default `moodle_session.json`): path for encrypted session cache file.
