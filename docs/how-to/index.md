@@ -1,6 +1,11 @@
+---
+icon: material/wrench
+---
+
 # How-to Guides
 
-How-to guides are task-oriented. Use them when you need to complete a specific action.
+How-to guides are **task-oriented**. Use them when you already know what you want to achieve
+and need the specific steps to get there.
 
 <div class="grid cards" markdown>
 
@@ -8,7 +13,7 @@ How-to guides are task-oriented. Use them when you need to complete a specific a
 
     ---
 
-    Install dependencies and run app/tests locally.
+    Install dependencies and run the app or tests locally.
 
     [:octicons-arrow-right-24: Open guide](setup-dev-environment.md)
 
@@ -20,7 +25,7 @@ How-to guides are task-oriented. Use them when you need to complete a specific a
 
     [:octicons-arrow-right-24: Open guide](configure-web-ui.md)
 
--   :material-puzzle-plus: __Add custom provider__
+-   :material-puzzle-plus: __Add a custom provider__
 
     ---
 
@@ -32,12 +37,12 @@ How-to guides are task-oriented. Use them when you need to complete a specific a
 
     ---
 
-    Run the right checks and commit conventions before pushing.
+    Run the right checks and use commit conventions before pushing.
 
     [:octicons-arrow-right-24: Open guide](prepare-commit.md)
 
 </div>
 
-## Next section
+## What's next?
 
-If you need exact settings/flags, jump to [Reference](../reference/index.md).
+If you need exact settings, environment variables, or flags, jump to [Reference](../reference/index.md).

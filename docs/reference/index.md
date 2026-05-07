@@ -1,6 +1,11 @@
+---
+icon: material/book-open-page-variant
+---
+
 # Reference
 
-Reference pages are information-oriented and complete.
+Reference pages are **information-oriented** and complete. Use them to look up exact values,
+defaults, and options while you work.
 
 <div class="grid cards" markdown>
 
@@ -8,7 +13,7 @@ Reference pages are information-oriented and complete.
 
     ---
 
-    Environment variables, defaults, and constraints.
+    All environment variables, their defaults, and allowed ranges.
 
     [:octicons-arrow-right-24: Open reference](configuration.md)
 
@@ -32,4 +37,4 @@ Reference pages are information-oriented and complete.
 
 ## Related
 
-To understand why things are designed this way, read [Explanation](../explanation/index.md).
+To understand why things are designed this way, read the [Explanation](../explanation/index.md) section.

@@ -1,31 +1,54 @@
-# Security model notes
+---
+icon: material/shield-check
+description: Web UI security boundaries, session handling, and operational security guidance.
+---
 
-This page summarizes the current security posture and practical limits.
+# Security model
+
+This page describes the current security posture and its practical limits.
 
 ## Web UI boundary
 
-- Web UI requires `MOODLEMATE_WEB__AUTH_SECRET`.
-- Web UI host is forced to `127.0.0.1` at runtime.
-- Login creates random server-side session tokens.
-- Cookies are `SameSite=strict`; auth cookie is `HttpOnly`.
-- State-changing API routes require CSRF token validation.
+The Web UI is designed to be a **localhost-only** operator tool, not a public-facing service.
+
+| Control | Detail |
+|---------|--------|
+| Binding | Always `127.0.0.1`, enforced at runtime — cannot be overridden via config |
+| Authentication required | `MOODLEMATE_WEB__AUTH_SECRET` must be set; app refuses to start without it |
+| Session tokens | Random `secrets.token_urlsafe(32)` values stored server-side |
+| Session lifetime | 30-day max-age cookie |
+| Cookie flags | `SameSite=strict`; auth cookie is `HttpOnly` |
+| CSRF protection | All state-changing routes require `X-CSRF-Token` header matching CSRF cookie |
+| Rate limiting | Login endpoint is rate-limited per client IP |
 
 ## Configuration editing via Web UI
 
-The dashboard supports runtime config updates, but selected sensitive/structural paths are immutable via API (for example Moodle credentials and provider secret endpoints/keys).
+The dashboard allows runtime config updates, but a fixed set of sensitive and structural paths
+are **immutable via the API**:
+
+- Moodle credentials (`url`, `username`, `password`)
+- AI API key and endpoint
+- Provider webhook URLs and API keys
+- Web UI settings (`enabled`, `host`, `port`, `auth_secret`)
+
+To change these, update `.env` and restart the app.
 
 ## Session and state files
 
-- Moodle session cache is encrypted only when `MOODLEMATE_SESSION_ENCRYPTION_KEY` is set.
-- Session file default: `moodle_session.json` (override with `MOODLE_SESSION_FILE`).
-- State file is persisted with restrictive permissions where possible.
+| File | Encryption | Override |
+|------|------------|---------|
+| `moodle_session.json` | Fernet-encrypted when `MOODLEMATE_SESSION_ENCRYPTION_KEY` is set; plaintext otherwise | `MOODLE_SESSION_FILE` env var |
+| `state.json` | Not encrypted (contains only the last notification ID and recent history) | `MOODLE_STATE_FILE` or `MOODLE_STATE_DIR` env var |
+
+Files are written with restrictive permissions where the OS allows it.
 
 ## Operational recommendations
 
-1. Keep Web UI local-only (default behavior).
-2. If reverse proxying, require TLS and independent upstream authentication.
-3. Store `.env`, session cache, and state files on protected storage.
-4. Limit backup/snapshot access to directories containing runtime secrets.
+- [x] Keep the Web UI local-only (default behaviour — no action required).
+- [x] Store `.env`, session cache, and state files on protected storage.
+- [x] Limit backup/snapshot access to directories containing runtime secrets.
+- [ ] If reverse proxying, require TLS and independent upstream authentication at the proxy.
+- [ ] Set `MOODLEMATE_SESSION_ENCRYPTION_KEY` to enable encrypted session caching.
 
 ## Related
 

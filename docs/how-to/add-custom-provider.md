@@ -1,36 +1,43 @@
+---
+icon: material/puzzle-plus
+description: Add a custom notification provider to Moodle Mate using the plugin loader.
+---
+
 # How to add a custom notification provider
 
-Moodle Mate auto-discovers providers from `src/moodlemate/providers/notification/*/provider.py`.
-
-This guide shows the minimal, code-accurate integration path.
+Moodle Mate auto-discovers providers by scanning
+`src/moodlemate/providers/notification/*/provider.py`.
+This guide walks through the minimal, code-accurate path for adding your own.
 
 ## How provider loading works
 
-A provider is loaded when all of the following are true:
+A provider is loaded when **all** of the following are true:
 
-1. It lives under `src/moodlemate/providers/notification/<provider_name>/provider.py`.
+1. It lives at `src/moodlemate/providers/notification/<name>/provider.py`.
 2. It defines a class that subclasses `NotificationProvider`.
-3. `Settings` contains a field named exactly `<provider_name>`.
-4. `<provider_name>.enabled` is `true` in config.
+3. `Settings` has a field named exactly `<name>` (matching the folder name).
+4. `<name>.enabled` is `true` in configuration.
 
-The plugin manager initializes providers with:
+The plugin manager initialises each provider with:
 
-- `provider_settings.model_dump(exclude={"enabled"})`
+```python
+provider_settings.model_dump(exclude={"enabled"})
+```
 
-So your provider `__init__` parameters must match your config model fields except `enabled`.
+So your `__init__` parameters must match your config model fields **except** `enabled`.
 
-## 1) Create provider module
+## 1 — Create the provider module
 
-Create:
+Create two files:
 
 ```text
-src/moodlemate/providers/notification/my_service/__init__.py
+src/moodlemate/providers/notification/my_service/__init__.py  # empty
 src/moodlemate/providers/notification/my_service/provider.py
 ```
 
-Example `provider.py`:
+Minimal `provider.py`:
 
-```python
+```python title="provider.py"
 import logging
 
 from moodlemate.infrastructure.http.request_manager import request_manager
@@ -43,7 +50,7 @@ class MyServiceProvider(NotificationProvider):
     def __init__(self, api_key: str, endpoint: str = "https://api.myservice.com"):
         self.api_key = api_key
         self.endpoint = endpoint.rstrip("/")
-        self.session = request_manager.get_session("provider_my_service")
+        self.session = request_manager.get_session("provider_my_service")  # (1)!
 
     def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         payload = {"title": subject, "body": message}
@@ -72,10 +79,13 @@ class MyServiceProvider(NotificationProvider):
         return False
 ```
 
-## 2) Add config model in `src/moodlemate/config.py`
+1.  Use `request_manager.get_session` with a unique name so your provider participates
+    in the shared retry/timeout configuration set at startup.
 
-```python
-from pydantic import BaseModel, Field
+## 2 — Add a config model in `src/moodlemate/config.py`
+
+```python title="config.py (add near the other provider config classes)"
+from pydantic import BaseModel
 
 
 class MyServiceConfig(BaseModel):
@@ -84,25 +94,26 @@ class MyServiceConfig(BaseModel):
     endpoint: str = "https://api.myservice.com"
 ```
 
-## 3) Register the model in `Settings`
+## 3 — Register the model in `Settings`
 
-```python
+```python title="config.py (inside the Settings class)"
 class Settings(BaseSettings):
-    # ...existing fields...
-    my_service: MyServiceConfig = Field(default_factory=MyServiceConfig)
+    # ... existing fields ...
+    my_service: MyServiceConfig = Field(default_factory=MyServiceConfig)  # (1)!
 ```
 
-The field name `my_service` must match the provider folder name.
+1.  The field name `my_service` must match the provider folder name exactly.
+    The env prefix becomes `MOODLEMATE_MY_SERVICE__*`.
 
-## 4) Configure `.env`
+## 4 — Configure `.env`
 
-```env
+```env title=".env"
 MOODLEMATE_MY_SERVICE__ENABLED=true
 MOODLEMATE_MY_SERVICE__API_KEY=secret_key_123
 MOODLEMATE_MY_SERVICE__ENDPOINT=https://api.myservice.com
 ```
 
-## 5) Test
+## 5 — Test
 
 ```bash
 uv run moodlemate --test-notification
@@ -110,9 +121,24 @@ uv run moodlemate --test-notification
 
 ## Troubleshooting
 
-- Provider not loaded: check folder name, class inheritance, and `Settings` field name match.
-- Provider constructor error: ensure `__init__` args match config model fields except `enabled`.
-- No message delivered: check logs for your provider’s HTTP response status/body.
+??? question "Provider not loaded at all"
+    Check all three conditions are met:
+
+    - Folder name matches the `Settings` field name exactly.
+    - Provider class subclasses `NotificationProvider`.
+    - `MOODLEMATE_<NAME>__ENABLED=true` is set in `.env`.
+
+??? question "Provider constructor error on startup"
+    Ensure your `__init__` parameters match the config model fields **excluding** `enabled`.
+    The plugin manager calls `model_dump(exclude={"enabled"})` and passes the result as kwargs.
+
+??? question "Provider sends but message is empty"
+    Check that `subject`, `message`, and optionally `summary` are what you expect.
+    Add a `logger.debug(...)` to your `send()` method and re-run to inspect.
+
+??? question "No log output from my provider at all"
+    Make sure your module imports succeed (check for typos in the import path).
+    Run `uv run moodlemate` (without `--test-notification`) and watch startup logs.
 
 ## Related
 

@@ -1,6 +1,11 @@
+---
+icon: material/send-check
+---
+
 # Tutorials
 
-Tutorials are learning-oriented. Follow them from start to finish.
+Tutorials are **learning-oriented**. Follow them from start to finish to build a working understanding
+of Moodle Mate by doing.
 
 <div class="grid cards" markdown>
 
@@ -8,12 +13,12 @@ Tutorials are learning-oriented. Follow them from start to finish.
 
     ---
 
-    Run Moodle Mate locally and verify delivery with Webhook.site.
+    Run Moodle Mate locally and verify delivery end-to-end with Webhook.site.
 
     [:octicons-arrow-right-24: Open tutorial](first-notification.md)
 
 </div>
 
-## Next section
+## What's next?
 
-When you are done, continue with practical task guides in [How-to guides](../how-to/index.md).
+When you're done, continue with practical task guides in [How-to guides](../how-to/index.md).

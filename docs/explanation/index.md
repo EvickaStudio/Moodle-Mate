@@ -1,6 +1,11 @@
+---
+icon: material/lightbulb-on-outline
+---
+
 # Explanation
 
-Explanation pages are understanding-oriented. They focus on architecture and trade-offs.
+Explanation pages are **understanding-oriented**. They discuss context, design decisions,
+and trade-offs — not step-by-step instructions.
 
 <div class="grid cards" markdown>
 
@@ -8,7 +13,7 @@ Explanation pages are understanding-oriented. They focus on architecture and tra
 
     ---
 
-    End-to-end flow from Moodle API to providers.
+    End-to-end runtime flow from the Moodle API through to providers.
 
     [:octicons-arrow-right-24: Open explanation](architecture.md)
 
