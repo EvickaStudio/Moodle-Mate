@@ -7,6 +7,9 @@ TURNDOWN = MarkdownConverter({"headingStyle": "atx", "codeBlockStyle": "fenced"}
 
 logger = logging.getLogger(__name__)
 
+MAX_PSEUDO_LIST_ITEM_LENGTH = 90
+PSEUDO_LIST_ITEM_TERMINATORS = (".", "!", "?", ":")
+
 
 def convert(html_content: str) -> str:
     """
@@ -22,8 +25,9 @@ def convert(html_content: str) -> str:
     return apply_custom_rules(TURNDOWN.to_markdown(html_content))
 
 
-# When turndown markdown conversion is not working as expected and malformes lines etc.
-# mdformat can be used to format the markdown to comply with commonmark spec. (currently not used)
+# If Turndown produces malformed lines or other unexpected Markdown output,
+# mdformat can be used to format the markdown to comply with the CommonMark spec.
+# (currently not used)
 # def format_markdown(text: str) -> str:
 #     """
 #     Formats Markdown content with mdformat.
@@ -86,9 +90,7 @@ def apply_custom_rules(text: str) -> str:
     # Ensure there's no more than one blank line between paragraphs
     text = re.sub(r"\n\s*\n", "\n\n", text)
 
-    # Fix broken bold markers split across lines (seen in some Moodle messages).
-    text = re.sub(r"\*\*([^\n*]+@[^\n*]+)\n\*\*([^\n]+)", r"\1\n\2", text)
-    text = re.sub(r"(?m)^\*\*$", "", text)
+    text = _fix_split_bold_email_markers(text)
 
     # Convert "heading + spaced lines" blocks into compact bullet lists.
     text = normalize_spaced_list_blocks(text)
@@ -99,6 +101,17 @@ def apply_custom_rules(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text
+
+
+def _fix_split_bold_email_markers(text: str) -> str:
+    """
+    Remove bold markers split around email lines in Moodle messages.
+
+    Example:
+    "**info@example.com\n**Weitere Infos" -> "info@example.com\nWeitere Infos"
+    """
+    text = re.sub(r"\*\*([^\n*]+@[^\n*]+)\n\*\*([^\n]+)", r"\1\n\2", text)
+    return re.sub(r"(?m)^\*\*$", "", text)
 
 
 def compact_list_item_spacing(text: str) -> str:
@@ -168,12 +181,14 @@ def normalize_spaced_list_blocks(text: str) -> str:
 
 def _is_list_intro_line(line: str) -> bool:
     stripped = line.strip()
+    # Moodle sometimes renders prose-list headings as "Was Dich erwartet:".
     return bool(stripped) and stripped.endswith(":")
 
 
 def _is_list_item_candidate(line: str) -> bool:
+    # Keep this conservative so full prose paragraphs are not converted to bullets.
     return bool(line) and not (
         line.startswith(("-", "*", "+"))
-        or len(line) > 90
-        or line.endswith((".", "!", "?", ":"))
+        or len(line) > MAX_PSEUDO_LIST_ITEM_LENGTH
+        or line.endswith(PSEUDO_LIST_ITEM_TERMINATORS)
     )

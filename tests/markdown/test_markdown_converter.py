@@ -156,3 +156,24 @@ def test_cleaner_preserves_separator_after_converted_pseudo_list():
     text = "Was Dich erwartet:\n\nPunkt A\n\nPunkt B\n\nDanach folgt ein Absatz."
     cleaned = apply_custom_rules(text)
     assert "- Punkt A\n- Punkt B\n\nDanach folgt ein Absatz." in cleaned
+
+
+def test_cleaner_does_not_convert_sentence_pseudo_list_candidates():
+    """Leave prose paragraphs untouched when they look like spaced pseudo-lists."""
+    text = (
+        "Was Dich erwartet:\n\n"
+        "Dies ist ein kompletter Satz, der kein Listeneintrag sein sollte.\n\n"
+        "Noch ein Satz."
+    )
+    assert apply_custom_rules(text) == text
+
+
+def test_cleaner_does_not_convert_long_pseudo_list_candidates():
+    """Leave long prose-like lines untouched instead of converting them to bullets."""
+    text = (
+        "Was Dich erwartet:\n\n"
+        "Dieser Eintrag ist absichtlich sehr lang und beschreibt in einem Satz "
+        "ausfuehrlich genug Inhalt fuer die Laengenpruefung\n\n"
+        "Kurz"
+    )
+    assert apply_custom_rules(text) == text
