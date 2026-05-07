@@ -163,7 +163,9 @@ class WebUI:
         async def login_page(request: Request) -> Response:
             if self._check_auth(request):
                 return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
-            return self.templates.TemplateResponse("login.html", {"request": request})
+            return self.templates.TemplateResponse(
+                request=request, name="login.html", context={}
+            )
 
         @self.app.post("/api/login", dependencies=[Depends(self._csrf_dependency)])
         async def login(
@@ -219,7 +221,9 @@ class WebUI:
                 return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
             return self.templates.TemplateResponse(
-                "index.html", {"request": request, "version": __version__}
+                request=request,
+                name="index.html",
+                context={"version": __version__},
             )
 
         @self.app.get("/api/status", dependencies=[Depends(self._auth_dependency)])

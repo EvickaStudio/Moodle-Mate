@@ -14,6 +14,7 @@
 - `docker compose build` / `docker compose up -d`: build and run the Docker image.
 - `docker compose logs -f`: follow container logs.
 - `uv run ruff format .` / `uv run ruff check --fix .`: format and lint.
+- `uv run pyrefly check --summarize-errors` or `make typecheck`: static type check (`src/moodlemate/`; see `docs/pyrefly.md`).
 - `make help`: list available project shortcuts.
 - `make install-dev`, `make run`, `make test`, `make check`: common local workflows.
 - `make clean`: remove `__pycache__` and bytecode files.
@@ -49,8 +50,21 @@
 - Before committing, run:
   - `make check`
   - `make test`
+  - `make typecheck` (or rely on `make ci-lint`, which includes Pyrefly)
 - Push feature branches and open PRs against `dev`.
 - Release promotion happens by merging `dev` into `main`, then running the release flow.
+
+## Python Type Checking (Pyrefly)
+
+This repository uses Pyrefly for static typing on application code (`src/moodlemate/`).
+
+After Python changes under `src/moodlemate/`:
+
+1. Run `make typecheck` (or `uv run pyrefly check --summarize-errors`) from the repo root.
+2. Fix reported errors; prefer real fixes over new suppressions.
+3. Do not add `# pyrefly: ignore` / `# type: ignore` or relax `[tool.pyrefly]` unless justified (false positive, untyped third-party boundary).
+
+If import errors appear, verify `uv sync --extra dev`, then `[tool.pyrefly]` `search-path` / `project-includes` in `pyproject.toml`.
 
 ## Configuration & Security Notes
 - Copy `example.env` to `.env` and set `MOODLEMATE_` variables (see `docs/how-to/setup-dev-environment.md`).

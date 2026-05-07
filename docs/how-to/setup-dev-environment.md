@@ -15,6 +15,7 @@ This guide shows you how to prepare a local environment for development.
    ```bash
    uv run moodlemate
    uv run pytest
+   uv run pyrefly check --summarize-errors
    ```
 
 ## Steps (manual venv)

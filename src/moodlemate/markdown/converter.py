@@ -1,11 +1,14 @@
+import logging
 import re
 
-# import logging
 from .turndown import MarkdownConverter
 
 TURNDOWN = MarkdownConverter({"headingStyle": "atx", "codeBlockStyle": "fenced"})
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
+MAX_PSEUDO_LIST_ITEM_LENGTH = 90
+PSEUDO_LIST_ITEM_TERMINATORS = (".", "!", "?", ":")
 
 
 def convert(html_content: str) -> str:
@@ -19,24 +22,32 @@ def convert(html_content: str) -> str:
         str: The converted and cleaned content.
     """
     # logger.info(f"Original HTML content:\n{html_content}")
-    md_output = TURNDOWN.to_markdown(html_content)
-    # logger.info(f"Raw markdown output:\n{md_output}")
-    cleaned = clean_converted_text(md_output)
-    # logger.info(f"Final cleaned markdown:\n{cleaned}")
-    return cleaned
+    return apply_custom_rules(TURNDOWN.to_markdown(html_content))
 
 
-def clean_converted_text(text: str) -> str:
+# If Turndown produces malformed lines or other unexpected Markdown output,
+# mdformat can be used to format the markdown to comply with the CommonMark spec.
+# (currently not used)
+# def format_markdown(text: str) -> str:
+#     """
+#     Formats Markdown content with mdformat.
+#     """
+#     import mdformat
+#     return mdformat.text(text).strip()
+
+
+def apply_custom_rules(text: str) -> str:
     """
-    Cleans the converted text by applying regex replacements.
+    Applies a custom set of rules to the already converted markdown text.
     Makes the output Discord-embed safe.
 
     Args:
-        text (str): The text to be cleaned.
+        text (str): The Markdown text to be cleaned.
 
     Returns:
-        str: The cleaned text.
+        str: The cleaned markdown text.
     """
+
     # Remove navigation breadcrumbs
     text = re.sub(r"\[.*?\]\(.*?\)\s*»\s*", "", text)
 
@@ -79,4 +90,105 @@ def clean_converted_text(text: str) -> str:
     # Ensure there's no more than one blank line between paragraphs
     text = re.sub(r"\n\s*\n", "\n\n", text)
 
+    text = _fix_split_bold_email_markers(text)
+
+    # Convert "heading + spaced lines" blocks into compact bullet lists.
+    text = normalize_spaced_list_blocks(text)
+
+    # Ensure there are no blank lines between list items.
+    text = compact_list_item_spacing(text)
+    # Final pass to preserve compact paragraph spacing after all rewrites.
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
     return text
+
+
+def _fix_split_bold_email_markers(text: str) -> str:
+    """
+    Remove bold markers split around email lines in Moodle messages.
+
+    Example:
+    "**info@example.com\n**Weitere Infos" -> "info@example.com\nWeitere Infos"
+    """
+    text = re.sub(r"\*\*([^\n*]+@[^\n*]+)\n\*\*([^\n]+)", r"\1\n\2", text)
+    return re.sub(r"(?m)^\*\*$", "", text)
+
+
+def compact_list_item_spacing(text: str) -> str:
+    """Collapse blank lines between consecutive markdown list items."""
+    text = re.sub(r"(?m)^([*+-]\s.+)\n\n(?=[*+-]\s)", r"\1\n", text)
+    text = re.sub(r"(?m)^(\d+\.\s.+)\n\n(?=\d+\.\s)", r"\1\n", text)
+    return text
+
+
+def normalize_spaced_list_blocks(text: str) -> str:
+    """
+    Convert pseudo-lists into markdown bullet lists.
+
+    This targets patterns like:
+    "Was Dich erwartet:" + blank lines + short item lines.
+    """
+    lines = text.splitlines()
+    normalized: list[str] = []
+    idx = 0
+
+    while idx < len(lines):
+        line = lines[idx]
+        if not _is_list_intro_line(line):
+            normalized.append(line)
+            idx += 1
+            continue
+
+        item_idx = idx + 1
+        while item_idx < len(lines) and not lines[item_idx].strip():
+            item_idx += 1
+
+        items: list[str] = []
+        scan_idx = item_idx
+        consumed_separator = False
+        while scan_idx < len(lines):
+            candidate = lines[scan_idx].strip()
+            if not _is_list_item_candidate(candidate):
+                break
+            items.append(candidate)
+            scan_idx += 1
+            if scan_idx < len(lines) and not lines[scan_idx].strip():
+                scan_idx += 1
+                consumed_separator = True
+            else:
+                consumed_separator = False
+                break
+
+        if len(items) < 2:
+            normalized.append(line)
+            idx += 1
+            continue
+
+        normalized.extend([line, ""])
+        normalized.extend(f"- {item}" for item in items)
+        if (
+            consumed_separator
+            and scan_idx < len(lines)
+            and lines[scan_idx].strip()
+            and not _is_list_item_candidate(lines[scan_idx].strip())
+        ):
+            normalized.append("")
+        idx = scan_idx
+        continue
+
+    return "\n".join(normalized)
+
+
+def _is_list_intro_line(line: str) -> bool:
+    stripped = line.strip()
+    # Moodle sometimes renders prose-list headings as "Was Dich erwartet:".
+    return bool(stripped) and stripped.endswith(":")
+
+
+def _is_list_item_candidate(line: str) -> bool:
+    # Keep this conservative so full prose paragraphs are not converted to bullets.
+    return bool(line) and not (
+        line.startswith(("-", "*", "+"))
+        or len(line) > MAX_PSEUDO_LIST_ITEM_LENGTH
+        or line.endswith(PSEUDO_LIST_ITEM_TERMINATORS)
+    )

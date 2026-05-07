@@ -5,35 +5,42 @@ description = "A Python application that fetches notifications from a Moodle ins
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "openai>=1.92.2",
-    "requests>=2.32.4",
-    "tiktoken>=0.9.0",
-    "zipp>=3.19.1",
+    "openai>=2.35.1",
+    "requests>=2.33.1",
+    "tiktoken>=0.12.0",
+    "zipp>=3.23.1",
     "bleach==6.3.0",
-    "pydantic>=2.10.0",
-    "pydantic-settings>=2.0.0",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.0",
     "urllib3>=2.6.3",
-    "fastapi>=0.109.0",
-    "uvicorn>=0.27.0",
-    "jinja2>=3.1.0",
-    "python-multipart>=0.0.22",
-    "cryptography>=45.0.0",
+    "fastapi>=0.136.1",
+    "uvicorn>=0.46.0",
+    "jinja2>=3.1.6",
+    "python-multipart>=0.0.27",
+    "cryptography>=48.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pre-commit>=4.2.0",
-    "filelock>=3.20.3",
-    "pytest>=8.4.1",
-    "pytest-cov>=4.0.0",
-    "pyright>=1.1.407",
-    "ruff>=0.15.2",
-    "types-requests>=2.32.4.20250611",
-    "virtualenv>=20.38.0",
+    "pre-commit>=4.6.0",
+    "filelock>=3.29.0",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
+    "types-requests>=2.33.0.20260503",
+    "virtualenv>=21.3.1",
+    "pyrefly>=0.64.0",
 ]
+
+[tool.pyrefly.errors]
+untyped-import = "ignore"
+missing-source = "warn"
+implicit-any-parameter = "ignore"
+implicit-any = "ignore"
 
 [project.scripts]
 moodlemate = "moodlemate.main:main"
+
 
 [build-system]
 requires = ["hatchling"]
@@ -66,9 +73,11 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
 
-[tool.pyright]
-include = ["src/moodlemate"]
-exclude = [
+
+[tool.pyrefly]
+project-includes = ["src/moodlemate"]
+search-path = ["src"]
+project-excludes = [
     "**/__pycache__",
     ".git",
     ".pytest_cache",
@@ -78,18 +87,6 @@ exclude = [
     "build",
     "dist",
 ]
-venvPath = "."
-venv = ".venv"
-pythonVersion = "3.11"
-pythonPlatform = "Linux"
-typeCheckingMode = "basic"
-useLibraryCodeForTypes = true
-reportMissingTypeStubs = "none"
-reportMissingModuleSource = "warning"
-reportUnknownVariableType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownMemberType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownParameterType = "none"
-
-executionEnvironments = [{ root = "src", extraPaths = ["src"] }]
+python-platform = "linux"
+python-version = "3.11.0"
+infer-with-first-use = false

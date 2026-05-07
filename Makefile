@@ -45,15 +45,15 @@ lint: ## Lint and auto-fix with Ruff
 lint-check: ## Lint without auto-fixes
 	$(UV) run ruff check --output-format=concise .
 
-typecheck: ## Type-check source code with Pyright
-	$(UV) run pyright
+typecheck: ## Static type-check application code with Pyrefly
+	$(UV) run pyrefly check --summarize-errors
 
-typecheck-warnings: ## Type-check source code with Pyright and include warnings
-	$(UV) run pyright --level warning
+typecheck-warnings: ## Pyrefly including warn-level diagnostics
+	$(UV) run pyrefly check --summarize-errors --min-severity warn
 
 check: format lint ## Run formatter + linter
 
-ci-lint: lint-check format-check ## CI-aligned lint checks (non-mutating)
+ci-lint: lint-check format-check typecheck ## CI-aligned lint + type checks (non-mutating)
 
 ci-test: test-ci ## CI-aligned test checks
 

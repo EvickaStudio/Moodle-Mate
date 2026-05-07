@@ -142,11 +142,10 @@ class NotificationProcessor:
         """Send notification through all providers."""
         sent_to = []
         for provider in self.providers:
+            name = (
+                getattr(provider, "provider_name", None) or provider.__class__.__name__
+            )
             try:
-                name = (
-                    getattr(provider, "provider_name", None)
-                    or provider.__class__.__name__
-                )
                 if provider.send(subject, message, summary):
                     sent_to.append(name)
                 else:

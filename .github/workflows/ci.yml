@@ -12,7 +12,7 @@ on:
 
 jobs:
   lint:
-    name: Lint and Type Check (uv + Ruff)
+    name: Lint, format, and type check (uv + Ruff + Pyrefly)
     runs-on: ubuntu-latest
     strategy:
       matrix:

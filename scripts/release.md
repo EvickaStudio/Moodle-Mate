@@ -58,7 +58,8 @@ Without this, Release Please cannot open release PRs.
 3. Run checks:
    1. `uv run ruff check --output-format=concise .`
    2. `uv run ruff format --check .`
-   3. `uv run pytest -q`
+   3. `uv run pyrefly check --summarize-errors`
+   4. `uv run pytest -q`
 4. To refresh to latest compatible dependencies for development:
    1. `make sync-dev`
    2. This runs: `uv lock --upgrade`, `uv sync --extra dev`, and regenerates `requirements.txt` + `requirements-dev.txt`.
@@ -76,7 +77,8 @@ Without this, Release Please cannot open release PRs.
 4. Run checks:
    1. `uv run ruff check --output-format=concise .`
    2. `uv run ruff format --check .`
-   3. `uv run pytest -q`
+   3. `uv run pyrefly check --summarize-errors`
+   4. `uv run pytest -q`
 
 ### B) Trigger Release Please
 
