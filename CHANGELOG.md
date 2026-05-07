@@ -1,6 +1,20 @@
 # Changelog
 
 Release history is managed by Release Please and published in GitHub Releases.
+## [2.5.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.4.0...v2.5.0) (2026-05-07)
+
+
+### Features
+
+* **markdown:** enhance pseudo-list handling and improve bold marker cleanup ([ee6a621](https://github.com/EvickaStudio/Moodle-Mate/commit/ee6a62199cae7f60824ee3c43274f1ebb2d5cbba))
+* **type-checking:** integrate Pyrefly for static type checking and update documentation ([8800873](https://github.com/EvickaStudio/Moodle-Mate/commit/8800873357ea981e1aca30d052e6277d2ec79437))
+
+
+### Bug Fixes
+
+* **markdown:** compact notification list spacing and cleanup ([55e5449](https://github.com/EvickaStudio/Moodle-Mate/commit/55e54490919746bfe1292500ade75d9a9c9e3481))
+* **markdown:** compact notification list spacing and cleanup ([0133bb3](https://github.com/EvickaStudio/Moodle-Mate/commit/0133bb3b8d3e0275adb485f021eb22d320e64e9b))
+
 ## [2.4.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.3.0...v2.4.0) (2026-02-23)
 
 
