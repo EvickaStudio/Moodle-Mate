@@ -35,7 +35,7 @@ def main() -> None:
 
     # Initialize settings for all components and services.
     try:
-        settings = Settings()  # pyright: ignore[reportCallIssue]
+        settings = Settings()  # pyrefly: ignore[bad-argument-type]
     except Exception as e:
         logging.critical(f"Failed to load configuration: {e}")
         logging.critical(

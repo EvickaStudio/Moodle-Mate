@@ -18,6 +18,7 @@ specific need.
 
 - `docs/reference/configuration.md`: configuration fields and defaults.
 - `docs/reference/cli.md`: CLI commands and flags.
+- `docs/pyrefly.md`: static type checking (Pyrefly) for `src/moodlemate/`.
 
 ## Explanation (understanding-oriented)
 

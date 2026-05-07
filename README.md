@@ -153,10 +153,10 @@ uv run moodlemate
 
 ### Type Checking
 
-Run static type checking with Pyright:
+Run static type checking with [Pyrefly](https://pyrefly.org) (application code under `src/moodlemate/`):
 
 ```bash
-uv run pyright
+uv run pyrefly check --summarize-errors
 ```
 
 or with Make:
@@ -164,6 +164,8 @@ or with Make:
 ```bash
 make typecheck
 ```
+
+See [docs/pyrefly.md](docs/pyrefly.md) for configuration, CI, and migration notes.
 
 ### Docker Usage
 

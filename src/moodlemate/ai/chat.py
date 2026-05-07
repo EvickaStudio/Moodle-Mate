@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+from typing import Any, cast
 
 import openai
 import tiktoken
@@ -214,23 +215,24 @@ class GPT:
                     # Add other roles as needed
 
                 # Prepare headers for OpenRouter if needed
-                extra_headers = {}
+                extra_headers: dict[str, str] = {}
                 if self.is_openrouter:
                     extra_headers["HTTP-Referer"] = "https://moodle-mate.app"
                     extra_headers["X-Title"] = "Moodle Mate"
 
                 # Prepare arguments for the API call
-                api_call_args = {
+                api_call_args: dict[str, Any] = {
                     "model": model,
                     "messages": typed_messages,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                 }
-                if extra_headers:  # Only include extra_headers if it's a non-empty dict
+                if extra_headers:
                     api_call_args["extra_headers"] = extra_headers
 
-                response: ChatCompletion = openai.chat.completions.create(
-                    **api_call_args
+                response = cast(
+                    ChatCompletion,
+                    openai.chat.completions.create(**api_call_args),
                 )
 
                 # Extract and validate response

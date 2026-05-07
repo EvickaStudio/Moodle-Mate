@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from moodlemate.core.version import __version__
 from moodlemate.infrastructure.http.request_manager import request_manager
@@ -60,9 +61,9 @@ class DiscordWebhookEmbed:
         )
         return self
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert embed to dictionary format."""
-        embed_dict = {
+        embed_dict: dict[str, Any] = {
             "title": self.title,
             "description": self.description,
             "color": self.color,
