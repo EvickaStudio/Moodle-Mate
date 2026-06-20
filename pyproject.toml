@@ -11,7 +11,7 @@ dependencies = [
     "zipp>=3.23.1",
     "bleach==6.3.0",
     "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.0",
+    "pydantic-settings>=2.14.2",
     "urllib3>=2.6.3",
     "fastapi>=0.136.1",
     "uvicorn>=0.46.0",
