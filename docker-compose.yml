@@ -4,10 +4,13 @@ services:
       context: .
       dockerfile: Dockerfile
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    env_file:
+      - .env
     volumes:
       - ./state:/app/state
       - ./logs:/app/logs
     restart: unless-stopped
     environment:
-      - TZ=UTC
+      - TZ=${TZ:-UTC}
       - MOODLE_SESSION_FILE=/app/state/moodle_session.json
+      - MOODLE_STATE_DIR=/app/state

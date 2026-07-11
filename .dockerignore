@@ -31,6 +31,14 @@ logs/
 
 # Configuration
 config.ini
+.env
+.env.*
+!example.env
+
+# Runtime state must be mounted, never baked into an image layer
+state/
+state.json
+moodle_session.json
 
 # Misc
 README.md
