@@ -1,6 +1,15 @@
 # Changelog
 
 Release history is managed by Release Please and published in GitHub Releases.
+## [2.5.1](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.5.0...v2.5.1) (2026-07-11)
+
+
+### Bug Fixes
+
+* **docker:** keep secrets and state outside images ([b79be76](https://github.com/EvickaStudio/Moodle-Mate/commit/b79be76ac79d80c44525957c86531342cee1f2a9))
+* **logo:** replace logo.svg with icon.svg in login template ([e9289e1](https://github.com/EvickaStudio/Moodle-Mate/commit/e9289e18f831cea520ebe10e5d6300249421cd5c))
+* **reliability:** harden unattended server operation ([27db6d8](https://github.com/EvickaStudio/Moodle-Mate/commit/27db6d800d8b45a9dce73c262021f7bfb28270c2))
+
 ## [2.5.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.4.0...v2.5.0) (2026-05-07)
 
 
