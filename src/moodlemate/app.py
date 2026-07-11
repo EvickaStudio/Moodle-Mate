@@ -1,4 +1,5 @@
 import logging
+import signal
 import threading
 import time
 from typing import TYPE_CHECKING
@@ -34,10 +35,17 @@ class MoodleMateApp:
         self.moodle_api = moodle_api
         self.state_manager = state_manager
         self._last_heartbeat_sent: float = 0.0
+        self._last_failure_alert_sent: float = 0.0
+        self._outage_alerted = False
+        self._started_at = time.time()
+        self._last_successful_poll: float | None = None
+        self._last_poll_error: str | None = None
+        self._shutdown_event = threading.Event()
         self._web_server_thread: threading.Thread | None = None
 
     def run(self) -> None:
         """Starts the main application loop."""
+        self._install_signal_handlers()
         try:
             if self.settings.web.enabled:
                 self._start_web_ui()
@@ -45,10 +53,25 @@ class MoodleMateApp:
             self._main_loop()
         except KeyboardInterrupt:
             logging.info("Shutting down gracefully...")
-            self.state_manager.maybe_save_state(force=True)
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e!s}")
             raise
+        finally:
+            self._shutdown_event.set()
+            self.state_manager.maybe_save_state(force=True)
+            request_manager.close()
+
+    def _install_signal_handlers(self) -> None:
+        """Translate service stop signals into a graceful loop shutdown."""
+        if threading.current_thread() is not threading.main_thread():
+            return
+
+        def request_shutdown(signum: int, _frame: object) -> None:
+            logging.info("Received signal %s; shutting down gracefully...", signum)
+            self._shutdown_event.set()
+
+        signal.signal(signal.SIGINT, request_shutdown)
+        signal.signal(signal.SIGTERM, request_shutdown)
 
     def _start_web_ui(self):
         """Starts the Web UI server in a separate thread."""
@@ -79,26 +102,28 @@ class MoodleMateApp:
         consecutive_errors = 0
         session_refresh_interval = 24.0  # hours
 
-        while True:
+        while not self._shutdown_event.is_set():
             try:
                 self._check_and_refresh_session(session_refresh_interval)
 
                 if self._fetch_and_process_notifications():
                     consecutive_errors = 0
                     self.state_manager.maybe_save_state()
+                    self._record_poll_success()
 
                 self._send_heartbeat_if_due()
 
                 sleep_time = self._calculate_sleep_time(
                     consecutive_errors, self.settings.notification.fetch_interval
                 )
-                time.sleep(sleep_time)
+                self._shutdown_event.wait(sleep_time)
 
             except Exception as e:
                 consecutive_errors, error_sleep = self._handle_error(
                     consecutive_errors, e
                 )
-                time.sleep(error_sleep)
+                self._last_poll_error = str(e)
+                self._shutdown_event.wait(error_sleep)
 
     def _check_and_refresh_session(self, interval: float) -> None:
         """Checks if the session needs to be refreshed and does so if necessary."""
@@ -118,7 +143,11 @@ class MoodleMateApp:
         notifications = self.moodle_handler.fetch_newest_notification()
         if notifications:
             for notification in notifications:
-                self.notification_processor.process(notification)
+                result = self.notification_processor.process(notification)
+                if not result.should_checkpoint:
+                    raise RuntimeError(
+                        "Notification was not delivered; checkpoint retained for retry"
+                    )
                 notification_id = notification.get("id")
                 if notification_id is not None:
                     self.moodle_handler.mark_notification_processed(notification_id)
@@ -139,16 +168,49 @@ class MoodleMateApp:
             and self.settings.health.failure_alert_threshold is not None
             and consecutive_errors >= self.settings.health.failure_alert_threshold
         ):
-            self._send_failure_alert(error)
+            now = time.time()
+            cooldown = self.settings.health.failure_alert_cooldown
+            if now - self._last_failure_alert_sent >= cooldown:
+                self._send_failure_alert(error)
+                self._last_failure_alert_sent = now
+                self._outage_alerted = True
 
         if consecutive_errors >= self.settings.notification.max_retries:
-            logging.critical("Too many consecutive errors. Restarting main loop...")
-            consecutive_errors = 0
+            logging.critical("Persistent errors; continuing with maximum backoff...")
+            consecutive_errors = max(1, self.settings.notification.max_retries)
 
         error_sleep = min(30 * (2 ** (consecutive_errors - 1)), 300)
         logging.info(f"Waiting {error_sleep} seconds before retry...")
 
         return consecutive_errors, error_sleep
+
+    def _record_poll_success(self) -> None:
+        """Record a successful Moodle poll and announce recovery once."""
+        self._last_successful_poll = time.time()
+        self._last_poll_error = None
+        if self._outage_alerted:
+            self._send_health_notification(
+                "Moodle-Mate Recovered",
+                "Moodle-Mate successfully connected to Moodle again.",
+            )
+            self._outage_alerted = False
+            self._last_failure_alert_sent = 0.0
+
+    def get_health_status(self) -> tuple[bool, dict[str, object]]:
+        """Return readiness based on the freshness of successful Moodle polls."""
+        now = time.time()
+        stale_after = self.settings.health.stale_after or max(
+            self.settings.notification.fetch_interval * 3, 300
+        )
+        reference = self._last_successful_poll or self._started_at
+        age = max(0.0, now - reference)
+        healthy = age <= stale_after and not self._shutdown_event.is_set()
+        return healthy, {
+            "status": "ok" if healthy else "unhealthy",
+            "last_successful_poll": self._last_successful_poll,
+            "seconds_since_success": round(age, 1),
+            "last_error": self._last_poll_error,
+        }
 
     def _calculate_sleep_time(
         self, consecutive_errors: int, base_interval: int
@@ -167,7 +229,9 @@ class MoodleMateApp:
             "subject": "Moodle-Mate Test Notification",
             "fullmessagehtml": "<p>This is a test notification from Moodle-Mate. If you received this, your notification providers are configured correctly!</p>",
         }
-        self.notification_processor.process(test_notification_data)
+        result = self.notification_processor.process(test_notification_data)
+        if not result.delivered:
+            raise RuntimeError("Test notification was not delivered by any provider")
         logging.info("Test notification sent.")
 
     def _send_heartbeat_if_due(self) -> None:

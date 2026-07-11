@@ -144,6 +144,13 @@ class RequestManager:
             return 0
         return (time.time() - created_at) / 3600
 
+    def close(self) -> None:
+        """Close every pooled HTTP session during graceful shutdown."""
+        for session in self._sessions.values():
+            session.close()
+        self._sessions.clear()
+        self._session_created_at.clear()
+
 
 # Global instance
 request_manager = RequestManager()

@@ -52,6 +52,8 @@ class HealthConfig(BaseModel):
     heartbeat_interval: int | None = None
     failure_alert_threshold: int | None = None
     target_provider: str | None = None
+    failure_alert_cooldown: int = Field(default=3600, ge=60, le=86400)
+    stale_after: int | None = Field(default=None, ge=30, le=86400)
 
 
 class WebConfig(BaseModel):

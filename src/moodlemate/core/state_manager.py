@@ -1,6 +1,8 @@
+import contextlib
 import json
 import logging
 import os
+import tempfile
 import time
 from collections import deque
 from typing import Any
@@ -62,24 +64,42 @@ class StateManager:
 
     def save_state(self) -> None:
         """Saves the current state to the state file."""
+        temporary_path: str | None = None
         try:
-            os.makedirs(os.path.dirname(self.state_file) or ".", exist_ok=True)
+            state_directory = os.path.dirname(self.state_file) or "."
+            os.makedirs(state_directory, exist_ok=True)
             state = {"last_notification_id": self.last_notification_id}
-            with open(self.state_file, "w") as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=state_directory,
+                prefix=".moodlemate-state-",
+                suffix=".tmp",
+                delete=False,
+            ) as f:
+                temporary_path = f.name
                 json.dump(state, f, indent=4)
+                f.flush()
+                os.fsync(f.fileno())
             try:
-                os.chmod(self.state_file, 0o600)
+                os.chmod(temporary_path, 0o600)
             except OSError as e:
                 logger.warning(
                     "Could not set restrictive permissions on state file %s: %s",
-                    self.state_file,
+                    temporary_path,
                     e,
                 )
+            os.replace(temporary_path, self.state_file)
+            temporary_path = None
             logger.info(f"Successfully saved state to {self.state_file}.")
             self._dirty = False
             self._last_saved_at = time.time()
         except OSError as e:
             logger.error(f"Could not write to state file {self.state_file}: {e}")
+        finally:
+            if temporary_path is not None:
+                with contextlib.suppress(OSError):
+                    os.unlink(temporary_path)
 
     def set_last_notification_id(self, notification_id: int):
         """Updates the last notification ID."""

@@ -44,6 +44,11 @@ This reference lists settings read from `.env` or environment variables with the
 - `HEARTBEAT_INTERVAL` (int, optional): Hours between heartbeat messages.
 - `FAILURE_ALERT_THRESHOLD` (int, optional): Consecutive errors before alert.
 - `TARGET_PROVIDER` (string, optional): Provider name for health notifications.
+- `FAILURE_ALERT_COOLDOWN` (int, default: `3600`): Minimum seconds between
+  repeated outage alerts.
+- `STALE_AFTER` (int, optional): Mark `/healthz` unhealthy after this many
+  seconds without a successful Moodle poll. The default is the greater of
+  three fetch intervals or 300 seconds.
 
 ## Web UI (`MOODLEMATE_WEB__*`)
 
