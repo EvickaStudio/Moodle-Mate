@@ -41,6 +41,7 @@ class MoodleMateApp:
         self._last_successful_poll: float | None = None
         self._last_poll_error: str | None = None
         self._shutdown_event = threading.Event()
+        self._web_server: uvicorn.Server | None = None
         self._web_server_thread: threading.Thread | None = None
 
     def run(self) -> None:
@@ -58,6 +59,7 @@ class MoodleMateApp:
             raise
         finally:
             self._shutdown_event.set()
+            self._stop_web_ui()
             self.state_manager.maybe_save_state(force=True)
             request_manager.close()
 
@@ -68,10 +70,16 @@ class MoodleMateApp:
 
         def request_shutdown(signum: int, _frame: object) -> None:
             logging.info("Received signal %s; shutting down gracefully...", signum)
-            self._shutdown_event.set()
+            self._request_shutdown()
 
         signal.signal(signal.SIGINT, request_shutdown)
         signal.signal(signal.SIGTERM, request_shutdown)
+
+    def _request_shutdown(self) -> None:
+        """Wake the polling loop and request an immediate web-server stop."""
+        self._shutdown_event.set()
+        if self._web_server is not None:
+            self._web_server.should_exit = True
 
     def _start_web_ui(self):
         """Starts the Web UI server in a separate thread."""
@@ -92,10 +100,27 @@ class MoodleMateApp:
             self.settings.web.host = host
             port = self.settings.web.port
             logging.info(f"Starting Web UI on http://{host}:{port}")
-            uvicorn.run(app, host=host, port=port, log_level="warning")
+            config = uvicorn.Config(app, host=host, port=port, log_level="warning")
+            self._web_server = uvicorn.Server(config)
+            self._web_server.run()
 
         self._web_server_thread = threading.Thread(target=run_server, daemon=True)
         self._web_server_thread.start()
+
+    def _stop_web_ui(self) -> None:
+        """Stop Uvicorn explicitly instead of leaving its daemon loop running."""
+        server = self._web_server
+        thread = self._web_server_thread
+        if server is not None:
+            server.should_exit = True
+        if thread is None or not thread.is_alive():
+            return
+
+        thread.join(timeout=3.0)
+        if thread.is_alive() and server is not None:
+            logging.warning("Web UI did not stop promptly; forcing shutdown.")
+            server.force_exit = True
+            thread.join(timeout=1.0)
 
     def _main_loop(self) -> None:
         """The main loop that continuously fetches and processes notifications."""
