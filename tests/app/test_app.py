@@ -2,7 +2,10 @@ import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
+
 from moodlemate.app import MoodleMateApp
+from moodlemate.notifications.processor import ProcessingResult
 
 
 def _build_settings(
@@ -26,6 +29,8 @@ def _build_settings(
             heartbeat_interval=None,
             failure_alert_threshold=failure_threshold,
             target_provider=target_provider,
+            failure_alert_cooldown=3600,
+            stale_after=None,
         ),
     )
 
@@ -57,6 +62,7 @@ def test_fetch_and_process_notifications_marks_processed_ids():
         {"id": 101, "subject": "A", "fullmessagehtml": "<p>A</p>", "useridfrom": 1},
         {"id": 102, "subject": "B", "fullmessagehtml": "<p>B</p>", "useridfrom": 2},
     ]
+    app.notification_processor.process.return_value = ProcessingResult(delivered=True)
 
     result = app._fetch_and_process_notifications()
 
@@ -64,6 +70,20 @@ def test_fetch_and_process_notifications_marks_processed_ids():
     assert app.notification_processor.process.call_count == 2
     app.moodle_handler.mark_notification_processed.assert_any_call(101)
     app.moodle_handler.mark_notification_processed.assert_any_call(102)
+
+
+def test_failed_delivery_does_not_advance_checkpoint():
+    settings = _build_settings()
+    app = _build_app(settings)
+    app.moodle_handler.fetch_newest_notification.return_value = [
+        {"id": 101, "subject": "A", "fullmessagehtml": "<p>A</p>"}
+    ]
+    app.notification_processor.process.return_value = ProcessingResult(delivered=False)
+
+    with pytest.raises(RuntimeError, match="not delivered"):
+        app._fetch_and_process_notifications.__wrapped__(app)
+
+    app.moodle_handler.mark_notification_processed.assert_not_called()
 
 
 def test_handle_error_triggers_failure_alert_at_threshold():

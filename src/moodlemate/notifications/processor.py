@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from moodlemate.core.security import InputValidator
@@ -12,6 +13,19 @@ if TYPE_CHECKING:
     from moodlemate.config import Settings
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class ProcessingResult:
+    """Outcome used by the polling loop to decide whether to checkpoint."""
+
+    delivered: bool
+    ignored: bool = False
+    providers_sent: tuple[str, ...] = ()
+
+    @property
+    def should_checkpoint(self) -> bool:
+        return self.delivered or self.ignored
 
 
 class NotificationProcessor:
@@ -29,7 +43,7 @@ class NotificationProcessor:
         self.state_manager = state_manager
         self.summarizer = summarizer
 
-    def process(self, notification: Mapping[str, Any]) -> None:
+    def process(self, notification: Mapping[str, Any]) -> ProcessingResult:
         """Process and send a notification through all enabled providers."""
         try:
             # Security: Sanitize notification data first
@@ -44,7 +58,7 @@ class NotificationProcessor:
             # Apply filters
             if self._should_ignore_notification(subject, sanitized_notification):
                 logger.info(f"Notification with subject '{subject}' ignored by filter.")
-                return
+                return ProcessingResult(delivered=False, ignored=True)
 
             # Generate summary if enabled
             summary = self._generate_summary(message) if self.summarizer else None
@@ -66,16 +80,24 @@ class NotificationProcessor:
             # Send through providers and record history
             providers_sent = self._send_to_providers(subject, message, summary)
 
-            # Add to history with message context
+            if not providers_sent:
+                logger.error("Notification was not delivered by any provider")
+                return ProcessingResult(delivered=False)
+
+            # Add successfully delivered notifications to history.
             self.state_manager.add_notification_to_history(
                 sanitized_notification,
                 providers_sent,
                 message=message,
                 summary=summary,
             )
+            return ProcessingResult(
+                delivered=True, providers_sent=tuple(providers_sent)
+            )
 
         except Exception as e:
             logging.error(f"Failed to process notification: {e!s}", exc_info=True)
+            return ProcessingResult(delivered=False)
 
     def _should_ignore_notification(
         self, subject: str, notification: Mapping[str, Any]

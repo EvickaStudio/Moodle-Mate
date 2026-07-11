@@ -55,7 +55,8 @@ def test_happy_path_converts_and_sends(processor, provider):
         "subject": "Hello",
         "fullmessagehtml": "<p>Hi <strong>there</strong></p>",
     }
-    processor.process(notification)
+    result = processor.process(notification)
+    assert result.should_checkpoint
     assert provider.sent and provider.sent[0][0] == "Hello"
     # markdown conversion should remove tags
     assert "**there**" in provider.sent[0][1]
@@ -64,7 +65,9 @@ def test_happy_path_converts_and_sends(processor, provider):
 def test_ignored_by_subject_filter(processor, provider, caplog):
     caplog.set_level(logging.INFO)
     notification = {"subject": "Please IGNORE-ME now", "fullmessagehtml": "<p>x</p>"}
-    processor.process(notification)
+    result = processor.process(notification)
+    assert result.ignored
+    assert result.should_checkpoint
     assert provider.sent == []
     assert any("ignored by filter" in rec.message for rec in caplog.records)
 
@@ -83,11 +86,28 @@ def test_ignored_by_course_filter(processor, provider):
 def test_missing_subject_raises_and_is_logged(processor, provider, caplog):
     caplog.set_level(logging.ERROR)
     notification = {"fullmessagehtml": "<p>content</p>"}
-    processor.process(notification)
+    result = processor.process(notification)
+    assert not result.should_checkpoint
     assert provider.sent == []
     assert any(
         "Failed to process notification" in rec.message for rec in caplog.records
     )
+
+
+def test_all_provider_failures_are_not_checkpointable(
+    fake_config, state_manager, caplog
+):
+    provider = Mock()
+    provider.provider_name = "broken"
+    provider.send.return_value = False
+    processor = NotificationProcessor(fake_config, [provider], state_manager)
+
+    result = processor.process(
+        {"subject": "Important", "fullmessagehtml": "<p>Retry me</p>"}
+    )
+
+    assert not result.should_checkpoint
+    assert result.providers_sent == ()
 
 
 def test_missing_message_raises_and_is_logged(processor, provider, caplog):

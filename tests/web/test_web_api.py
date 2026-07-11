@@ -29,6 +29,9 @@ class DummyAppInstance:
     def send_test_notification(self) -> None:
         self.test_notifications_sent += 1
 
+    def get_health_status(self) -> tuple[bool, dict[str, object]]:
+        return True, {"status": "ok", "last_successful_poll": 123.0}
+
 
 @pytest.fixture
 def anyio_backend() -> str:
@@ -94,6 +97,13 @@ def _csrf_headers(client: httpx.AsyncClient) -> dict[str, str]:
 async def test_protected_route_requires_authentication(client: httpx.AsyncClient):
     response = await client.get("/api/status")
     assert response.status_code == 401
+
+
+@pytest.mark.anyio
+async def test_health_endpoint_reports_runtime_health(client: httpx.AsyncClient):
+    response = await client.get("/healthz")
+    assert response.status_code == 200
+    assert response.json()["last_successful_poll"] == 123.0
 
 
 @pytest.mark.anyio

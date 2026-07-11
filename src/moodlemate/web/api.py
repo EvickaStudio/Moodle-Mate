@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
@@ -234,8 +234,9 @@ class WebUI:
             }
 
         @self.app.get("/healthz")
-        async def healthz() -> dict[str, str]:
-            return {"status": "ok"}
+        async def healthz() -> JSONResponse:
+            healthy, payload = self.app_instance.get_health_status()
+            return JSONResponse(payload, status_code=200 if healthy else 503)
 
         @self.app.get("/api/history", dependencies=[Depends(self._auth_dependency)])
         async def get_history() -> list[dict]:

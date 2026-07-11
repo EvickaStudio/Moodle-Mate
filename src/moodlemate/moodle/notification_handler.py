@@ -328,13 +328,13 @@ class MoodleNotificationHandler:
             return None
 
         except MoodleConnectionError as e:
-            # For connection errors, we'll log and return None instead of re-raising
-            # This allows the application to continue running even with connectivity issues
             logger.error(f"Connection error while fetching new notifications: {e!s}")
-            return None
+            raise
         except Exception as e:
             logger.error(f"Unexpected error fetching new notifications: {e!s}")
-            return None
+            raise MoodleConnectionError(
+                f"Unexpected error fetching notifications: {e!s}"
+            ) from e
 
     def user_id_from(self, user_id: int) -> UserData | None:
         """
