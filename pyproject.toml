@@ -9,7 +9,7 @@ dependencies = [
 "requests>=2.34.2",
 "tiktoken>=0.13.0",
 "zipp>=4.1.0",
-    "bleach==6.3.0",
+    "bleach==6.4.0",
     "pydantic>=2.13.4",
 "pydantic-settings>=2.14.2",
 "urllib3>=2.7.0",
