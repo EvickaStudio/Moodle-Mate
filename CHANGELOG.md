@@ -1,6 +1,18 @@
 # Changelog
 
 Release history is managed by Release Please and published in GitHub Releases.
+## [2.6.0](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.5.1...v2.6.0) (2026-08-19)
+
+
+### Features
+
+* **web:** redesign dashboard and login experience ([a58c312](https://github.com/EvickaStudio/Moodle-Mate/commit/a58c312dde35ab6a30803970cd33bbbbf98959db))
+
+
+### Bug Fixes
+
+* address review comments on server shutdown, web UI, and OpenAI client ([2b77edf](https://github.com/EvickaStudio/Moodle-Mate/commit/2b77edf0eb71dee326fc35db90e7cf882cc45e12))
+
 ## [2.5.1](https://github.com/EvickaStudio/Moodle-Mate/compare/v2.5.0...v2.5.1) (2026-07-11)
 
 
