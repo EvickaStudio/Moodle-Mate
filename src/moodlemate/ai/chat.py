@@ -44,8 +44,9 @@ class GPT:
 
     def _init_gpt(self):
         """Initialize GPT instance."""
-        self._api_key = None
-        self._endpoint = None
+        self._api_key: str | None = None
+        self._endpoint: str | None = None
+        self._client: openai.OpenAI | None = None
         self.PRICING = get_default_model_pricing()
         self._api_key_pattern = re.compile(r"^sk-[A-Za-z0-9_-]{48,}$")
 
@@ -77,9 +78,8 @@ class GPT:
             raise InvalidAPIKeyError(
                 "Invalid API key format for default OpenAI endpoint. Expected format: 'sk-' followed by 48+ alphanumeric characters"
             )
-
         self._api_key = key
-        openai.api_key = key
+        self._client = None
 
     @property
     def endpoint(self) -> str | None:
@@ -97,7 +97,15 @@ class GPT:
             url: The OpenAI API endpoint URL
         """
         self._endpoint = url
-        openai.base_url = url
+        self._client = None
+
+    def _get_client(self) -> openai.OpenAI:
+        """Get or initialize OpenAI client."""
+        if not self._api_key:
+            raise InvalidAPIKeyError("API key cannot be empty")
+        if self._client is None:
+            self._client = openai.OpenAI(api_key=self._api_key, base_url=self._endpoint)
+        return self._client
 
     def register_model(self, model: str, pricing: ModelPricing) -> None:
         """Register or override pricing information for a model at runtime."""
@@ -230,11 +238,11 @@ class GPT:
                 if extra_headers:
                     api_call_args["extra_headers"] = extra_headers
 
+                client = self._get_client()
                 response = cast(
                     ChatCompletion,
-                    openai.chat.completions.create(**api_call_args),
+                    client.chat.completions.create(**api_call_args),
                 )
-
                 # Extract and validate response
                 if not response.choices:
                     raise ChatCompletionError("No completion choices returned")

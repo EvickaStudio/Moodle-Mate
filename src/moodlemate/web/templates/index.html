@@ -419,8 +419,9 @@
         }
         root.innerHTML = items.map((item) => {
             const providers = (item.providers || []).map((provider) => `<span class="tag">${escapeHtml(provider)}</span>`).join("");
-            const contextLink = item.context_url
-                ? `<p><a href="${escapeAttribute(item.context_url)}" target="_blank" rel="noopener noreferrer">Open Moodle context</a></p>`
+            const contextUrl = typeof item.context_url === "string" ? item.context_url.trim() : "";
+            const contextLink = /^https?:\/\//i.test(contextUrl)
+                ? `<p><a href="${escapeAttribute(contextUrl)}" target="_blank" rel="noopener noreferrer">Open Moodle context</a></p>`
                 : "";
             return `<details class="activity">
                 <summary>
@@ -463,11 +464,12 @@
     function configFromForm() {
         const payload = JSON.parse(JSON.stringify(state.config));
         document.querySelectorAll("#settings-form [name]").forEach((field) => {
+            if (field.type === "number" && field.value === "") return;
             let value;
             if (field.type === "checkbox") value = field.checked;
             else if (field.name === "filters.ignore_subjects_containing") value = field.value.split("\n").map((item) => item.trim()).filter(Boolean);
             else if (field.name === "filters.ignore_courses_by_id") value = field.value.split(",").map((item) => Number(item.trim())).filter(Number.isInteger);
-            else if (field.type === "number") value = field.value === "" ? null : Number(field.value);
+            else if (field.type === "number") value = Number(field.value);
             else value = field.value;
             setPath(payload, field.name, value);
         });

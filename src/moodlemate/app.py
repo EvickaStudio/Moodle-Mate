@@ -110,13 +110,16 @@ class MoodleMateApp:
     def _stop_web_ui(self) -> None:
         """Stop Uvicorn explicitly instead of leaving its daemon loop running."""
         server = self._web_server
-        thread = self._web_server_thread
         if server is not None:
             server.should_exit = True
+        thread = self._web_server_thread
         if thread is None or not thread.is_alive():
             return
 
         thread.join(timeout=3.0)
+        server = self._web_server
+        if server is not None:
+            server.should_exit = True
         if thread.is_alive() and server is not None:
             logging.warning("Web UI did not stop promptly; forcing shutdown.")
             server.force_exit = True
