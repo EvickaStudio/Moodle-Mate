@@ -107,6 +107,17 @@ async def test_health_endpoint_reports_runtime_health(client: httpx.AsyncClient)
 
 
 @pytest.mark.anyio
+async def test_login_page_is_self_contained_and_static(client: httpx.AsyncClient):
+    response = await client.get("/login")
+
+    assert response.status_code == 200
+    assert "cdn.tailwindcss.com" not in response.text
+    assert "unpkg.com" not in response.text
+    assert "animation:" not in response.text
+    assert "transition:" not in response.text
+
+
+@pytest.mark.anyio
 async def test_login_requires_csrf_token(client: httpx.AsyncClient):
     response = await client.post("/api/login", json={"password": "pw"})
     assert response.status_code == 403
@@ -136,6 +147,17 @@ async def test_authenticated_user_can_fetch_status_history_and_config(
     client: httpx.AsyncClient,
 ):
     await _login(client)
+
+    dashboard = await client.get("/")
+    assert dashboard.status_code == 200
+    assert "cdn.tailwindcss.com" not in dashboard.text
+    assert "unpkg.com" not in dashboard.text
+    assert "animation:" not in dashboard.text
+    assert "transition:" not in dashboard.text
+    assert "Recent activity" in dashboard.text
+    assert "Runtime settings" in dashboard.text
+    assert 'href="#overview"' not in dashboard.text
+    assert '<details class="settings">' not in dashboard.text
 
     status = await client.get("/api/status")
     history = await client.get("/api/history")

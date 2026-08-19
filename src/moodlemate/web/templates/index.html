@@ -1,859 +1,549 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moodle Mate - Dashboard</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Moodle Mate</title>
     <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        background: "var(--color-bg)",
-                        "card-bg": "var(--color-card)",
-                        border: "var(--color-border)",
-                        "border-hover": "var(--color-border-hover)",
-                        primary: "var(--color-text)",
-                        secondary: "var(--color-text-secondary)",
-                        tertiary: "var(--color-text-tertiary)",
-                        accent: "var(--color-accent)",
-                        "accent-muted": "var(--color-accent-muted)",
-                        "accent-contrast": "var(--color-accent-contrast)",
-                        success: "var(--color-success)",
-                        danger: "var(--color-danger)",
-                        input: "var(--color-input)"
-                    },
-                    fontFamily: {
-                        sans: ["Inter", "sans-serif"],
-                        mono: ["JetBrains Mono", "monospace"]
-                    },
-                    fontSize: {
-                        xs: "11px",
-                        sm: "12px",
-                        base: "13px",
-                        lg: "14px",
-                        xl: "16px",
-                        "2xl": "20px"
-                    },
-                    animation: {
-                        "fade-in": "fadeIn 0.3s ease-out forwards"
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            "0%": { opacity: "0", transform: "translateY(5px)" },
-                            "100%": { opacity: "1", transform: "translateY(0)" }
-                        }
-                    }
-                }
-            }
-        };
-    </script>
-
     <style>
         :root {
-            --color-bg: #14120B;
-            --color-card: #1B1913;
-            --color-border: #2D281D;
-            --color-border-hover: #3A3426;
-            --color-text: #E8E2D4;
-            --color-text-secondary: #A89E8F;
-            --color-text-tertiary: #7F7566;
-            --color-accent: #F4B860;
-            --color-accent-muted: #DFA851;
-            --color-accent-contrast: #1A1510;
-            --color-input: #1E1A13;
-            --color-success: #10B981;
-            --color-danger: #4E1F1F;
-            --color-scroll-track: #14120B;
-            --color-scroll-thumb: #333333;
-            --color-scroll-thumb-hover: #4d4d4d;
+            color-scheme: dark;
+            --page: #000000;
+            --bg: #000000;
+            --surface: #121015;
+            --surface-muted: #1b1720;
+            --border: #2d2635;
+            --text: #f3f3f1;
+            --muted: #99999f;
+            --accent: #8b5cf6;
+            --accent-dark: #7547e8;
+            --coral: #ef765d;
+            --yellow: #e6df55;
+            --mint: #69c982;
+            --ice: #b9dce3;
+            --success-bg: #cfe9a3;
+            --success-text: #192310;
+            --danger-bg: #512b2b;
+            --danger-text: #ffd4d4;
+            --radius: 18px;
         }
 
-        [x-cloak] { display: none !important; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: auto; }
         body {
-            background-color: var(--color-bg);
-            color: var(--color-text);
-            font-family: "Inter", sans-serif;
-            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 28px;
+            background: var(--page);
+            color: var(--text);
+            font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: var(--color-scroll-track); }
-        ::-webkit-scrollbar-thumb { background: var(--color-scroll-thumb); border-radius: 5px; border: 2px solid var(--color-bg); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--color-scroll-thumb-hover); }
-        .expand-content {
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+        button, input, select, textarea { font: inherit; }
+        button, summary { cursor: pointer; }
+        button:focus-visible, input:focus-visible, select:focus-visible,
+        textarea:focus-visible, summary:focus-visible, a:focus-visible {
+            outline: 3px solid rgba(49, 95, 140, .25);
+            outline-offset: 2px;
+        }
+        a { color: var(--accent); }
+        .shell {
+            width: min(1180px, 100%);
+            min-height: calc(100vh - 56px);
+            margin: 0 auto;
             overflow: hidden;
-            max-height: 0;
-            opacity: 0;
+            border: 0;
+            border-radius: 0;
+            background: var(--bg);
         }
-        .expand-content.open {
-            max-height: 500px;
-            opacity: 1;
+        .topbar {
+            background: var(--surface);
+            background: var(--bg);
+            border-bottom: 0;
         }
-        .toggle-track {
-            width: 42px;
-            height: 22px;
-            border-radius: 999px;
-            border: 1px solid var(--color-border);
-            background: var(--color-input);
+        .topbar-inner, main {
+            width: min(1080px, calc(100% - 40px));
+            margin: 0 auto;
+        }
+        .topbar-inner {
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+        .brand img { width: 30px; height: 30px; }
+        .top-actions { display: flex; align-items: center; gap: 8px; }
+        .top-actions .status,
+        .top-actions .button {
+            height: 26px;
+            min-height: 26px;
+            padding: 0 9px;
             display: inline-flex;
             align-items: center;
-            padding: 0 3px;
-            transition: background 0.25s ease, border-color 0.25s ease;
-            position: relative;
-            box-sizing: border-box;
+            justify-content: center;
+            border-radius: 999px;
+            font-size: 11px;
+            line-height: 1;
+            font-weight: 600;
         }
-        .toggle-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--color-text);
-            transition: transform 0.25s ease;
+        .top-actions .button { background: #141117; border-color: var(--border); }
+        .top-actions .button:hover { background: #201a27; }
+        .top-actions .button.danger { color: #d6b7c0; }
+        main { padding: 14px 0 48px; }
+        .page-heading {
+            min-height: 190px;
+            margin-bottom: 12px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            border-radius: 22px;
+            background: var(--accent);
+            color: #09090a;
         }
-        input:checked + .toggle-track {
-            background: var(--color-accent);
-            border-color: var(--color-accent);
+        .page-heading .muted { color: rgba(9, 9, 10, .68); }
+        h1, h2, h3, p { margin-top: 0; }
+        h1 { margin-bottom: 4px; font-size: clamp(40px, 7vw, 74px); line-height: .95; letter-spacing: -.055em; font-weight: 500; }
+        h2 { margin-bottom: 14px; font-size: 17px; }
+        h3 { margin-bottom: 8px; font-size: 15px; }
+        .muted { color: var(--muted); }
+        .grid { display: grid; gap: 16px; }
+        .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 12px; }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
         }
-        input:checked + .toggle-track .toggle-thumb {
-            transform: translateX(18px);
+        .metrics .card { min-height: 118px; border: 0; color: #111113; display: flex; flex-direction: column; justify-content: space-between; }
+        .metrics .card:nth-child(1) { background: var(--coral); }
+        .metrics .card:nth-child(2) { background: var(--yellow); }
+        .metrics .card:nth-child(3) { background: var(--ice); }
+        .metrics .muted, .metrics .metric-label { color: rgba(17, 17, 19, .64); }
+        .metric-label { color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+        .metric-value { font-size: 34px; line-height: 1; font-weight: 450; letter-spacing: -.04em; overflow-wrap: anywhere; }
+        .metric-value.small { font-size: 14px; font-weight: 500; }
+        .section { margin-top: 24px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 10px;
         }
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
+        .section-header h2 { margin: 0; }
+        .button {
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--text);
+            padding: 8px 12px;
+            min-height: 36px;
+        }
+        .button:hover { background: var(--surface-muted); }
+        .button.primary { background: var(--ice); border-color: var(--ice); color: #121315; }
+        .button.primary:hover { background: #9fc8d0; }
+        .button.danger { color: var(--danger-text); }
+        .button:disabled { opacity: .55; cursor: not-allowed; }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+        .status.unhealthy { background: var(--danger-bg); color: var(--danger-text); }
+        .action-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            border-color: #352946;
+            border-radius: var(--radius);
+            background: #15111c;
+        }
+        .action-row p { margin: 2px 0 0; }
+        .empty { color: var(--muted); padding: 24px; text-align: center; }
+        .activity-list { border: 1px solid #30263b; border-radius: var(--radius); background: #121015; overflow: hidden; }
+        .activity { border-bottom: 1px solid var(--border); }
+        .activity:last-child { border-bottom: 0; }
+        .activity summary { list-style: none; padding: 14px 16px; }
+        .activity summary::-webkit-details-marker { display: none; }
+        .activity-title { display: flex; justify-content: space-between; gap: 16px; }
+        .activity-title strong { font-weight: 600; }
+        .activity-meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+        .activity-body { border-top: 1px solid var(--border); padding: 16px; background: #0d0b0f; }
+        .activity-body pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font: inherit;
+            margin: 0 0 14px;
+        }
+        .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+        .tag { border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; color: var(--muted); font-size: 11px; }
+        .settings { background: transparent; }
+        .settings-heading { margin-bottom: 14px; }
+        .settings-heading h2 { margin-bottom: 4px; }
+        .settings-body { padding: 0; }
+        .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .form-section {
             margin: 0;
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: #121015;
         }
-        input[type="number"] {
-            -moz-appearance: textfield;
+        .form-section h3 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .form-section h3::after { content: "Editable"; color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+        .form-section.providers { grid-column: 1 / -1; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .field.full { grid-column: 1 / -1; }
+        label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 5px; }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: #09080a;
+            color: var(--text);
+            padding: 8px 9px;
+        }
+        textarea { min-height: 84px; resize: vertical; }
+        .checkbox { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+        .checkbox label { margin: 0; font-size: 14px; font-weight: 500; }
+        .form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding-top: 6px; }
+        .notice {
+            display: none;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            margin-bottom: 18px;
+        }
+        .notice.show { display: block; }
+        .notice.success { background: var(--success-bg); color: var(--success-text); border-color: #bddbc7; }
+        .notice.error { background: var(--danger-bg); color: var(--danger-text); border-color: #ebc5c5; }
+        [hidden] { display: none !important; }
+
+        @media (max-width: 760px) {
+            body { padding: 0; background: var(--bg); }
+            .shell { min-height: 100vh; border: 0; border-radius: 0; }
+            .metrics, .form-grid, .settings-grid { grid-template-columns: 1fr; }
+            .field.full { grid-column: auto; }
+            .action-row, .activity-title { align-items: flex-start; flex-direction: column; }
+            .topbar-inner { padding: 10px 0; align-items: flex-start; }
+            .top-actions { flex-wrap: wrap; justify-content: flex-end; }
+            .form-section.providers, .form-actions { grid-column: auto; }
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden text-base bg-background text-primary" x-data="dashboard()" x-init="init()">
-
-    <aside class="w-[240px] flex-shrink-0 flex flex-col border-r border-border h-full bg-background pt-6 pb-4 px-4 overflow-y-auto text-primary z-20">
-        <div class="mb-8 pl-2 flex items-center gap-2 text-primary">
-            <img src="/static/icon.svg" alt="Moodle Mate Logo" class="w-8 h-8">
-            <span class="font-medium text-lg tracking-tight text-primary">Moodle Mate</span>
-        </div>
-
-        <div class="mb-6 pl-2">
-            <div class="font-medium text-primary flex items-center gap-1">
-                Admin <span class="text-tertiary text-[10px]">↗</span>
+<body>
+<div class="shell">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <img src="/static/icon.svg" alt="">
+                <span>Moodle Mate</span>
+                <span class="muted">v{{ version }}</span>
+            </div>
+            <div class="top-actions">
+                <span id="runtime-status" class="status">Checking</span>
+                <button id="refresh" class="button" type="button">Refresh</button>
+                <button id="logout" class="button danger" type="button">Log out</button>
             </div>
         </div>
+    </header>
 
-        <nav class="flex flex-col gap-1 mb-6">
-            <a href="#overview" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-primary bg-white/5 transition-all duration-150 text-left">
-                <svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                Dashboard
-            </a>
-        </nav>
-
-        <div class="mt-auto pl-2">
-            <button @click="logout" class="flex items-center gap-2 text-tertiary hover:text-danger-text cursor-pointer transition-colors text-xs w-full text-left">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                Log Out
-            </button>
+    <main>
+        <div id="overview" class="page-heading">
+            <h1>Dashboard</h1>
+            <p class="muted">Notification delivery and service configuration.</p>
         </div>
-    </aside>
 
-    <main class="flex-1 h-full overflow-y-auto bg-background text-primary scroll-smooth">
-        <div class="max-w-[1100px] mx-auto px-8 lg:px-16 py-12 flex flex-col gap-12">
+        <div id="notice" class="notice" role="status"></div>
 
-            <section id="overview" class="flex flex-col gap-6 animate-fade-in">
-                <div class="flex flex-wrap items-end justify-between border-b border-white/5 pb-6 gap-4">
-                    <div>
-                        <h1 class="text-3xl font-medium mb-1 text-primary">Dashboard</h1>
-                        <p class="text-secondary text-sm">Monitoring Moodle instance notifications</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" @click.outside="open = false" class="w-9 h-9 rounded-full border border-border bg-card-bg text-secondary hover:text-primary hover:bg-border/20 flex items-center justify-center transition-colors" title="Switch theme">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v3m0 12v3m9-9h-3M6 12H3m15.364-6.364l-2.121 2.121M8.757 15.243l-2.12 2.121m12.727 0l-2.121-2.121M8.757 8.757l-2.12-2.121"></path></svg>
-                            </button>
-                            <div x-show="open" x-transition class="absolute right-0 mt-2 w-44 bg-card-bg border border-border rounded-2xl shadow-lg py-2 z-50">
-                                <div class="px-3 pb-2 text-[10px] font-semibold text-tertiary uppercase tracking-[0.2em]">Theme</div>
-                                <template x-for="(label, key) in themeNames" :key="key">
-                                    <button @click="setTheme(key); open = false" class="w-full flex items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-border/30" :class="currentTheme === key ? 'text-accent font-medium' : 'text-secondary'">
-                                        <span x-text="label"></span>
-                                        <svg x-show="currentTheme === key" class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 px-2 py-1">
-                            <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-                            </span>
-                            <span class="text-xs text-success uppercase tracking-wider font-medium" x-text="status.running ? 'Operational' : 'Idle'"></span>
-                        </div>
-                        <button @click="refreshData" class="p-1.5 rounded hover:bg-white/10 text-secondary hover:text-primary transition-colors active:scale-95 duration-150" :class="{'animate-spin': loading}" title="Refresh">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        </button>
-                    </div>
+        <section class="grid metrics" aria-label="Service overview">
+            <div class="card">
+                <div class="metric-label">Last processed notification</div>
+                <div id="last-id" class="metric-value">—</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Fetch interval</div>
+                <div class="metric-value"><span id="fetch-interval">—</span> <span class="muted">sec</span></div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Moodle address</div>
+                <div id="moodle-url" class="metric-value small">—</div>
+            </div>
+        </section>
+
+        <section class="card action-row">
+            <div>
+                <h2>Test delivery</h2>
+                <p class="muted">Send one test message through the configured providers.</p>
+            </div>
+            <button id="test-notification" class="button primary" type="button">Send test</button>
+        </section>
+
+        <section id="activity" class="section">
+            <div class="section-header">
+                <h2>Recent activity</h2>
+                <span id="history-count" class="muted">0 entries</span>
+            </div>
+            <div id="history" class="activity-list">
+                <div class="empty">Loading activity…</div>
+            </div>
+        </section>
+
+        <section id="settings" class="section">
+            <div class="settings">
+                <div class="settings-heading">
+                    <h2>Runtime settings</h2>
+                    <p class="muted">Changes apply to the running service. Credentials and connection addresses remain managed through environment variables.</p>
                 </div>
-
-                <div class="flex flex-wrap gap-12 py-2">
-                    <div class="flex flex-col">
-                        <h4 class="text-tertiary text-xs mb-1 uppercase tracking-wide">Last ID Processed</h4>
-                        <div class="text-2xl font-medium text-primary font-mono" x-text="status.last_notification_id || '---'"></div>
-                    </div>
-                    <div class="flex flex-col">
-                        <h4 class="text-tertiary text-xs mb-1 uppercase tracking-wide">Fetch Interval</h4>
-                        <div class="text-2xl font-medium text-primary">
-                            <span x-text="config.notification.fetch_interval || 60"></span>
-                            <span class="text-tertiary text-sm font-normal">sec</span>
+                <div class="settings-body">
+                    <form id="settings-form" class="settings-grid">
+                        <div class="form-section">
+                            <h3>Polling</h3>
+                            <div class="form-grid">
+                                <div class="field"><label for="fetch">Fetch interval (seconds)</label><input id="fetch" name="notification.fetch_interval" type="number" min="10" max="3600"></div>
+                                <div class="field"><label for="retries">Maximum retries</label><input id="retries" name="notification.max_retries" type="number" min="0" max="10"></div>
+                                <div class="field"><label for="connect-timeout">Connect timeout</label><input id="connect-timeout" name="notification.connect_timeout" type="number" min="0.1" max="60" step="0.1"></div>
+                                <div class="field"><label for="read-timeout">Read timeout</label><input id="read-timeout" name="notification.read_timeout" type="number" min="0.1" max="180" step="0.1"></div>
+                                <div class="field"><label for="retry-total">HTTP retries</label><input id="retry-total" name="notification.retry_total" type="number" min="0" max="10"></div>
+                                <div class="field"><label for="retry-backoff">HTTP backoff factor</label><input id="retry-backoff" name="notification.retry_backoff_factor" type="number" min="0" max="5" step="0.1"></div>
+                                <div class="field"><label for="payload-limit">Payload limit (bytes)</label><input id="payload-limit" name="notification.max_payload_bytes" type="number" min="1024" max="262144"></div>
+                                <div class="field"><label for="initial-fetch">Initial fetch count</label><input id="initial-fetch" name="moodle.initial_fetch_count" type="number" min="1"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <h4 class="text-tertiary text-xs mb-1 uppercase tracking-wide">Target URL</h4>
-                        <div class="text-base text-secondary font-mono pt-1 truncate max-w-[280px]" x-text="config.moodle.url || 'Not configured'"></div>
-                    </div>
+
+                        <div class="form-section">
+                            <h3>Health monitoring</h3>
+                            <div class="form-grid">
+                                <div class="checkbox"><input id="health-enabled" name="health.enabled" type="checkbox"><label for="health-enabled">Enable health notifications</label></div>
+                                <div class="field"><label for="health-provider">Target provider</label><input id="health-provider" name="health.target_provider" type="text"></div>
+                                <div class="field"><label for="heartbeat">Heartbeat interval (hours)</label><input id="heartbeat" name="health.heartbeat_interval" type="number" min="1"></div>
+                                <div class="field"><label for="failure-threshold">Failure alert threshold</label><input id="failure-threshold" name="health.failure_alert_threshold" type="number" min="1"></div>
+                                <div class="field"><label for="alert-cooldown">Alert cooldown (seconds)</label><input id="alert-cooldown" name="health.failure_alert_cooldown" type="number" min="60"></div>
+                                <div class="field"><label for="stale-after">Unhealthy after (seconds)</label><input id="stale-after" name="health.stale_after" type="number" min="30"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Filters</h3>
+                            <div class="form-grid">
+                                <div class="field"><label for="ignore-subjects">Ignored subject phrases (one per line)</label><textarea id="ignore-subjects" name="filters.ignore_subjects_containing"></textarea></div>
+                                <div class="field"><label for="ignore-courses">Ignored course IDs (comma separated)</label><textarea id="ignore-courses" name="filters.ignore_courses_by_id"></textarea></div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>AI summary</h3>
+                            <div class="form-grid">
+                                <div class="checkbox"><input id="ai-enabled" name="ai.enabled" type="checkbox"><label for="ai-enabled">Enable summaries</label></div>
+                                <div class="field"><label for="ai-model">Model</label><input id="ai-model" name="ai.model" type="text"></div>
+                                <div class="field"><label for="ai-temperature">Temperature</label><input id="ai-temperature" name="ai.temperature" type="number" step="0.1"></div>
+                                <div class="field"><label for="ai-tokens">Maximum tokens</label><input id="ai-tokens" name="ai.max_tokens" type="number" min="1"></div>
+                                <div class="field full"><label for="ai-prompt">System prompt</label><textarea id="ai-prompt" name="ai.system_prompt"></textarea></div>
+                            </div>
+                        </div>
+
+                        <div class="form-section providers">
+                            <h3>Providers</h3>
+                            <div class="form-grid">
+                                <div class="checkbox"><input id="discord-enabled" name="discord.enabled" type="checkbox"><label for="discord-enabled">Discord enabled</label></div>
+                                <div class="field"><label for="discord-name">Discord bot name</label><input id="discord-name" name="discord.bot_name" type="text"></div>
+                                <div class="checkbox"><input id="pushbullet-enabled" name="pushbullet.enabled" type="checkbox"><label for="pushbullet-enabled">Pushbullet enabled</label></div>
+                                <div class="checkbox"><input id="pushbullet-summary" name="pushbullet.include_summary" type="checkbox"><label for="pushbullet-summary">Pushbullet includes summary</label></div>
+                                <div class="checkbox"><input id="webhook-enabled" name="webhook_site.enabled" type="checkbox"><label for="webhook-enabled">Webhook.site enabled</label></div>
+                                <div class="checkbox"><input id="webhook-summary" name="webhook_site.include_summary" type="checkbox"><label for="webhook-summary">Webhook.site includes summary</label></div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions"><button id="save-settings" class="button primary" type="submit">Save settings</button></div>
+                    </form>
                 </div>
-
-                <div class="bg-card-bg border border-border rounded-lg p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-                    <div>
-                        <div class="text-lg font-medium mb-1 text-primary">Test Notification</div>
-                        <p class="text-secondary text-sm">Trigger a manual check and payload delivery.</p>
-                    </div>
-                    <button @click="triggerTestNotification" :disabled="loading" class="bg-accent text-accent-contrast border border-border px-4 py-1.5 rounded-full text-sm font-medium tracking-wide hover:bg-accent-muted active:scale-95 transition-all disabled:opacity-50 disabled:scale-100">
-                        <span x-show="!loading" class="flex items-center gap-2">
-                            <span>Send Now</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </span>
-                        <span x-show="loading">Sending...</span>
-                    </button>
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-primary">Recent Activity</h3>
-                        <span class="text-secondary text-xs" x-text="history.length + ' entries'"></span>
-                    </div>
-                    <div class="bg-card-bg border border-border rounded-lg overflow-hidden">
-                        <template x-for="(item, index) in history" :key="item.timestamp ?? index">
-                            <div class="border-b border-white/5 last:border-0 transition-colors">
-                                <div @click="toggleExpand(index)" class="flex justify-between items-center px-5 py-4 cursor-pointer group">
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-1 text-tertiary transition-transform duration-300" :class="expandedId === index ? 'rotate-90 text-primary' : ''">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-                                        </div>
-                                        <div>
-                                            <div class="text-base font-medium text-primary transition-colors group-hover:text-white" x-text="item.subject || 'Notification'"></div>
-                                            <div class="text-xs text-tertiary mt-0.5">
-                                                ID: <span class="font-mono" x-text="item.id || '---'"></span>
-                                                • <span x-text="formatDate(item.timestamp)"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-2 items-center">
-                                        <template x-for="provider in item.providers || []" :key="provider">
-                                            <span class="text-[10px] px-1.5 py-0.5 border border-border rounded text-secondary" x-text="provider"></span>
-                                        </template>
-                                        <span x-show="!item.providers || !item.providers.length" class="text-secondary text-[10px]">None</span>
-                                    </div>
-                                </div>
-                                <div class="expand-content bg-background border-t border-white/5" :class="expandedId === index ? 'open' : ''">
-                                    <div class="p-5 pl-12 space-y-4">
-                                        <div>
-                                            <div class="text-xs text-tertiary uppercase tracking-wider mb-1">Message</div>
-                                            <div class="text-sm text-primary whitespace-pre-wrap leading-relaxed" x-text="item.message || 'No message captured.'"></div>
-                                        </div>
-
-                                        <div x-show="item.summary">
-                                            <div class="text-xs text-tertiary uppercase tracking-wider mb-1">Summary</div>
-                                            <div class="text-sm text-secondary whitespace-pre-wrap leading-relaxed" x-text="item.summary"></div>
-                                        </div>
-
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <div class="text-[10px] text-tertiary uppercase tracking-wide mb-1">Author</div>
-                                                <div class="text-sm text-secondary" x-text="item.author || '—'"></div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[10px] text-tertiary uppercase tracking-wide mb-1">Course</div>
-                                                <div class="text-sm text-secondary" x-text="item.course || '—'"></div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[10px] text-tertiary uppercase tracking-wide mb-1">Component</div>
-                                                <div class="text-sm text-secondary" x-text="item.component || '—'"></div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[10px] text-tertiary uppercase tracking-wide mb-1">Event Type</div>
-                                                <div class="text-sm text-secondary" x-text="item.event_type || '—'"></div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <div class="text-[10px] text-tertiary uppercase tracking-wide mb-1">Context URL</div>
-                                            <a x-show="item.context_url"
-                                               :href="item.context_url"
-                                               target="_blank"
-                                               rel="noopener"
-                                               class="text-sm text-accent break-all hover:underline"
-                                               x-text="item.context_url"></a>
-                                            <div x-show="!item.context_url" class="text-sm text-secondary">—</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                        <div x-show="history.length === 0" class="px-5 py-6 text-center text-secondary">No notifications recorded yet.</div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="configuration" class="flex flex-col gap-8 pb-20 pt-6 border-t border-white/5">
-                <div class="flex flex-wrap justify-between items-center gap-4">
-                    <div>
-                        <h2 class="text-3xl font-medium text-primary">Settings</h2>
-                        <p class="text-secondary text-sm mt-1">Manage connections and behavior</p>
-                    </div>
-                    <button @click="saveConfig" :disabled="saving" class="bg-accent text-accent-contrast px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-accent-muted active:scale-95 transition-all disabled:opacity-40 flex items-center gap-2">
-                        <span x-show="!saving">Save Changes</span>
-                        <span x-show="saving">Saving...</span>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div class="bg-card-bg border border-border rounded-lg p-6">
-                        <h2 class="text-lg font-medium mb-4 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10v6"/><path d="M22 16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2"/><path d="M22 10a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2"/><rect x="2" y="6" width="20" height="8" rx="2"/></svg>
-                            Moodle Connection
-                        </h2>
-                        <div class="grid grid-cols-1 gap-4">
-                            <p class="text-xs text-tertiary">Sensitive connection credentials are read-only in the UI and must be changed via environment variables.</p>
-                            <div>
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Moodle URL</label>
-                                <input type="text" x-model="config.moodle.url" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed" placeholder="https://moodle.example.edu">
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Username</label>
-                                    <input type="text" x-model="config.moodle.username" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Password</label>
-                                    <input type="password" x-model="config.moodle.password" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed" placeholder="••••••••">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Initial Fetch Count</label>
-                                <div class="flex items-center bg-input border border-border rounded-lg overflow-hidden h-10">
-                                    <button type="button" @click="config.moodle.initial_fetch_count = Math.max(1, (Number(config.moodle.initial_fetch_count) || 1) - 1)" class="h-full px-3 flex items-center justify-center text-secondary hover:text-primary hover:bg-white/5 border-r border-border transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
-                                    </button>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.moodle.initial_fetch_count" class="w-full h-full bg-transparent text-center text-sm text-primary focus:outline-none border-none">
-                                    <button type="button" @click="config.moodle.initial_fetch_count = (Number(config.moodle.initial_fetch_count) || 1) + 1" class="h-full px-3 flex items-center justify-center text-secondary hover:text-primary hover:bg-white/5 border-l border-border transition-colors">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-card-bg border border-border rounded-lg p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-medium flex items-center gap-2">
-                                <svg class="w-5 h-5 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10h-10V2z"/><path d="M12 12 2.1 12a10 10 0 0 1 9.9-10V12z"/></svg>
-                                AI Processing
-                            </h2>
-                            <label class="inline-flex items-center cursor-pointer select-none">
-                                <input type="checkbox" x-model="config.ai.enabled" class="sr-only peer">
-                                <span class="toggle-track" aria-hidden="true">
-                                    <span class="toggle-thumb"></span>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-200" :class="{'opacity-40 pointer-events-none': !config.ai.enabled}">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Endpoint</label>
-                                <input type="text" x-model="config.ai.endpoint" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Model</label>
-                                <input type="text" x-model="config.ai.model" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">API Key</label>
-                                <input type="password" x-model="config.ai.api_key" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed" placeholder="sk-...">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">System Prompt</label>
-                                <textarea rows="2" x-model="config.ai.system_prompt" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors resize-none"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-card-bg border border-border rounded-lg p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-medium flex items-center gap-2">
-                                <svg class="w-5 h-5 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-                                Discord Integration
-                            </h2>
-                            <label class="inline-flex items-center cursor-pointer select-none">
-                                <input type="checkbox" x-model="config.discord.enabled" class="sr-only peer">
-                                <span class="toggle-track" aria-hidden="true">
-                                    <span class="toggle-thumb"></span>
-                                </span>
-                            </label>
-                        </div>
-                        <div class="grid grid-cols-1 gap-4 transition-opacity duration-200" :class="{'opacity-40 pointer-events-none': !config.discord.enabled}">
-                            <div>
-                                <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Webhook URL</label>
-                                <input type="password" x-model="config.discord.webhook_url" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Bot Name</label>
-                                    <input type="text" x-model="config.discord.bot_name" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Avatar URL</label>
-                                    <input type="text" x-model="config.discord.thumbnail_url" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-card-bg border border-border rounded-lg p-6 flex flex-col gap-6">
-                        <div>
-                            <h2 class="text-lg font-medium mb-4 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-                                Web Server & Notification
-                            </h2>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Host</label>
-                                    <input type="text" x-model="config.web.host" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Port</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.web.port" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Auth Secret</label>
-                                    <input type="password" x-model="config.web.auth_secret" readonly class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors opacity-70 cursor-not-allowed">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-border">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Fetch Interval (sec)</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" min="10" x-model.number="config.notification.fetch_interval" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder=">=10">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Max Retries</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" x-model.number="config.notification.max_retries" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="0-10">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Connect Timeout (s)</label>
-                                    <input type="text" inputmode="decimal" x-model.number="config.notification.connect_timeout" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="<=60">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Read Timeout (s)</label>
-                                    <input type="text" inputmode="decimal" x-model.number="config.notification.read_timeout" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="<=180">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Max Payload (bytes)</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.notification.max_payload_bytes" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="1024-262144">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Retry Total</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" x-model.number="config.notification.retry_total" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="0-10">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Retry Backoff Factor</label>
-                                    <input type="text" inputmode="decimal" x-model.number="config.notification.retry_backoff_factor" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="0-5">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="border-t border-border pt-4">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-sm font-medium">Health Checks Enabled</span>
-                                <label class="inline-flex items-center cursor-pointer select-none">
-                                    <input type="checkbox" x-model="config.health.enabled" class="sr-only peer">
-                                    <span class="toggle-track" aria-hidden="true">
-                                        <span class="toggle-thumb"></span>
-                                    </span>
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 transition-opacity duration-200" :class="{'opacity-40 pointer-events-none': !config.health.enabled}">
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Heartbeat (hrs)</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.health.heartbeat_interval" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Failure Threshold</label>
-                                    <input type="text" inputmode="numeric" pattern="[0-9]*" x-model.number="config.health.failure_alert_threshold" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-tertiary mb-1.5 uppercase tracking-wide">Target Provider</label>
-                                    <input type="text" x-model="config.health.target_provider" class="w-full bg-input border border-border rounded px-3 py-2 text-sm text-primary focus:border-accent focus:outline-none transition-colors" placeholder="discord">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <footer class="text-xs text-secondary flex flex-wrap justify-between gap-2 border-t border-white/5 pt-4">
-                <span>Moodle Mate <span x-text="version"></span></span>
-                <span>Status: <span class="text-success" x-text="status.running ? 'Operational' : 'Paused'"></span></span>
-            </footer>
-        </div>
+            </div>
+        </section>
     </main>
+</div>
 
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none">
-        <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="toast.visible"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="translate-y-2 opacity-0"
-                 x-transition:enter-end="translate-y-0 opacity-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="pointer-events-auto w-[300px] bg-card-bg border border-border rounded shadow-xl p-4 flex items-start gap-3">
-                <div class="mt-1.5 h-1.5 w-1.5 rounded-full shrink-0" :class="toast.type === 'success' ? 'bg-green-500' : (toast.type === 'error' ? 'bg-red-500' : 'bg-blue-500')"></div>
-                <div class="flex-1">
-                    <h4 class="text-sm font-medium text-primary mb-1" x-text="toast.title"></h4>
-                    <p class="text-xs text-secondary leading-relaxed" x-text="toast.message"></p>
-                </div>
-            </div>
-        </template>
-    </div>
+<script>
+    const state = { config: null };
 
-    <script>
-        const defaultConfigState = () => ({
-            moodle: { url: "", username: "", password: "", initial_fetch_count: 1 },
-            ai: { enabled: true, api_key: "", model: "gpt-5-nano", temperature: 0.7, max_tokens: 150, system_prompt: "", endpoint: "" },
-            notification: { max_retries: 5, fetch_interval: 60, connect_timeout: 10, read_timeout: 30, retry_total: 3, retry_backoff_factor: 1, max_payload_bytes: 65536 },
-            health: { enabled: false, heartbeat_interval: null, failure_alert_threshold: null, target_provider: "" },
-            web: { enabled: true, host: "127.0.0.1", port: 9095, auth_secret: "" },
-            discord: { enabled: false, webhook_url: "", bot_name: "MoodleMate", thumbnail_url: "" },
-            webhook_site: { enabled: false, webhook_url: "", include_summary: true },
-            pushbullet: { enabled: false, api_key: "", include_summary: true }
-        });
+    function getCookie(name) {
+        const part = document.cookie.split("; ").find((item) => item.startsWith(`${name}=`));
+        return part ? decodeURIComponent(part.split("=").slice(1).join("=")) : "";
+    }
 
-        function dashboard() {
-            return {
-                status: { running: true, last_notification_id: null },
-                config: defaultConfigState(),
-                history: [],
-                loading: false,
-                saving: false,
-                expandedId: null,
-                toasts: [],
-                currentTheme: "ember",
-                themeNames: {
-                    ember: "Ember Glow",
-                    midnight: "Midnight Drift",
-                    jade: "Jade Pulse",
-                    kestral: "Kestral Dark"
-                },
-                themes: {
-                    ember: {
-                        "--color-bg": "#14120B",
-                        "--color-card": "#1B1913",
-                        "--color-border": "#2D281D",
-                        "--color-border-hover": "#3A3426",
-                        "--color-text": "#E8E2D4",
-                        "--color-text-secondary": "#A89E8F",
-                        "--color-text-tertiary": "#7F7566",
-                        "--color-accent": "#F4B860",
-                        "--color-accent-muted": "#DFA851",
-                        "--color-accent-contrast": "#1A1510",
-                        "--color-input": "#1E1A13",
-                        "--color-success": "#10B981",
-                        "--color-danger": "#4E1F1F",
-                        "--color-scroll-track": "#14120B",
-                        "--color-scroll-thumb": "#3A2C1F",
-                        "--color-scroll-thumb-hover": "#4C3420"
-                    },
-                    midnight: {
-                        "--color-bg": "#0D1117",
-                        "--color-card": "#161B22",
-                        "--color-border": "#2D333B",
-                        "--color-border-hover": "#3E4450",
-                        "--color-text": "#E6EDF3",
-                        "--color-text-secondary": "#A6B3C1",
-                        "--color-text-tertiary": "#7D8896",
-                        "--color-accent": "#60A5FA",
-                        "--color-accent-muted": "#3B82F6",
-                        "--color-accent-contrast": "#05070A",
-                        "--color-input": "#0F141A",
-                        "--color-success": "#34D399",
-                        "--color-danger": "#B91C1C",
-                        "--color-scroll-track": "#0D1117",
-                        "--color-scroll-thumb": "#2D333B",
-                        "--color-scroll-thumb-hover": "#3E4450"
-                    },
-                    jade: {
-                        "--color-bg": "#0E1C18",
-                        "--color-card": "#152822",
-                        "--color-border": "#1E352C",
-                        "--color-border-hover": "#2A473D",
-                        "--color-text": "#E4F2EC",
-                        "--color-text-secondary": "#A5C7BB",
-                        "--color-text-tertiary": "#6F8F85",
-                        "--color-accent": "#34D399",
-                        "--color-accent-muted": "#10B981",
-                        "--color-accent-contrast": "#05120E",
-                        "--color-input": "#11231D",
-                        "--color-success": "#22C55E",
-                        "--color-danger": "#DC2626",
-                        "--color-scroll-track": "#0E1C18",
-                        "--color-scroll-thumb": "#1F3A30",
-                        "--color-scroll-thumb-hover": "#2E5044"
-                    },
-                    kestral: {
-                        "--color-bg": "#141414",
-                        "--color-card": "#181818",
-                        "--color-border": "#2B2B2B",
-                        "--color-border-hover": "#3C3C3C",
-                        "--color-text": "#CCCCCC",
-                        "--color-text-secondary": "#9D9D9D",
-                        "--color-text-tertiary": "#616161",
-                        "--color-accent": "#c586c0",
-                        "--color-accent-muted": "#b06daa",
-                        "--color-accent-contrast": "#FFFFFF",
-                        "--color-input": "#313131",
-                        "--color-success": "#2EA043",
-                        "--color-danger": "#F85149",
-                        "--color-scroll-track": "#141414",
-                        "--color-scroll-thumb": "#2B2B2B",
-                        "--color-scroll-thumb-hover": "#3C3C3C"
-                    }
-                },
-                version: {{ version | tojson }},
-                refreshTimer: null,
-
-                async init() {
-                    document.documentElement.classList.add("dark");
-                    this.loadTheme();
-                    this.applyConfigDefaults();
-                    await this.refreshData();
-                    this.refreshTimer = setInterval(() => this.refreshData(true), 15000);
-                },
-
-                defaultConfig() {
-                    return defaultConfigState();
-                },
-
-                deepMerge(target, source) {
-                    const output = Array.isArray(target) ? target.slice() : { ...target };
-                    if (source && typeof source === "object") {
-                        Object.keys(source).forEach((key) => {
-                            const srcVal = source[key];
-                            if (Array.isArray(srcVal)) {
-                                output[key] = srcVal.slice();
-                            } else if (srcVal && typeof srcVal === "object") {
-                                output[key] = this.deepMerge(output[key] || {}, srcVal);
-                            } else {
-                                output[key] = srcVal;
-                            }
-                        });
-                    }
-                    return output;
-                },
-
-                applyConfigDefaults(newConfig = null) {
-                    const merged = this.deepMerge(this.defaultConfig(), newConfig || this.config || {});
-                    this.config = merged;
-                },
-
-                async parseResponse(res) {
-                    if (!res) return null;
-                    if (res.status === 401 || res.status === 307 || res.redirected) {
-                        window.location.href = "/login";
-                        return null;
-                    }
-                    if (res.status === 204) return null;
-                    if (!res.ok) {
-                        const message = await res.text();
-                        throw new Error(message || "Request failed");
-                    }
-                    return res.json();
-                },
-
-                getCookie(name) {
-                    const value = `; ${document.cookie}`;
-                    const parts = value.split(`; ${name}=`);
-                    if (parts.length === 2) return parts.pop().split(";").shift();
-                    return null;
-                },
-
-                async apiFetch(url, options = {}) {
-                    const init = { ...options };
-                    const method = (init.method || "GET").toUpperCase();
-                    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-                        init.headers = {
-                            ...(init.headers || {}),
-                            "X-CSRF-Token": this.getCookie("moodlemate_csrf") || ""
-                        };
-                    }
-                    return fetch(url, init);
-                },
-
-                async refreshData(silent = false) {
-                    if (!silent) this.loading = true;
-                    try {
-                        const [statusRes, configRes, historyRes] = await Promise.all([
-                            this.apiFetch("/api/status"),
-                            this.apiFetch("/api/config"),
-                            this.apiFetch("/api/history")
-                        ]);
-                        const statusData = await this.parseResponse(statusRes);
-                        const configData = await this.parseResponse(configRes);
-                        const historyData = await this.parseResponse(historyRes);
-                        if (statusData) this.status = statusData;
-                        if (configData) this.applyConfigDefaults(configData);
-                        if (historyData) this.history = historyData;
-                    } catch (err) {
-                        console.error(err);
-                        if (!silent) this.showToast("Error", "Unable to refresh data.", "error");
-                    } finally {
-                        if (!silent) this.loading = false;
-                    }
-                },
-
-                prepareConfigPayload() {
-                    const payload = JSON.parse(JSON.stringify(this.config));
-                    payload.moodle.initial_fetch_count = Number(payload.moodle.initial_fetch_count) || 1;
-                    payload.notification.fetch_interval = Number(payload.notification.fetch_interval) || 60;
-                    payload.notification.max_retries = Number(payload.notification.max_retries) || 5;
-                    payload.notification.connect_timeout = Math.max(0.1, Number(payload.notification.connect_timeout) || 10);
-                    payload.notification.read_timeout = Math.max(0.1, Number(payload.notification.read_timeout) || 30);
-                    payload.notification.retry_total = Math.max(0, Math.floor(Number(payload.notification.retry_total) || 3));
-                    payload.notification.retry_backoff_factor = Math.max(0, Number(payload.notification.retry_backoff_factor) || 1);
-                    payload.notification.max_payload_bytes = Math.max(1024, Math.floor(Number(payload.notification.max_payload_bytes) || 65536));
-                    payload.web.port = Number(payload.web.port) || 9095;
-                    const heartbeat = payload.health.heartbeat_interval;
-                    payload.health.heartbeat_interval = heartbeat === "" || heartbeat === null ? null : Number(heartbeat);
-                    const failure = payload.health.failure_alert_threshold;
-                    payload.health.failure_alert_threshold = failure === "" || failure === null ? null : Number(failure);
-                    return payload;
-                },
-
-                async saveConfig() {
-                    this.saving = true;
-                    try {
-                        const payload = this.prepareConfigPayload();
-                        const res = await this.apiFetch("/api/config", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!res.ok) {
-                            let detail = "Failed to save config";
-                            try {
-                                const body = await res.json();
-                                if (body?.detail) {
-                                    detail = Array.isArray(body.detail)
-                                        ? body.detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
-                                        : body.detail;
-                                }
-                            } catch (e) {
-                                // ignore parse errors
-                            }
-                            throw new Error(detail);
-                        }
-                        this.showToast("Success", "Configuration saved successfully.", "success");
-                        await this.refreshData(true);
-                    } catch (err) {
-                        console.error(err);
-                        this.showToast("Error", err?.message || "Failed to save configuration.", "error");
-                    } finally {
-                        this.saving = false;
-                    }
-                },
-
-                async triggerTestNotification() {
-                    this.loading = true;
-                    try {
-                        const res = await this.apiFetch("/api/test-notification", {
-                            method: "POST"
-                        });
-                        if (!res.ok) {
-                            throw new Error("Request failed");
-                        }
-                        this.showToast("Notification Sent", "Test payload delivered.", "success");
-                    } catch (err) {
-                        console.error(err);
-                        this.showToast("Error", "Failed to trigger notification.", "error");
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async logout() {
-                    try {
-                        await this.apiFetch("/api/logout", { method: "POST" });
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        window.location.href = "/login";
-                    }
-                },
-
-                toggleExpand(id) {
-                    this.expandedId = this.expandedId === id ? null : id;
-                },
-
-                formatDate(timestamp) {
-                    if (timestamp === null || timestamp === undefined) return "N/A";
-                    const numeric = Number(timestamp);
-                    if (Number.isNaN(numeric)) return "N/A";
-                    return new Date(numeric * 1000).toLocaleString();
-                },
-
-                loadTheme() {
-                    const saved = localStorage.getItem("moodlemate_theme");
-                    const nextTheme = saved && this.themes[saved] ? saved : "ember";
-                    this.setTheme(nextTheme);
-                },
-
-                setTheme(name) {
-                    if (!this.themes[name]) return;
-                    this.currentTheme = name;
-                    localStorage.setItem("moodlemate_theme", name);
-                    const palette = this.themes[name];
-                    const root = document.documentElement;
-                    Object.entries(palette).forEach(([key, value]) => {
-                        root.style.setProperty(key, value);
-                    });
-                },
-
-                showToast(title, message, type = "info") {
-                    const id = Date.now();
-                    this.toasts.push({ id, title, message, type, visible: true });
-                    setTimeout(() => {
-                        const toast = this.toasts.find((t) => t.id === id);
-                        if (toast) toast.visible = false;
-                    }, 4000);
-                }
-            };
+    async function apiFetch(url, options = {}) {
+        const request = { ...options, headers: { ...(options.headers || {}) } };
+        if (["POST", "PUT", "PATCH", "DELETE"].includes((request.method || "GET").toUpperCase())) {
+            request.headers["X-CSRF-Token"] = getCookie("moodlemate_csrf");
         }
-    </script>
+        const response = await fetch(url, request);
+        if (response.status === 401) window.location.href = "/login";
+        return response;
+    }
+
+    function showNotice(message, type = "success") {
+        const notice = document.getElementById("notice");
+        notice.textContent = message;
+        notice.className = `notice show ${type}`;
+    }
+
+    function escapeHtml(value) {
+        const node = document.createElement("div");
+        node.textContent = value == null ? "" : String(value);
+        return node.innerHTML;
+    }
+
+    function escapeAttribute(value) {
+        return String(value ?? "").replace(/[&"'<>]/g, (character) => ({
+            "&": "&amp;", '"': "&quot;", "'": "&#39;", "<": "&lt;", ">": "&gt;"
+        })[character]);
+    }
+
+    function formatDate(timestamp) {
+        const numeric = Number(timestamp);
+        return Number.isFinite(numeric) ? new Date(numeric * 1000).toLocaleString() : "Unknown time";
+    }
+
+    function renderHistory(items) {
+        const root = document.getElementById("history");
+        document.getElementById("history-count").textContent = `${items.length} ${items.length === 1 ? "entry" : "entries"}`;
+        if (!items.length) {
+            root.innerHTML = '<div class="empty">No delivered notifications recorded yet.</div>';
+            return;
+        }
+        root.innerHTML = items.map((item) => {
+            const providers = (item.providers || []).map((provider) => `<span class="tag">${escapeHtml(provider)}</span>`).join("");
+            const contextUrl = typeof item.context_url === "string" ? item.context_url.trim() : "";
+            const contextLink = /^https?:\/\//i.test(contextUrl)
+                ? `<p><a href="${escapeAttribute(contextUrl)}" target="_blank" rel="noopener noreferrer">Open Moodle context</a></p>`
+                : "";
+            return `<details class="activity">
+                <summary>
+                    <div class="activity-title">
+                        <div><strong>${escapeHtml(item.subject || "Notification")}</strong><div class="activity-meta">ID ${escapeHtml(item.id ?? "—")} · ${escapeHtml(formatDate(item.timestamp))}</div></div>
+                        <div class="tags">${providers || '<span class="tag">No provider</span>'}</div>
+                    </div>
+                </summary>
+                <div class="activity-body">
+                    <h3>Message</h3><pre>${escapeHtml(item.message || "No message captured.")}</pre>
+                    ${item.summary ? `<h3>Summary</h3><pre>${escapeHtml(item.summary)}</pre>` : ""}
+                    <p class="muted">Author: ${escapeHtml(item.author || "—")} · Course: ${escapeHtml(item.course || "—")} · Component: ${escapeHtml(item.component || "—")}</p>
+                    ${contextLink}
+                </div>
+            </details>`;
+        }).join("");
+    }
+
+    function getPath(object, path) {
+        return path.split(".").reduce((value, key) => value?.[key], object);
+    }
+
+    function setPath(object, path, value) {
+        const keys = path.split(".");
+        const finalKey = keys.pop();
+        const target = keys.reduce((current, key) => current[key], object);
+        target[finalKey] = value;
+    }
+
+    function fillForm(config) {
+        document.querySelectorAll("#settings-form [name]").forEach((field) => {
+            const value = getPath(config, field.name);
+            if (field.type === "checkbox") field.checked = Boolean(value);
+            else if (field.name === "filters.ignore_subjects_containing") field.value = (value || []).join("\n");
+            else if (field.name === "filters.ignore_courses_by_id") field.value = (value || []).join(", ");
+            else field.value = value ?? "";
+        });
+    }
+
+    function configFromForm() {
+        const payload = JSON.parse(JSON.stringify(state.config));
+        document.querySelectorAll("#settings-form [name]").forEach((field) => {
+            if (field.type === "number" && field.value === "") return;
+            let value;
+            if (field.type === "checkbox") value = field.checked;
+            else if (field.name === "filters.ignore_subjects_containing") value = field.value.split("\n").map((item) => item.trim()).filter(Boolean);
+            else if (field.name === "filters.ignore_courses_by_id") value = field.value.split(",").map((item) => Number(item.trim())).filter(Number.isInteger);
+            else if (field.type === "number") value = Number(field.value);
+            else value = field.value;
+            setPath(payload, field.name, value);
+        });
+        return payload;
+    }
+
+    async function loadData() {
+        const button = document.getElementById("refresh");
+        button.disabled = true;
+        try {
+            const [statusResponse, historyResponse, configResponse, healthResponse] = await Promise.all([
+                apiFetch("/api/status"), apiFetch("/api/history"), apiFetch("/api/config"), fetch("/healthz")
+            ]);
+            if (![statusResponse, historyResponse, configResponse].every((response) => response.ok)) throw new Error("Dashboard data could not be loaded");
+            const [status, history, config, health] = await Promise.all([
+                statusResponse.json(), historyResponse.json(), configResponse.json(), healthResponse.json()
+            ]);
+            state.config = config;
+            document.getElementById("last-id").textContent = status.last_notification_id ?? "—";
+            document.getElementById("fetch-interval").textContent = config.notification.fetch_interval;
+            document.getElementById("moodle-url").textContent = config.moodle.url || "Not configured";
+            const badge = document.getElementById("runtime-status");
+            badge.textContent = health.status === "ok" ? "Operational" : "Needs attention";
+            badge.className = `status${health.status === "ok" ? "" : " unhealthy"}`;
+            renderHistory(history);
+            fillForm(config);
+        } catch (error) {
+            showNotice(error.message || "Dashboard data could not be loaded", "error");
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    document.getElementById("refresh").addEventListener("click", loadData);
+    document.getElementById("logout").addEventListener("click", async () => {
+        await apiFetch("/api/logout", { method: "POST" });
+        window.location.href = "/login";
+    });
+    document.getElementById("test-notification").addEventListener("click", async (event) => {
+        event.currentTarget.disabled = true;
+        try {
+            const response = await apiFetch("/api/test-notification", { method: "POST" });
+            if (!response.ok) throw new Error("Test notification failed");
+            showNotice("Test notification delivered.");
+        } catch (error) {
+            showNotice(error.message, "error");
+        } finally {
+            event.currentTarget.disabled = false;
+        }
+    });
+    document.getElementById("settings-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = document.getElementById("save-settings");
+        button.disabled = true;
+        try {
+            const response = await apiFetch("/api/config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(configFromForm())
+            });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(typeof body.detail === "string" ? body.detail : "Settings could not be saved");
+            }
+            showNotice("Settings saved.");
+            await loadData();
+        } catch (error) {
+            showNotice(error.message, "error");
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    loadData();
+</script>
 </body>
 </html>
-

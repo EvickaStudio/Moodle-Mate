@@ -55,6 +55,48 @@ def test_run_saves_state_on_keyboard_interrupt():
     app.state_manager.maybe_save_state.assert_called_once_with(force=True)
 
 
+def test_request_shutdown_stops_polling_and_web_server():
+    app = _build_app(_build_settings())
+    app._web_server = Mock(should_exit=False)
+
+    app._request_shutdown()
+
+    assert app._shutdown_event.is_set()
+    assert app._web_server.should_exit is True
+
+
+def test_stop_web_ui_joins_server_thread():
+    app = _build_app(_build_settings())
+    app._web_server = Mock(should_exit=False, force_exit=False)
+    app._web_server_thread = Mock()
+    app._web_server_thread.is_alive.return_value = True
+
+    app._stop_web_ui()
+
+    assert app._web_server.should_exit is True
+    app._web_server_thread.join.assert_any_call(timeout=3.0)
+    assert app._web_server.force_exit is True
+    app._web_server_thread.join.assert_any_call(timeout=1.0)
+
+
+def test_stop_web_ui_handles_late_server_initialization():
+    app = _build_app(_build_settings())
+    app._web_server = None
+    server_mock = Mock(should_exit=False, force_exit=False)
+
+    def side_effect(*args, **kwargs):
+        app._web_server = server_mock
+
+    app._web_server_thread = Mock()
+    app._web_server_thread.is_alive.return_value = True
+    app._web_server_thread.join.side_effect = side_effect
+
+    app._stop_web_ui()
+
+    assert server_mock.should_exit is True
+    assert server_mock.force_exit is True
+
+
 def test_fetch_and_process_notifications_marks_processed_ids():
     settings = _build_settings()
     app = _build_app(settings)

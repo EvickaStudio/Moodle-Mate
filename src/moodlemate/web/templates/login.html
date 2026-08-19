@@ -1,118 +1,123 @@
-<!DOCTYPE html>
-<html lang="en" class="dark">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Moodle Mate</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        background: "#14120B",
-                        "card-bg": "#1B1913",
-                        border: "#2D281D",
-                        accent: "#F4B860",
-                        "accent-muted": "#DFA851",
-                        primary: "#E8E2D4",
-                        secondary: "#A89E8F",
-                        input: "#1E1A13",
-                        danger: "#F87171"
-                    },
-                    fontFamily: {
-                        sans: ["Inter", "sans-serif"],
-                        mono: ["JetBrains Mono", "monospace"]
-                    }
-                }
-            }
-        };
-    </script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in · Moodle Mate</title>
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #000000;
+            --surface: #111113;
+            --border: #36363b;
+            --text: #f3f3f1;
+            --muted: #99999f;
+            --accent: #8b5cf6;
+            --accent-dark: #7547e8;
+            --danger-bg: #512b2b;
+            --danger-text: #ffd4d4;
+        }
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 32px clamp(24px, 8vw, 110px);
+            background: var(--bg);
+            color: var(--text);
+            font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        main {
+            width: min(100%, 980px);
+            min-height: calc(100vh - 64px);
+            margin: 0 auto;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+        .brand img { width: 24px; height: 24px; }
+        .login-layout {
+            width: min(100%, 650px);
+            margin: auto;
+            display: grid;
+            grid-template-columns: minmax(0, .9fr) 1px minmax(0, 1.1fr);
+            gap: 34px;
+            align-items: center;
+        }
+        .divider { width: 1px; height: 170px; background: var(--border); }
+        .intro .mini-brand { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; font-weight: 650; }
+        .intro .mini-brand img { width: 22px; height: 22px; }
+        h1 { max-width: 260px; margin: 0 0 10px; font-size: 31px; line-height: 1.08; letter-spacing: -.035em; font-weight: 500; }
+        p { max-width: 270px; margin: 0; color: var(--muted); font-size: 13px; }
+        form { width: 100%; }
+        label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 650; }
+        input { width: 100%; min-height: 40px; border-radius: 5px; font: inherit; border: 1px solid #252528; padding: 8px 11px; color: var(--text); background: #171719; }
+        input:focus-visible, button:focus-visible { outline: 3px solid rgba(49, 95, 140, .25); outline-offset: 2px; }
+        button { min-height: 34px; margin-top: 16px; padding: 6px 14px; border: 1px solid #f2f2f0; border-radius: 999px; background: #f2f2f0; color: #0b0b0c; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+        button:hover { background: #d9d9d6; }
+        button:disabled { opacity: .55; cursor: not-allowed; }
+        .error { display: none; margin-top: 14px; padding: 9px 10px; border: 1px solid #ebc5c5; border-radius: 6px; background: var(--danger-bg); color: var(--danger-text); }
+        .error.show { display: block; }
+        @media (max-width: 650px) {
+            body { padding: 24px; }
+            main { min-height: calc(100vh - 48px); }
+            .login-layout { grid-template-columns: 1fr; gap: 24px; }
+            .divider { width: 100%; height: 1px; }
+            h1 { font-size: 28px; }
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-background text-primary flex items-center justify-center p-6" x-data="login()" x-init="init()">
-
-    <div class="w-full max-w-sm bg-card-bg border border-border rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.35)] p-7 space-y-6">
-        <div class="flex flex-col items-center gap-1.5 text-center">
-            <img src="/static/icon.svg" alt="Moodle Mate Logo" class="w-9 h-9">
-            <h1 class="text-xl font-semibold tracking-tight text-primary">Moodle Mate</h1>
-            <p class="text-secondary text-xs uppercase tracking-[0.2em]">Secure Access</p>
-        </div>
-
-        <form @submit.prevent="submitLogin" class="space-y-5">
-            <div class="space-y-2">
-                <label class="text-xs uppercase tracking-wide text-secondary">Access Password</label>
-                <input type="password"
-                       x-model="password"
-                       placeholder="••••••••"
-                       class="w-full bg-input border border-border rounded-lg px-3 py-2.5 text-primary focus:outline-none focus:border-accent transition-colors"
-                       required>
-            </div>
-
-            <button type="submit"
-                    :disabled="loading"
-                    class="w-full bg-accent text-[#1A1510] font-semibold py-2.5 rounded-full transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(244,184,96,0.3)] hover:bg-accent-muted active:scale-95">
-                <span x-show="!loading">Access Dashboard</span>
-                <svg x-show="loading" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-            </button>
-
-            <p x-show="error" x-text="error" class="text-danger text-sm text-center" x-cloak></p>
+<body>
+<main>
+    <div class="brand">
+        <img src="/static/icon.svg" alt="">
+        <span>Moodle Mate</span>
+    </div>
+    <div class="login-layout">
+        <section class="intro">
+            <div class="mini-brand"><img src="/static/icon.svg" alt=""><span>Admin access</span></div>
+            <h1>Open your dashboard.</h1>
+            <p>Review Moodle notifications, delivery history, service health, and runtime settings.</p>
+        </section>
+        <div class="divider" aria-hidden="true"></div>
+        <form id="login-form">
+            <label for="password">Dashboard password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+            <button id="submit" type="submit">Sign in</button>
+            <div id="error" class="error" role="alert"></div>
         </form>
     </div>
+</main>
+<script>
+    function getCookie(name) {
+        const part = document.cookie.split("; ").find((item) => item.startsWith(`${name}=`));
+        return part ? decodeURIComponent(part.split("=").slice(1).join("=")) : "";
+    }
 
-    <script>
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(";").shift();
-            return null;
-        }
-
-        function login() {
-            return {
-                password: "",
-                loading: false,
-                error: "",
-
-                init() {
-                    document.documentElement.classList.add("dark");
+    document.getElementById("login-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = document.getElementById("submit");
+        const error = document.getElementById("error");
+        button.disabled = true;
+        error.className = "error";
+        try {
+            const response = await fetch("/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": getCookie("moodlemate_csrf")
                 },
-
-                async submitLogin() {
-                    this.loading = true;
-                    this.error = "";
-                    try {
-                        const res = await fetch("/api/login", {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-Token": getCookie("moodlemate_csrf") || ""
-                            },
-                            body: JSON.stringify({ password: this.password })
-                        });
-                        if (res.ok) {
-                            window.location.href = "/";
-                        } else {
-                            this.error = "Invalid password. Try again.";
-                        }
-                    } catch (e) {
-                        this.error = "Login failed. Please retry.";
-                    } finally {
-                        this.loading = false;
-                    }
-                }
-            };
+                body: JSON.stringify({ password: document.getElementById("password").value })
+            });
+            if (!response.ok) throw new Error(response.status === 429 ? "Too many attempts. Try again later." : "Incorrect password.");
+            window.location.href = "/";
+        } catch (exception) {
+            error.textContent = exception.message || "Sign in failed. Try again.";
+            error.className = "error show";
+        } finally {
+            button.disabled = false;
         }
-    </script>
+    });
+</script>
 </body>
 </html>
-

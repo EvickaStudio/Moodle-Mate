@@ -2,11 +2,12 @@
 # Install runtime only: pip install -r requirements.txt
 # Install development: pip install -r requirements-dev.txt
 -r requirements.txt
-pre-commit>=4.6.0
-filelock>=3.29.7
+pre-commit>=4.6.2
+filelock>=3.32.3
+httpx>=0.28.1
 pytest>=9.1.1
 pytest-cov>=7.1.0
-ruff>=0.15.21
-types-requests>=2.33.0.20260518
-virtualenv>=21.6.1
-pyrefly>=1.1.1
+ruff>=0.16.3
+types-requests>=2.33.0.20260712
+virtualenv>=21.7.4
+pyrefly>=1.2.0
