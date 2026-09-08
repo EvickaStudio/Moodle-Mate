@@ -439,8 +439,8 @@ class MoodleNotificationHandler:
             return None
 
         logger.info(f"Fetched {len(notifications)} notifications on initial run.")
-        # Process in reverse order to handle oldest first
-        for notification in reversed(notifications):
+        notifications.sort(key=lambda notification: notification["id"])
+        for notification in notifications:
             self._handle_new_notification(
                 "Processing initial notification: ID ",
                 notification["id"],
