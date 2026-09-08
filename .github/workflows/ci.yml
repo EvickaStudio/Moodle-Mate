@@ -38,6 +38,10 @@ jobs:
     - name: CI lint checks
       run: make ci-lint
 
+    - name: Verify hashed development requirements
+      if: matrix.python-version == '3.11'
+      run: python -m pip --python .venv/bin/python install --dry-run --ignore-installed --require-hashes -r requirements-dev.txt
+
     - name: Minimize uv cache
       if: always()
       run: uv cache prune --ci

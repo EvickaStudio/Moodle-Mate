@@ -35,4 +35,6 @@ For GitHub‑native annotations you can use the composite action documented at [
 
 ## pip installs
 
-Dev dependencies are mirrored in `requirements-dev.txt` (regenerate with `scripts/export_requirements_dev.sh` or `make export-requirements-dev` after editing `pyproject.toml`).
+`requirements-dev.txt` contains pinned runtime and development dependencies with
+hashes from `uv.lock`. After changing dependencies, update the lockfile and run
+`scripts/export_requirements_dev.sh` or `make export-requirements-dev`.
