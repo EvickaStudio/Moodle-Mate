@@ -12,9 +12,8 @@ def initialize_summarizer(settings: "Settings") -> "NotificationSummarizer | Non
     if not settings.ai.enabled:
         return None
     gpt = GPT()
+    gpt.endpoint = settings.ai.endpoint
     gpt.api_key = settings.ai.api_key
-    if settings.ai.endpoint:
-        gpt.endpoint = settings.ai.endpoint
     return NotificationSummarizer(settings, gpt)
 
 

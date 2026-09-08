@@ -1,11 +1,17 @@
+import json
 from unittest.mock import MagicMock, Mock
 
+import httpx
+import openai
 import pytest
 
 from moodlemate.ai.chat import GPT
 from moodlemate.ai.errors import InvalidAPIKeyError
 from moodlemate.config import Settings
-from moodlemate.notifications.summarizer import NotificationSummarizer
+from moodlemate.notifications.summarizer import (
+    NotificationSummarizer,
+    initialize_summarizer,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -157,3 +163,93 @@ def test_empty_completion_preserves_original_notification(monkeypatch):
     assert (
         client.chat.completions.create.call_args.kwargs["max_completion_tokens"] == 2048
     )
+
+
+@pytest.mark.parametrize(
+    "endpoint,key",
+    [
+        ("http://127.0.0.1:11434/v1", "local-key"),
+        ("http://127.0.0.1:11434/v1", ""),
+        (None, "sk-" + "a" * 48),
+    ],
+)
+def test_summarizer_initialization_sends_configured_authentication(
+    endpoint, key, monkeypatch
+):
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "id": "test",
+                "object": "chat.completion",
+                "created": 1,
+                "model": "test-model",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {"role": "assistant", "content": "Summary"},
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    original_client = openai.OpenAI
+    with httpx.Client(transport=httpx.MockTransport(respond)) as http_client:
+        monkeypatch.setattr(
+            openai,
+            "OpenAI",
+            lambda **kwargs: original_client(http_client=http_client, **kwargs),
+        )
+        settings = Settings(
+            _env_file=None,
+            moodle={
+                "url": "https://moodle.example.edu",
+                "username": "test",
+                "password": "dummy",
+            },
+            ai={
+                "enabled": True,
+                "api_key": key,
+                "endpoint": endpoint,
+                "model": "test-model",
+            },
+        )
+        summarizer = initialize_summarizer(settings)
+        assert summarizer.summarize("Body") == "Summary"
+
+    assert len(requests) == 1
+    assert (
+        str(requests[0].url)
+        == (endpoint or "https://api.openai.com/v1") + "/chat/completions"
+    )
+    assert requests[0].headers.get("authorization") == (
+        f"Bearer {key}" if key else None
+    )
+    assert json.loads(requests[0].content)["model"] == "test-model"
+
+
+@pytest.mark.parametrize("endpoint", [None, "https://api.openai.com/v1/"])
+def test_openai_endpoint_still_requires_a_key(endpoint):
+    gpt = GPT()
+    gpt.endpoint = endpoint
+    with pytest.raises(InvalidAPIKeyError):
+        gpt.api_key = ""
+
+
+def test_initializer_clears_previous_custom_endpoint():
+    GPT().endpoint = "http://127.0.0.1:11434/v1"
+    settings = Settings(
+        _env_file=None,
+        moodle={
+            "url": "https://moodle.example.edu",
+            "username": "test",
+            "password": "dummy",
+        },
+        ai={"api_key": "not-an-openai-key"},
+    )
+    with pytest.raises(InvalidAPIKeyError):
+        initialize_summarizer(settings)
