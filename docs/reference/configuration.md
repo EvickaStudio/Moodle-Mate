@@ -111,13 +111,32 @@ Custom providers use the same pattern:
 
 ## Runtime files and paths
 
-These are read directly from the environment:
+The `MOODLE_` path variables are read directly from the process environment.
+For native runs, adding them to `.env` alone does not export them. Set them in
+the launching shell or service configuration, for example on Linux/macOS:
+
+```bash
+export MOODLE_STATE_DIR="$PWD/state"
+export MOODLE_SESSION_FILE="$MOODLE_STATE_DIR/moodle_session.json"
+export MOODLE_LOG_DIR="$PWD/logs"
+uv run moodlemate
+```
+
+Docker Compose loads `.env` into the container environment through `env_file`;
+its explicit `environment` entries take precedence. Paths used there refer to
+the container filesystem. Mount those directories to retain files on the host.
 
 - `MOODLE_SESSION_FILE` (native default: `moodle_session.json`; Docker default: `$MOODLE_STATE_DIR/moodle_session.json`): Encrypted cached session token file.
 - `MOODLE_LOG_DIR` (native default: `logs`; Docker default: `/app/logs`): Directory for rotating log files.
-- `MOODLEMATE_SESSION_ENCRYPTION_KEY` (optional): Enables encrypted Moodle session caching when set.
 - `MOODLE_STATE_FILE` (optional): Full path for `state.json`.
-- `MOODLE_STATE_DIR` (default: `/app/state`): Directory for `state.json`.
+- `MOODLE_STATE_DIR` (optional): Directory for `state.json`, unless `MOODLE_STATE_FILE`
+  is set. Docker defaults to `/app/state`. Native runs use `/app/state` when it
+  exists, otherwise `state.json` in the working directory.
+
+`MOODLEMATE_SESSION_ENCRYPTION_KEY` enables encrypted Moodle session caching when
+set. This setting uses the `MOODLEMATE_` prefix and is loaded from `.env` for native
+runs as well as from environment variables. The path variables do not enable
+session caching by themselves.
 
 A notification is complete only after all enabled providers confirm delivery.
 Successful sends are saved immediately under `delivery_receipts` in `state.json`,
