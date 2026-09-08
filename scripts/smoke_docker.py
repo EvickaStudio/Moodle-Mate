@@ -12,15 +12,27 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = """
+import os
+from pathlib import Path
 from unittest.mock import Mock
 from moodlemate.app import MoodleMateApp
 from moodlemate.config import Settings
 from moodlemate.core.state_manager import StateManager
+from moodlemate.infrastructure.logging.setup import setup_logging
+from moodlemate.moodle.api import MoodleAPI
 from moodlemate.notifications.processor import NotificationProcessor
 
 settings = Settings(_env_file=None,
     moodle={"url": "https://moodle.invalid", "username": "test", "password": "dummy"},
     ai={"enabled": False}, web={"auth_secret": "smoke-test-only"})
+assert os.environ["MOODLE_SESSION_FILE"] == "/app/state/moodle_session.json"
+assert os.environ["MOODLE_LOG_DIR"] == "/app/logs"
+api = MoodleAPI("https://moodle.invalid", "test", "dummy", session_encryption_key="smoke-only")
+api.token = "dummy-token"
+api._save_session_state()
+assert Path(api.session_state_file).read_text().find("ciphertext") >= 0
+setup_logging()
+assert Path("/app/logs/moodlemate.log").is_file()
 state = StateManager()
 handler = Mock()
 handler.fetch_newest_notification.return_value = None
