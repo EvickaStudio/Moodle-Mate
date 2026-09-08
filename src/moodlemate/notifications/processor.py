@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ProcessingResult:
-    """Outcome used by the polling loop to decide whether to checkpoint."""
+    """Delivery is complete only when all enabled providers confirm success."""
 
     delivered: bool
     ignored: bool = False
@@ -78,22 +78,24 @@ class NotificationProcessor:
                 )
 
             # Send through providers and record history
-            providers_sent = self._send_to_providers(subject, message, summary)
+            notification_id = sanitized_notification.get("id")
+            # Test notifications (ID 0) and messages without IDs always send anew.
+            if not isinstance(notification_id, int) or notification_id <= 0:
+                notification_id = None
+            result = self._send_to_providers(subject, message, summary, notification_id)
 
-            if not providers_sent:
-                logger.error("Notification was not delivered by any provider")
-                return ProcessingResult(delivered=False)
+            if not result.delivered:
+                logger.error("Notification delivery is incomplete")
+                return result
 
             # Add successfully delivered notifications to history.
             self.state_manager.add_notification_to_history(
                 sanitized_notification,
-                providers_sent,
+                list(result.providers_sent),
                 message=message,
                 summary=summary,
             )
-            return ProcessingResult(
-                delivered=True, providers_sent=tuple(providers_sent)
-            )
+            return result
 
         except Exception as e:
             logging.error(f"Failed to process notification: {e!s}", exc_info=True)
@@ -159,19 +161,38 @@ class NotificationProcessor:
         return trimmed, True
 
     def _send_to_providers(
-        self, subject: str, message: str, summary: str | None
-    ) -> list[str]:
-        """Send notification through all providers."""
+        self,
+        subject: str,
+        message: str,
+        summary: str | None,
+        notification_id: int | None,
+    ) -> ProcessingResult:
+        """Send only to providers that have not yet confirmed delivery."""
+        delivered = (
+            self.state_manager.get_delivered_providers(notification_id)
+            if notification_id is not None
+            else set()
+        )
         sent_to = []
         for provider in self.providers:
             name = (
                 getattr(provider, "provider_name", None) or provider.__class__.__name__
             )
+            if name in delivered:
+                sent_to.append(name)
+                continue
             try:
                 if provider.send(subject, message, summary):
                     sent_to.append(name)
+                    if notification_id is not None:
+                        self.state_manager.mark_provider_delivered(
+                            notification_id, name
+                        )
                 else:
                     logging.error(f"Failed to send via {name}")
             except Exception as e:
                 logging.error(f"Error with {name}: {e!s}", exc_info=True)
-        return sent_to
+        return ProcessingResult(
+            delivered=bool(self.providers) and len(sent_to) == len(self.providers),
+            providers_sent=tuple(sent_to),
+        )

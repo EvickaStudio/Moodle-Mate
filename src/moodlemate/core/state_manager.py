@@ -27,6 +27,7 @@ class StateManager:
         self.state_file = state_file
         self.last_notification_id: int | None = None
         self.notification_history: deque[dict] = deque(maxlen=50)
+        self._delivery_receipts: dict[str, list[str]] = {}
         self._save_interval_seconds = 15.0
         self._last_saved_at: float = 0.0
         self._dirty = False
@@ -54,6 +55,14 @@ class StateManager:
                 with open(self.state_file) as f:
                     state = json.load(f)
                     self.last_notification_id = state.get("last_notification_id")
+                    receipts = state.get("delivery_receipts", {})
+                    if isinstance(receipts, dict):
+                        self._delivery_receipts = {
+                            notification_id: providers
+                            for notification_id, providers in receipts.items()
+                            if isinstance(providers, list)
+                            and all(isinstance(name, str) for name in providers)
+                        }
                     logger.info(
                         f"Loaded state from {self.state_file}. Last notification ID: {self.last_notification_id}"
                     )
@@ -68,7 +77,9 @@ class StateManager:
         try:
             state_directory = os.path.dirname(self.state_file) or "."
             os.makedirs(state_directory, exist_ok=True)
-            state = {"last_notification_id": self.last_notification_id}
+            state: dict[str, Any] = {"last_notification_id": self.last_notification_id}
+            if self._delivery_receipts:
+                state["delivery_receipts"] = self._delivery_receipts
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 encoding="utf-8",
@@ -105,7 +116,20 @@ class StateManager:
         """Updates the last notification ID."""
         if notification_id > (self.last_notification_id or 0):
             self.last_notification_id = notification_id
+            self._delivery_receipts.pop(str(notification_id), None)
             self._dirty = True
+
+    def get_delivered_providers(self, notification_id: int) -> set[str]:
+        """Return providers that already confirmed delivery of this notification."""
+        return set(self._delivery_receipts.get(str(notification_id), []))
+
+    def mark_provider_delivered(self, notification_id: int, provider_name: str) -> None:
+        """Persist each successful send so retries can survive a restart."""
+        providers = self._delivery_receipts.setdefault(str(notification_id), [])
+        if provider_name not in providers:
+            providers.append(provider_name)
+            self._dirty = True
+            self.save_state()
 
     def maybe_save_state(self, force: bool = False) -> None:
         """Persist state when dirty and the interval has elapsed, or when forced."""

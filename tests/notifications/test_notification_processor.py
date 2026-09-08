@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -94,13 +95,16 @@ def test_missing_subject_raises_and_is_logged(processor, provider, caplog):
     )
 
 
-def test_all_provider_failures_are_not_checkpointable(
-    fake_config, state_manager, caplog
+@pytest.mark.parametrize("enabled", [False, True])
+def test_no_successful_providers_are_not_checkpointable(
+    enabled, fake_config, state_manager
 ):
     provider = Mock()
     provider.provider_name = "broken"
     provider.send.return_value = False
-    processor = NotificationProcessor(fake_config, [provider], state_manager)
+    processor = NotificationProcessor(
+        fake_config, [provider] if enabled else [], state_manager
+    )
 
     result = processor.process(
         {"subject": "Important", "fullmessagehtml": "<p>Retry me</p>"}
@@ -108,6 +112,21 @@ def test_all_provider_failures_are_not_checkpointable(
 
     assert not result.should_checkpoint
     assert result.providers_sent == ()
+
+
+@pytest.mark.parametrize("notification_id", [None, 0])
+def test_synthetic_notifications_are_sent_every_time(
+    notification_id, processor, provider, state_manager
+):
+    notification = {"subject": "Test", "fullmessagehtml": "<p>Body</p>"}
+    if notification_id is not None:
+        notification["id"] = notification_id
+
+    for _ in range(2):
+        assert processor.process(notification).delivered
+
+    assert len(provider.sent) == 2
+    assert not Path(state_manager.state_file).exists()
 
 
 def test_missing_message_raises_and_is_logged(processor, provider, caplog):
