@@ -4,6 +4,8 @@ import pytest
 
 from moodlemate.ai.chat import GPT
 from moodlemate.ai.errors import InvalidAPIKeyError
+from moodlemate.config import Settings
+from moodlemate.notifications.summarizer import NotificationSummarizer
 
 
 @pytest.fixture(autouse=True)
@@ -92,3 +94,66 @@ def test_chat_completion_success(monkeypatch):
 
     assert result == "Summary result"
     mock_client.chat.completions.create.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "model", ["gpt-5-nano", "gpt-5-nano-2025-08-07", "gpt-5-mini", "gpt-5"]
+)
+def test_gpt5_requests_use_supported_parameters(model, monkeypatch):
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content="Summary"))]
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    monkeypatch.setattr(gpt, "count_tokens", lambda *args, **kwargs: 1)
+
+    assert gpt.chat_completion(model, "Summarize", "Body", max_tokens=2048) == "Summary"
+    arguments = client.chat.completions.create.call_args.kwargs
+    assert "temperature" not in arguments
+    assert "max_tokens" not in arguments
+    assert arguments["max_completion_tokens"] == 2048
+    assert arguments["reasoning_effort"] == "minimal"
+
+
+@pytest.mark.parametrize("model", ["gpt-4o-mini", "local-model", "gpt-5-chat-latest"])
+def test_other_model_requests_preserve_sampling_parameters(model, monkeypatch):
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content="Summary"))]
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    monkeypatch.setattr(gpt, "count_tokens", lambda *args, **kwargs: 1)
+
+    assert (
+        gpt.chat_completion(model, "Summarize", "Body", temperature=0.3, max_tokens=150)
+        == "Summary"
+    )
+    arguments = client.chat.completions.create.call_args.kwargs
+    assert arguments["temperature"] == 0.3
+    assert arguments["max_tokens"] == 150
+    assert "reasoning_effort" not in arguments
+
+
+def test_empty_completion_preserves_original_notification(monkeypatch):
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content=""))]
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    settings = Settings(
+        _env_file=None,
+        moodle={
+            "url": "https://moodle.example.edu",
+            "username": "test",
+            "password": "dummy",
+        },
+    )
+    summarizer = NotificationSummarizer(settings, gpt)
+
+    assert summarizer.summarize("Original notification") == "Original notification"
+    assert (
+        client.chat.completions.create.call_args.kwargs["max_completion_tokens"] == 2048
+    )

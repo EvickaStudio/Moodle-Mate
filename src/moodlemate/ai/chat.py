@@ -235,6 +235,12 @@ class GPT:
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                 }
+                if re.fullmatch(r"gpt-5(?:-mini|-nano)?(?:-\d{4}-\d{2}-\d{2})?", model):
+                    api_call_args.pop("temperature")
+                    api_call_args["max_completion_tokens"] = api_call_args.pop(
+                        "max_tokens"
+                    )
+                    api_call_args["reasoning_effort"] = "minimal"
                 if extra_headers:
                     api_call_args["extra_headers"] = extra_headers
 
@@ -248,6 +254,10 @@ class GPT:
                     raise ChatCompletionError("No completion choices returned")
 
                 output_text = response.choices[0].message.content or ""
+                if not output_text.strip():
+                    raise ChatCompletionError(
+                        "No completion text returned; check the token budget"
+                    )
 
                 # Only calculate and log costs for known models
                 if model in self.PRICING:

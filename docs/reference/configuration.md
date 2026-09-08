@@ -16,8 +16,12 @@ This reference lists settings read from `.env` or environment variables with the
 - `ENABLED` (bool, default: `true`): Enable AI summaries.
 - `API_KEY` (string, default: empty): Provider API key.
 - `MODEL` (string, default: `gpt-5-nano`): Model name.
-- `TEMPERATURE` (float, default: `0.7`): Sampling temperature.
-- `MAX_TOKENS` (int, default: `150`): Maximum summary tokens.
+- `TEMPERATURE` (float, default: `0.7`): Sampling temperature. Omitted for the
+  original `gpt-5`, `gpt-5-mini`, and `gpt-5-nano` models and dated snapshots.
+- `MAX_TOKENS` (int, default: `2048`): Completion token budget. For those GPT-5
+  models this includes reasoning tokens; requests use minimal reasoning effort.
+  An explicit smaller budget remains unchanged. If the model returns no text,
+  summarization falls back to the original notification.
 - `SYSTEM_PROMPT` (string, default: set): System prompt for the summarizer.
 - `ENDPOINT` (string, optional): Custom API endpoint.
 

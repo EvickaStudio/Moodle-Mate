@@ -18,7 +18,7 @@ class AIConfig(BaseModel):
     api_key: str = ""
     model: str = "gpt-5-nano"
     temperature: float = 0.7
-    max_tokens: int = 150
+    max_tokens: int = 2048
     system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links. Write in target language of the notification."
     endpoint: str | None = None
 
