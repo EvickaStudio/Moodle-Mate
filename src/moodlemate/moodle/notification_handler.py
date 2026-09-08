@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from moodlemate.core.state_manager import StateManager
 from moodlemate.moodle.api import MoodleAPI
@@ -20,6 +20,15 @@ class NotificationData(TypedDict):
     useridfrom: int
     subject: str
     fullmessagehtml: str
+    courseid: NotRequired[int]
+    contexturl: NotRequired[str]
+    url: NotRequired[str]
+    timecreated: NotRequired[int]
+    created: NotRequired[int]
+    time: NotRequired[int]
+    component: NotRequired[str]
+    eventtype: NotRequired[str]
+    userfrom: NotRequired[str | dict[str, str]]
 
 
 class UserData(TypedDict):
@@ -397,12 +406,33 @@ class MoodleNotificationHandler:
                 logging.error(f"Missing required notification fields: {missing}")
                 return None
 
+            # Retain the optional metadata used by filters and dashboard history.
+            metadata: dict[str, Any] = {}
+            for key in ("courseid", "timecreated", "created", "time"):
+                try:
+                    metadata[key] = int(notification[key])
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    continue
+            for key in ("contexturl", "url", "component", "eventtype"):
+                if isinstance(value := notification.get(key), str):
+                    metadata[key] = value
+            author = notification.get("userfrom")
+            if isinstance(author, str):
+                metadata["userfrom"] = author
+            elif isinstance(author, dict):
+                metadata["userfrom"] = {
+                    key: value
+                    for key in ("fullname", "firstname", "username")
+                    if isinstance(value := author.get(key), str)
+                }
+
             # Create TypedDict with validated data
             return NotificationData(
                 id=int(notification["id"]),
                 useridfrom=int(notification["useridfrom"]),
                 subject=str(notification["subject"]),
                 fullmessagehtml=str(notification["fullmessagehtml"]),
+                **metadata,
             )
         except (KeyError, ValueError) as e:
             logging.error("Error processing notification data (%s)", type(e).__name__)

@@ -36,10 +36,7 @@ class NotificationConfig(BaseModel):
 
 
 class FiltersConfig(BaseModel):
-    """
-    Notification filtering rules.
-    TODO: Implement subject/course-based filtering and differentiate between global notifications and personal ones.
-    """
+    """Filter notifications by subject or available Moodle course ID."""
 
     ignore_subjects_containing: list[str] = Field(default_factory=list)
     ignore_courses_by_id: list[int] = Field(default_factory=list)

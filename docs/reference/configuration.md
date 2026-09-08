@@ -39,8 +39,8 @@ pending for retry, including when this fallback is used.
 
 - `IGNORE_SUBJECTS_CONTAINING` (list[string], default: empty): Subject substrings
   that cause a notification to be skipped.
-- `IGNORE_COURSES_BY_ID` (list[int], default: empty): Reserved for future course
-  filtering.
+- `IGNORE_COURSES_BY_ID` (list[int], default: empty): Skip notifications whose
+  Moodle `courseid` matches an entry. Notifications without a course ID are kept.
 
 ## Health (`MOODLEMATE_HEALTH__*`)
 
