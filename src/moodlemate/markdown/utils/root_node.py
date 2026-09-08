@@ -8,12 +8,28 @@ from .whitespace import collapse_whitespace
 logger = logging.getLogger(__name__)
 
 
+class HTMLComplexityError(ValueError):
+    """HTML exceeds the safe work budget for recursive Markdown conversion."""
+
+
+def _check_complexity(root):
+    # ponytail: bound the recursive converter; use iterative conversion for larger trees.
+    stack = [(root, 0)]
+    visited = 0
+    while stack:
+        node, depth = stack.pop()
+        visited += 1
+        if depth > 64 or visited > 10_000:
+            raise HTMLComplexityError("HTML is too complex for Markdown conversion")
+        stack.extend((child, depth + 1) for child in node.children)
+
+
 def build_root_node(input_obj, options):
     """
     Wraps (and possibly parses) an input (HTML string or Node) into a single root node.
 
     1) If the input is a string, parse it as HTML inside <x-turndown>.
-    2) Otherwise, do a deep copy.
+    2) Otherwise, copy the supplied subtree without its ancestors.
     3) Finally, collapse whitespace on the root based on the options.
 
     Args:
@@ -29,7 +45,11 @@ def build_root_node(input_obj, options):
         )
         root = _find_turndown_root(doc)
     else:
-        root = copy.deepcopy(input_obj)
+        root = input_obj
+
+    _check_complexity(root)
+    if not isinstance(input_obj, str):
+        root = copy.deepcopy(root, {id(root.parent): None})
 
     # Collapse whitespace
     collapse_whitespace(

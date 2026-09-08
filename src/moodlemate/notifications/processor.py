@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 from moodlemate.core.security import InputValidator
 from moodlemate.core.state_manager import StateManager
 from moodlemate.markdown import convert
+from moodlemate.markdown.converter import convert_plain_text
+from moodlemate.markdown.utils.root_node import HTMLComplexityError
 from moodlemate.notifications.base import NotificationProvider
 from moodlemate.notifications.summarizer import NotificationSummarizer
 
@@ -134,7 +136,12 @@ class NotificationProcessor:
     def _get_notification_message(self, notification: Mapping[str, Any]) -> str:
         """Extract and convert notification message."""
         if message := notification.get("fullmessagehtml", "").strip():
-            return convert(message)  # Convert HTML to Markdown
+            try:
+                return convert(message)
+            except HTMLComplexityError:
+                logger.warning("Notification HTML is too complex; sending plain text")
+                plain_text = convert_plain_text(message)
+                return f"Formatting simplified for this notification.\n\n{plain_text}".strip()
         else:
             raise ValueError("Notification message is empty")
 
