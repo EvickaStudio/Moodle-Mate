@@ -3,6 +3,17 @@ import json
 from moodlemate.core.state_manager import StateManager
 
 
+def test_loads_legacy_checkpoint_without_delivery_receipts(monkeypatch, tmp_path):
+    monkeypatch.setattr(StateManager, "_instance", None)
+    state_file = tmp_path / "state.json"
+    state_file.write_text('{"last_notification_id": 42}')
+
+    manager = StateManager(str(state_file))
+
+    assert manager.last_notification_id == 42
+    assert manager.get_delivered_providers(43) == set()
+
+
 def test_state_save_uses_atomic_replace(monkeypatch, tmp_path):
     StateManager._instance = None
     state_file = tmp_path / "state.json"

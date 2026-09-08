@@ -93,3 +93,10 @@ These are read directly from the environment:
 - `MOODLEMATE_SESSION_ENCRYPTION_KEY` (optional): Enables encrypted Moodle session caching when set.
 - `MOODLE_STATE_FILE` (optional): Full path for `state.json`.
 - `MOODLE_STATE_DIR` (default: `/app/state`): Directory for `state.json`.
+
+A notification is complete only after all enabled providers confirm delivery.
+Successful sends are saved immediately under `delivery_receipts` in `state.json`,
+so retries and restarts skip those providers. Receipts are cleared when the
+notification is checkpointed. Existing checkpoint-only state files remain
+compatible, and test notifications always send again. A provider timeout with an
+uncertain remote result can still cause duplicate delivery.

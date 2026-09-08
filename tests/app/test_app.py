@@ -1,3 +1,4 @@
+import json
 import time
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -9,7 +10,7 @@ from moodlemate.app import MoodleMateApp
 from moodlemate.core.state_manager import StateManager
 from moodlemate.moodle.api import MoodleAPI
 from moodlemate.moodle.notification_handler import MoodleNotificationHandler
-from moodlemate.notifications.processor import ProcessingResult
+from moodlemate.notifications.processor import NotificationProcessor, ProcessingResult
 
 
 def _build_settings(
@@ -130,6 +131,83 @@ def test_failed_delivery_does_not_advance_checkpoint():
         app._fetch_and_process_notifications.__wrapped__(app)
 
     app.moodle_handler.mark_notification_processed.assert_not_called()
+
+
+@pytest.mark.parametrize("failure", [False, RuntimeError("provider unavailable")])
+def test_partial_delivery_retries_only_pending_providers_after_restart(
+    failure, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(StateManager, "_instance", None)
+    state_file = tmp_path / "state.json"
+    state = StateManager(str(state_file))
+    state.set_last_notification_id(100)
+    settings = _build_settings()
+    settings.filters = SimpleNamespace(
+        ignore_subjects_containing=[], ignore_courses_by_id=[]
+    )
+    notification = {
+        "id": 101,
+        "useridfrom": 1,
+        "subject": "Update",
+        "fullmessagehtml": "<p>Body</p>",
+    }
+    api = Mock()
+    api.login.return_value = True
+    api.get_user_id.return_value = 42
+    api.get_popup_notifications.return_value = {"notifications": [notification]}
+    successful = Mock(provider_name="successful")
+    successful.send.return_value = True
+    pending = Mock(provider_name="pending")
+    pending.send.side_effect = [failure, False]
+    processor = NotificationProcessor(settings, [successful, pending], state)
+    handler = MoodleNotificationHandler(settings, api, state)
+    app = MoodleMateApp(settings, processor, handler, api, state)
+
+    for _ in range(2):
+        with pytest.raises(RuntimeError, match="not delivered"):
+            app._fetch_and_process_notifications.__wrapped__(app)
+
+    successful.send.assert_called_once()
+    assert pending.send.call_count == 2
+    assert handler.last_notification_id == state.last_notification_id == 100
+    assert state.get_history() == []
+
+    # Restart without a manual state save: each successful send must be durable.
+    monkeypatch.setattr(StateManager, "_instance", None)
+    restored_state = StateManager(str(state_file))
+    successful = Mock(provider_name="successful")
+    successful.send.return_value = True
+    pending = Mock(provider_name="pending")
+    pending.send.return_value = True
+    processor = NotificationProcessor(settings, [successful, pending], restored_state)
+    handler = MoodleNotificationHandler(settings, api, restored_state)
+    restarted_app = MoodleMateApp(settings, processor, handler, api, restored_state)
+
+    assert restarted_app._fetch_and_process_notifications() is True
+    successful.send.assert_not_called()
+    pending.send.assert_called_once()
+    assert handler.last_notification_id == restored_state.last_notification_id == 101
+    history = restored_state.get_history()
+    assert len(history) == 1
+    assert history[0]["providers"] == ["successful", "pending"]
+
+    # Receipts belong to one notification; both providers get the next message.
+    notification["id"] = 102
+    assert restarted_app._fetch_and_process_notifications() is True
+    successful.send.assert_called_once()
+    assert pending.send.call_count == 2
+    restored_state.maybe_save_state(force=True)
+    assert json.loads(state_file.read_text()) == {"last_notification_id": 102}
+
+
+def test_test_notification_reports_partial_delivery():
+    app = _build_app(_build_settings())
+    app.notification_processor.process.return_value = ProcessingResult(
+        delivered=False, providers_sent=("successful",)
+    )
+
+    with pytest.raises(RuntimeError, match="all enabled providers"):
+        app.send_test_notification()
 
 
 @pytest.mark.parametrize("failed_id", [101, 102, 103])

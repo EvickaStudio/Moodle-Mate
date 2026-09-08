@@ -259,7 +259,9 @@ class MoodleMateApp:
         }
         result = self.notification_processor.process(test_notification_data)
         if not result.delivered:
-            raise RuntimeError("Test notification was not delivered by any provider")
+            raise RuntimeError(
+                "Test notification was not delivered to all enabled providers"
+            )
         logging.info("Test notification sent.")
 
     def _send_heartbeat_if_due(self) -> None:
