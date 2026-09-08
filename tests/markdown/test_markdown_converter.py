@@ -1,4 +1,46 @@
+import pytest
+
 from moodlemate.markdown.converter import apply_custom_rules, convert
+from moodlemate.markdown.turndown import MarkdownConverter
+from moodlemate.markdown.utils.html_parser import parse_from_string
+
+
+@pytest.mark.parametrize("as_node", [False, True])
+def test_deep_html_is_rejected_before_recursive_processing(as_node):
+    content = "<blockquote>" * 1500 + "Text" + "</blockquote>" * 1500
+    value = parse_from_string(content) if as_node else content
+
+    with pytest.raises(ValueError, match="complex"):
+        MarkdownConverter().to_markdown(value)
+
+
+def test_node_conversion_copies_only_the_requested_subtree():
+    root = parse_from_string(
+        "<blockquote>" * 1500 + "<p>Ordinary subtree</p>" + "</blockquote>" * 1500
+    )
+    node = root
+    for _ in range(1501):
+        node = node.children[0]
+    parent = node.parent
+
+    assert MarkdownConverter().to_markdown(node) == "Ordinary subtree"
+    assert node.parent is parent
+
+
+def test_plain_text_fallback_preserves_breaks_destinations_and_literal_text():
+    from moodlemate.markdown.converter import convert_plain_text
+
+    content = (
+        "<blockquote>" * 1500
+        + 'Attend at 10:00<br>Room 42<p><a href="https://example.com/task">Submit here</a></p>'
+        + "**delete** or [click](https://example.com)"
+        + "</blockquote>" * 1500
+    )
+    result = convert_plain_text(content)
+
+    assert "10:00\nRoom 42" in result
+    assert "Submit here (https://example.com/task)" in result
+    assert r"\*\*delete\*\* or \[click\](https://example.com)" in result
 
 
 def test_convert_basic_html_to_markdown():

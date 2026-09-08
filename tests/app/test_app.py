@@ -210,6 +210,56 @@ def test_test_notification_reports_partial_delivery():
         app.send_test_notification()
 
 
+@pytest.mark.parametrize(
+    "body",
+    [
+        "<blockquote>" * 1500 + "Meaningful text" + "</blockquote>" * 1500,
+        "&lt;blockquote&gt;" * 1500 + "Meaningful text" + "&lt;/blockquote&gt;" * 1500,
+        "<blockquote>" * 1500 + "Meaningful text",
+        "<em>" * 1500 + "Meaningful text" + "</em>" * 1500,
+        "<b>x</b>" * 5001 + "Meaningful text",
+    ],
+    ids=["nested", "encoded", "unclosed", "inline", "wide"],
+)
+def test_complex_content_uses_fallback_and_preserves_delivery_retries(
+    body, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(StateManager, "_instance", None)
+    state = StateManager(str(tmp_path / "state.json"))
+    state.set_last_notification_id(100)
+    settings = _build_settings()
+    settings.filters = SimpleNamespace(
+        ignore_subjects_containing=[], ignore_courses_by_id=[]
+    )
+    handler = Mock()
+    handler.fetch_newest_notification.return_value = [
+        {"id": 101, "subject": "Complex", "fullmessagehtml": body},
+        {
+            "id": 102,
+            "subject": "Normal",
+            "fullmessagehtml": "<p>Normal <b>body</b></p>",
+        },
+    ]
+    handler.mark_notification_processed.side_effect = state.set_last_notification_id
+    provider = Mock(provider_name="test")
+    provider.send.side_effect = [False, True, True]
+    processor = NotificationProcessor(settings, [provider], state)
+    app = MoodleMateApp(settings, processor, handler, Mock(), state)
+
+    with pytest.raises(RuntimeError, match="not delivered"):
+        app._fetch_and_process_notifications.__wrapped__(app)
+    assert state.last_notification_id == 100
+    provider.send.assert_called_once()
+    assert "Formatting simplified" in provider.send.call_args.args[1]
+    assert "Meaningful text" in provider.send.call_args.args[1]
+
+    assert app._fetch_and_process_notifications() is True
+    assert state.last_notification_id == 102
+    assert provider.send.call_count == 3
+    assert "**body**" in provider.send.call_args.args[1]
+    assert [item["id"] for item in state.get_history()] == [102, 101]
+
+
 @pytest.mark.parametrize("failed_id", [101, 102, 103])
 def test_initial_delivery_failure_remains_pending_after_restart(
     failed_id, monkeypatch, tmp_path

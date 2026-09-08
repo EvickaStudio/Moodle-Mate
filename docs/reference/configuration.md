@@ -31,6 +31,10 @@ This reference lists settings read from `.env` or environment variables with the
 - `RETRY_BACKOFF_FACTOR` (float, default: `1.0`): HTTP backoff factor.
 - `MAX_PAYLOAD_BYTES` (int, default: `65536`): Max bytes per message/summary.
 
+HTML exceeding 64 nesting levels or 10,000 parsed nodes is sent as plain text with
+a formatting notice. The outgoing byte limit still applies. Failed sends remain
+pending for retry, including when this fallback is used.
+
 ## Filters (`MOODLEMATE_FILTERS__*`)
 
 - `IGNORE_SUBJECTS_CONTAINING` (list[string], default: empty): Subject substrings

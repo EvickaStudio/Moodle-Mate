@@ -2,6 +2,8 @@ import logging
 import re
 
 from .turndown import MarkdownConverter
+from .utils.html_parser import parse_from_string
+from .utils.utilities import is_block
 
 TURNDOWN = MarkdownConverter({"headingStyle": "atx", "codeBlockStyle": "fenced"})
 
@@ -23,6 +25,26 @@ def convert(html_content: str) -> str:
     """
     # logger.info(f"Original HTML content:\n{html_content}")
     return apply_custom_rules(TURNDOWN.to_markdown(html_content))
+
+
+def convert_plain_text(html_content: str) -> str:
+    """Flatten complex HTML iteratively, retaining text, breaks and link destinations."""
+    parts: list[str] = []
+    stack = [(parse_from_string(html_content), False)]
+    while stack:
+        node, closing = stack.pop()
+        if node.node_type == 3:
+            parts.append(TURNDOWN.escape(node.data))
+            continue
+        if closing:
+            if node.node_name == "A" and (href := node.get_attribute("href")):
+                parts.append(f" ({TURNDOWN.escape(href)})")
+        else:
+            stack.append((node, True))
+            stack.extend((child, False) for child in reversed(node.children))
+        if is_block(node) or (node.node_name == "BR" and not closing):
+            parts.append("\n")
+    return re.sub(r"\n{3,}", "\n\n", "".join(parts)).strip()
 
 
 # If Turndown produces malformed lines or other unexpected Markdown output,
