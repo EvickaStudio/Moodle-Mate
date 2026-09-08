@@ -56,6 +56,12 @@ pending for retry, including when this fallback is used.
 
 ## Web UI (`MOODLEMATE_WEB__*`)
 
+Runtime settings updates take effect between notification batches. Provider
+toggles and options, AI settings, and HTTP defaults update their active consumers.
+An update can wait for an ongoing delivery or retry to finish. Changes apply only
+to the running process; edit the environment configuration to retain them after
+restart. Credentials, endpoints, and web server settings require a restart.
+
 - `ENABLED` (bool, default: `true`): Enable the Web UI.
 - `HOST` (string, default: `127.0.0.1`): Bind address (localhost only).
 - `PORT` (int, default: `9095`): Bind port.

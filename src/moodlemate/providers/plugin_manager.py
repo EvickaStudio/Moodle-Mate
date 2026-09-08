@@ -80,5 +80,6 @@ class PluginManager:
                         logger.info(f"Loaded enabled provider: {name}")
             except Exception as e:
                 logger.error(f"Error initializing provider {name}: {e!s}")
+                raise
 
         return providers

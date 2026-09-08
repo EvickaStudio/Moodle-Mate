@@ -1,7 +1,17 @@
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import Mock
+
 import httpx
 import pytest
 
+from moodlemate.ai.chat import GPT
+from moodlemate.app import MoodleMateApp
 from moodlemate.config import Settings
+from moodlemate.core.security.rate_limiter import RateLimiterManager
+from moodlemate.notifications.processor import NotificationProcessor
+from moodlemate.notifications.summarizer import NotificationSummarizer
+from moodlemate.providers.notification import initialize_providers
 from moodlemate.web.api import CSRF_COOKIE_NAME, CSRF_HEADER_NAME, WebUI
 
 
@@ -23,8 +33,13 @@ class DummyStateManager:
 
 
 class DummyAppInstance:
-    def __init__(self) -> None:
+    def __init__(self, settings=None) -> None:
         self.test_notifications_sent = 0
+        self.settings = settings
+
+    def apply_settings(self, settings) -> None:
+        for field in settings.__class__.model_fields:
+            setattr(self.settings, field, getattr(settings, field))
 
     def send_test_notification(self) -> None:
         self.test_notifications_sent += 1
@@ -39,7 +54,8 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture
-def settings() -> Settings:
+def settings(monkeypatch) -> Settings:
+    monkeypatch.setattr("moodlemate.web.api.rate_limiter_manager", RateLimiterManager())
     return Settings(
         _env_file=None,
         moodle={
@@ -59,7 +75,7 @@ def settings() -> Settings:
 @pytest.fixture
 def webui(settings: Settings) -> tuple[WebUI, DummyAppInstance]:
     state_manager = DummyStateManager()
-    app_instance = DummyAppInstance()
+    app_instance = DummyAppInstance(settings)
     return WebUI(settings, state_manager, app_instance), app_instance
 
 
@@ -196,6 +212,139 @@ async def test_config_update_keeps_immutable_fields(
     assert settings.notification.fetch_interval == 123
     assert settings.health.enabled is True
     assert settings.health.target_provider == "discord"
+
+
+@pytest.mark.anyio
+async def test_config_update_changes_actual_delivery_components(settings, monkeypatch):
+    monkeypatch.setattr(GPT, "_instance", None)
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "chat_completion", Mock(return_value="Updated summary"))
+    state = Mock()
+    state.get_delivered_providers.return_value = set()
+    processor = NotificationProcessor(
+        settings,
+        initialize_providers(settings),
+        state,
+        NotificationSummarizer(settings, gpt),
+    )
+    app = MoodleMateApp(settings, processor, Mock(), Mock(), state)
+    ui = WebUI(settings, state, app)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=ui.get_app()), base_url="http://testserver"
+    ) as client:
+        await _login(client)
+        response = await client.post(
+            "/api/config",
+            headers=_csrf_headers(client),
+            json={
+                "ai": {"enabled": False},
+                "discord": {"enabled": False},
+                "pushbullet": {"enabled": False},
+                "webhook_site": {"include_summary": False},
+                "notification": {"read_timeout": 14},
+            },
+        )
+        assert response.status_code == 200
+        assert [provider.provider_name for provider in processor.providers] == [
+            "webhook_site"
+        ]
+        assert processor.providers[0].include_summary is False
+        assert processor.providers[0].session._default_timeout[1] == 14
+        assert processor.summarizer is None
+
+        response = await client.post(
+            "/api/config",
+            headers=_csrf_headers(client),
+            json={
+                "ai": {
+                    "enabled": True,
+                    "model": "updated-model",
+                    "temperature": 0.2,
+                    "max_tokens": 77,
+                },
+                "discord": {"enabled": True, "bot_name": "Updated bot"},
+                "webhook_site": {"enabled": False},
+            },
+        )
+        assert response.status_code == 200
+        provider = processor.providers[0]
+        assert provider.provider_name == "discord"
+        monkeypatch.setattr(
+            provider.session, "post", Mock(return_value=Mock(status_code=204))
+        )
+        app.send_test_notification()
+        assert gpt.chat_completion.call_args.kwargs["model"] == "updated-model"
+        assert gpt.chat_completion.call_args.kwargs["temperature"] == 0.2
+        assert gpt.chat_completion.call_args.kwargs["max_tokens"] == 77
+        payload = provider.session.post.call_args.kwargs["json"]
+        assert payload["username"] == "Updated bot"
+        assert payload["embeds"][0]["fields"][0]["value"] == "Updated summary"
+
+        old_settings = settings.model_dump()
+        old_providers = processor.providers
+        response = await client.post(
+            "/api/config",
+            headers=_csrf_headers(client),
+            json={
+                "discord": {"enabled": False},
+                "notification": {"read_timeout": -1},
+            },
+        )
+        assert response.status_code == 400
+        assert settings.model_dump() == old_settings
+        assert processor.providers is old_providers
+
+        monkeypatch.setattr(
+            "moodlemate.app.initialize_providers",
+            Mock(side_effect=ValueError("Provider configuration is invalid")),
+        )
+        response = await client.post(
+            "/api/config",
+            headers=_csrf_headers(client),
+            json={"discord": {"bot_name": "Not applied"}},
+        )
+        assert response.status_code == 500
+        assert settings.model_dump() == old_settings
+        assert processor.providers is old_providers
+
+
+def test_settings_update_waits_for_active_delivery(settings, monkeypatch):
+    delivering = threading.Event()
+    release_delivery = threading.Event()
+    update_started = threading.Event()
+    configured = threading.Event()
+
+    def deliver(_notification):
+        delivering.set()
+        assert release_delivery.wait(timeout=5)
+        return Mock(delivered=True)
+
+    def create_providers(_settings):
+        configured.set()
+        return []
+
+    processor = Mock()
+    processor.process.side_effect = deliver
+    app = MoodleMateApp(settings, processor, Mock(), Mock(), Mock())
+    monkeypatch.setattr("moodlemate.app.initialize_providers", create_providers)
+    monkeypatch.setattr("moodlemate.app.initialize_summarizer", Mock(return_value=None))
+
+    def update():
+        update_started.set()
+        app.apply_settings(settings.model_copy(deep=True))
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        delivery = pool.submit(app.send_test_notification)
+        try:
+            assert delivering.wait(timeout=5)
+            updating = pool.submit(update)
+            assert update_started.wait(timeout=5)
+            assert not configured.wait(timeout=0.05)
+        finally:
+            release_delivery.set()
+        delivery.result(timeout=5)
+        updating.result(timeout=5)
+    assert configured.is_set()
 
 
 @pytest.mark.anyio

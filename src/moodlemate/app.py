@@ -8,6 +8,8 @@ import uvicorn
 
 from moodlemate.core.utils.retry import with_retry
 from moodlemate.infrastructure.http.request_manager import request_manager
+from moodlemate.notifications.summarizer import initialize_summarizer
+from moodlemate.providers.notification import initialize_providers
 from moodlemate.web.api import WebUI
 
 if TYPE_CHECKING:
@@ -41,8 +43,26 @@ class MoodleMateApp:
         self._last_successful_poll: float | None = None
         self._last_poll_error: str | None = None
         self._shutdown_event = threading.Event()
+        # ponytail: serialize runtime changes with delivery; use a command queue if updates must be nonblocking.
+        self._runtime_lock = threading.RLock()
         self._web_server: uvicorn.Server | None = None
         self._web_server_thread: threading.Thread | None = None
+
+    def apply_settings(self, settings: "Settings") -> None:
+        """Apply validated settings and refresh their consumers between deliveries."""
+        with self._runtime_lock:
+            providers = initialize_providers(settings)
+            summarizer = initialize_summarizer(settings)
+            request_manager.configure(
+                connect_timeout=settings.notification.connect_timeout,
+                read_timeout=settings.notification.read_timeout,
+                retry_total=settings.notification.retry_total,
+                backoff_factor=settings.notification.retry_backoff_factor,
+            )
+            for field in settings.__class__.model_fields:
+                setattr(self.settings, field, getattr(settings, field))
+            self.notification_processor.providers = providers
+            self.notification_processor.summarizer = summarizer
 
     def run(self) -> None:
         """Starts the main application loop."""
@@ -132,14 +152,15 @@ class MoodleMateApp:
 
         while not self._shutdown_event.is_set():
             try:
-                self._check_and_refresh_session(session_refresh_interval)
+                with self._runtime_lock:
+                    self._check_and_refresh_session(session_refresh_interval)
 
-                if self._fetch_and_process_notifications():
-                    consecutive_errors = 0
-                    self.state_manager.maybe_save_state()
-                    self._record_poll_success()
+                    if self._fetch_and_process_notifications():
+                        consecutive_errors = 0
+                        self.state_manager.maybe_save_state()
+                        self._record_poll_success()
 
-                self._send_heartbeat_if_due()
+                    self._send_heartbeat_if_due()
 
                 sleep_time = self._calculate_sleep_time(
                     consecutive_errors, self.settings.notification.fetch_interval
@@ -147,10 +168,11 @@ class MoodleMateApp:
                 self._shutdown_event.wait(sleep_time)
 
             except Exception as e:
-                consecutive_errors, error_sleep = self._handle_error(
-                    consecutive_errors, e
-                )
-                self._last_poll_error = str(e)
+                with self._runtime_lock:
+                    consecutive_errors, error_sleep = self._handle_error(
+                        consecutive_errors, e
+                    )
+                    self._last_poll_error = str(e)
                 self._shutdown_event.wait(error_sleep)
 
     def _check_and_refresh_session(self, interval: float) -> None:
@@ -257,7 +279,8 @@ class MoodleMateApp:
             "subject": "Moodle-Mate Test Notification",
             "fullmessagehtml": "<p>This is a test notification from Moodle-Mate. If you received this, your notification providers are configured correctly!</p>",
         }
-        result = self.notification_processor.process(test_notification_data)
+        with self._runtime_lock:
+            result = self.notification_processor.process(test_notification_data)
         if not result.delivered:
             raise RuntimeError(
                 "Test notification was not delivered to all enabled providers"

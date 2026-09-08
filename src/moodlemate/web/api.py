@@ -14,7 +14,6 @@ from moodlemate.config import Settings
 from moodlemate.core.security import rate_limiter_manager
 from moodlemate.core.state_manager import StateManager
 from moodlemate.core.version import __version__
-from moodlemate.infrastructure.http.request_manager import request_manager
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +253,7 @@ class WebUI:
                 Depends(self._csrf_dependency),
             ],
         )
-        async def update_config(
+        def update_config(
             new_config: dict[str, Any] = CONFIG_BODY,
         ) -> dict[str, str]:
             try:
@@ -291,15 +290,7 @@ class WebUI:
                 except ValidationError as exc:
                     raise HTTPException(status_code=400, detail=exc.errors()) from exc
 
-                for field_name in validated.__class__.model_fields:
-                    setattr(self.settings, field_name, getattr(validated, field_name))
-
-                request_manager.configure(
-                    connect_timeout=self.settings.notification.connect_timeout,
-                    read_timeout=self.settings.notification.read_timeout,
-                    retry_total=self.settings.notification.retry_total,
-                    backoff_factor=self.settings.notification.retry_backoff_factor,
-                )
+                self.app_instance.apply_settings(validated)
 
                 logger.info("Configuration updated via WebUI")
                 return {"message": "Configuration updated successfully."}
@@ -319,7 +310,7 @@ class WebUI:
                 Depends(self._csrf_dependency),
             ],
         )
-        async def trigger_test_notification() -> dict[str, str]:
+        def trigger_test_notification() -> dict[str, str]:
             try:
                 self.app_instance.send_test_notification()
                 return {"message": "Test notification triggered"}
