@@ -402,9 +402,7 @@
     }
 
     function escapeHtml(value) {
-        const node = document.createElement("div");
-        node.textContent = value == null ? "" : String(value);
-        return node.innerHTML;
+        return escapeAttribute(value);
     }
 
     function escapeAttribute(value) {
