@@ -186,23 +186,21 @@ def test_mark_notification_processed_updates_state_manager():
     handler.state_manager.set_last_notification_id.assert_called_once_with(11)
 
 
-def test_handle_initial_fetch_processes_notifications_in_reverse_order():
+def test_handle_initial_fetch_returns_notifications_oldest_first():
     handler = _build_handler(last_notification_id=None)
     notifications = [
-        {"id": 1, "useridfrom": 1, "subject": "A", "fullmessagehtml": "A"},
-        {"id": 2, "useridfrom": 1, "subject": "B", "fullmessagehtml": "B"},
         {"id": 3, "useridfrom": 1, "subject": "C", "fullmessagehtml": "C"},
+        {"id": 2, "useridfrom": 1, "subject": "B", "fullmessagehtml": "B"},
+        {"id": 1, "useridfrom": 1, "subject": "A", "fullmessagehtml": "A"},
     ]
     handler.fetch_notifications = Mock(return_value=notifications)
-    call_order: list[int] = []
-    handler._handle_new_notification = Mock(
-        side_effect=lambda *_args: call_order.append(_args[1])
-    )  # type: ignore[assignment]
 
     result = handler._handle_initial_fetch()
 
-    assert result == notifications
-    assert call_order == [3, 2, 1]
+    assert result is not None
+    assert [notification["id"] for notification in result] == [1, 2, 3]
+    assert handler.last_notification_id is None
+    handler.state_manager.set_last_notification_id.assert_not_called()
 
 
 def test_fetch_notifications_raises_after_retries(monkeypatch):

@@ -6,6 +6,7 @@ import pytest
 from requests.exceptions import ConnectionError, JSONDecodeError
 
 from moodlemate.app import MoodleMateApp
+from moodlemate.core.state_manager import StateManager
 from moodlemate.moodle.api import MoodleAPI
 from moodlemate.moodle.notification_handler import MoodleNotificationHandler
 from moodlemate.notifications.processor import ProcessingResult
@@ -129,6 +130,66 @@ def test_failed_delivery_does_not_advance_checkpoint():
         app._fetch_and_process_notifications.__wrapped__(app)
 
     app.moodle_handler.mark_notification_processed.assert_not_called()
+
+
+@pytest.mark.parametrize("failed_id", [101, 102, 103])
+def test_initial_delivery_failure_remains_pending_after_restart(
+    failed_id, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(StateManager, "_instance", None)
+    state_file = str(tmp_path / "state.json")
+    state = StateManager(state_file)
+    settings = _build_settings()
+    settings.moodle = SimpleNamespace(initial_fetch_count=3)
+    api = Mock()
+    api.login.return_value = True
+    api.get_user_id.return_value = 42
+    api.get_popup_notifications.return_value = {
+        "notifications": [
+            {
+                "id": identifier,
+                "useridfrom": 1,
+                "subject": "Update",
+                "fullmessagehtml": "Body",
+            }
+            for identifier in (103, 102, 101)
+        ]
+    }
+    handler = MoodleNotificationHandler(settings, api, state)
+    processor = Mock()
+    processor.process.side_effect = lambda notification: ProcessingResult(
+        delivered=notification["id"] != failed_id
+    )
+    app = MoodleMateApp(settings, processor, handler, api, state)
+
+    with pytest.raises(RuntimeError, match="not delivered"):
+        app._fetch_and_process_notifications.__wrapped__(app)
+
+    last_delivered = None if failed_id == 101 else failed_id - 1
+    assert handler.last_notification_id == last_delivered
+    assert state.last_notification_id == last_delivered
+    state.maybe_save_state(force=True)
+
+    monkeypatch.setattr(StateManager, "_instance", None)
+    restored_state = StateManager(state_file)
+    restored_handler = MoodleNotificationHandler(settings, api, restored_state)
+    restarted_app = MoodleMateApp(
+        settings, processor, restored_handler, api, restored_state
+    )
+    processor.process.side_effect = None
+    processor.process.return_value = ProcessingResult(delivered=True)
+    processor.process.reset_mock()
+
+    assert restarted_app._fetch_and_process_notifications() is True
+    assert [call.args[0]["id"] for call in processor.process.call_args_list] == list(
+        range(failed_id, 104)
+    )
+    assert restored_handler.last_notification_id == 103
+    assert restored_state.last_notification_id == 103
+
+    processor.process.reset_mock()
+    assert restarted_app._fetch_and_process_notifications() is True
+    processor.process.assert_not_called()
 
 
 @pytest.mark.parametrize("first_run", [False, True])
