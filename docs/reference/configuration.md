@@ -25,6 +25,11 @@ This reference lists settings read from `.env` or environment variables with the
 - `SYSTEM_PROMPT` (string, default: set): System prompt for the summarizer.
 - `ENDPOINT` (string, optional): Custom API endpoint.
 
+Custom OpenAI-compatible endpoints accept their own key format. Set `API_KEY`
+to an empty string only when the custom server does not require authentication;
+requests then omit the Authorization header. The default OpenAI endpoint still
+requires an OpenAI key. Use the server's API base URL, typically ending in `/v1`.
+
 ## Notifications (`MOODLEMATE_NOTIFICATION__*`)
 
 - `MAX_RETRIES` (int, default: `5`): Max consecutive fetch errors before reset.

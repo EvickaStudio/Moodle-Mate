@@ -2,6 +2,7 @@ import logging
 import re
 import time
 from typing import Any, cast
+from urllib.parse import urlparse
 
 import openai
 import tiktoken
@@ -56,6 +57,12 @@ class GPT:
         return "openrouter.ai" in self._endpoint.lower() if self._endpoint else False
 
     @property
+    def _uses_openai_endpoint(self) -> bool:
+        return (
+            not self._endpoint or urlparse(self._endpoint).hostname == "api.openai.com"
+        )
+
+    @property
     def api_key(self) -> str | None:
         """Get the configured API key."""
         return self._api_key
@@ -71,10 +78,10 @@ class GPT:
         Raises:
             InvalidAPIKeyError: If the key is empty or invalid
         """
-        if not key:
+        if not key and self._uses_openai_endpoint:
             raise InvalidAPIKeyError("API key cannot be empty")
 
-        if not self._api_key_pattern.match(key) and not self._endpoint:
+        if not self._api_key_pattern.match(key) and self._uses_openai_endpoint:
             raise InvalidAPIKeyError(
                 "Invalid API key format for default OpenAI endpoint. Expected format: 'sk-' followed by 48+ alphanumeric characters"
             )
@@ -87,7 +94,7 @@ class GPT:
         return self._endpoint
 
     @endpoint.setter
-    def endpoint(self, url: str) -> None:
+    def endpoint(self, url: str | None) -> None:
         """
         Set the API endpoint URL.
         This can be useful for using a custom endpoint
@@ -101,10 +108,13 @@ class GPT:
 
     def _get_client(self) -> openai.OpenAI:
         """Get or initialize OpenAI client."""
-        if not self._api_key:
+        if not self._api_key and self._uses_openai_endpoint:
             raise InvalidAPIKeyError("API key cannot be empty")
         if self._client is None:
-            self._client = openai.OpenAI(api_key=self._api_key, base_url=self._endpoint)
+            # The SDK requires a key; keyless custom requests omit its header below.
+            self._client = openai.OpenAI(
+                api_key=self._api_key or "moodlemate-no-key", base_url=self._endpoint
+            )
         return self._client
 
     def register_model(self, model: str, pricing: ModelPricing) -> None:
@@ -223,7 +233,9 @@ class GPT:
                     # Add other roles as needed
 
                 # Prepare headers for OpenRouter if needed
-                extra_headers: dict[str, str] = {}
+                extra_headers: dict[str, str | openai.Omit] = {}
+                if not self._api_key and not self._uses_openai_endpoint:
+                    extra_headers["Authorization"] = openai.Omit()
                 if self.is_openrouter:
                     extra_headers["HTTP-Referer"] = "https://moodle-mate.app"
                     extra_headers["X-Title"] = "Moodle Mate"
