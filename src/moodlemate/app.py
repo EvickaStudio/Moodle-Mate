@@ -220,8 +220,10 @@ class MoodleMateApp:
         ):
             now = time.time()
             cooldown = self.settings.health.failure_alert_cooldown
-            if now - self._last_failure_alert_sent >= cooldown:
-                self._send_failure_alert(error)
+            if (
+                now - self._last_failure_alert_sent >= cooldown
+                and self._send_failure_alert(error)
+            ):
                 self._last_failure_alert_sent = now
                 self._outage_alerted = True
 
@@ -238,11 +240,10 @@ class MoodleMateApp:
         """Record a successful Moodle poll and announce recovery once."""
         self._last_successful_poll = time.time()
         self._last_poll_error = None
-        if self._outage_alerted:
-            self._send_health_notification(
-                "Moodle-Mate Recovered",
-                "Moodle-Mate successfully connected to Moodle again.",
-            )
+        if self._outage_alerted and self._send_health_notification(
+            "Moodle-Mate Recovered",
+            "Moodle-Mate successfully connected to Moodle again.",
+        ):
             self._outage_alerted = False
             self._last_failure_alert_sent = 0.0
 
@@ -301,25 +302,31 @@ class MoodleMateApp:
         ) / 3600 >= self.settings.health.heartbeat_interval:
             logging.info("Sending heartbeat notification...")
             subject = "Moodle-Mate Heartbeat"
-            message = "Moodle-Mate is still running and healthy!"
-            self._send_health_notification(subject, message)
-            self._last_heartbeat_sent = current_time
+            message = "Moodle-Mate is running."
+            if self._last_successful_poll is None:
+                message += " Waiting for the first successful Moodle poll."
+            elif self._last_poll_error or not self.get_health_status()[0]:
+                message += " Moodle polling needs attention."
+            else:
+                message += " Moodle polling is healthy."
+            if self._send_health_notification(subject, message):
+                self._last_heartbeat_sent = current_time
 
-    def _send_failure_alert(self, error: Exception) -> None:
+    def _send_failure_alert(self, error: Exception) -> bool:
         """Sends a failure alert notification."""
         if not self.settings.health.enabled:
-            return
+            return False
 
         logging.error(f"Sending failure alert: {error}")
         subject = "Moodle-Mate Failure Alert!"
         message = f"Moodle-Mate encountered a critical error: {error}"
-        self._send_health_notification(subject, message)
+        return self._send_health_notification(subject, message)
 
-    def _send_health_notification(self, subject: str, message: str) -> None:
+    def _send_health_notification(self, subject: str, message: str) -> bool:
         """Helper to send health-related notifications to the target provider."""
         if not self.settings.health.target_provider:
             logging.warning("No target provider configured for health notifications.")
-            return
+            return False
 
         target_provider_name = self.settings.health.target_provider.lower()
         for provider in self.notification_processor.providers:
@@ -328,15 +335,18 @@ class MoodleMateApp:
             ).lower()
             if provider_name == target_provider_name:
                 try:
-                    provider.send(subject, message)
-                    logging.info(
-                        f"Health notification sent via {provider.provider_name}."
+                    if provider.send(subject, message):
+                        logging.info("Health notification sent via %s.", provider_name)
+                        return True
+                    logging.error(
+                        "Health notification was not delivered via %s.", provider_name
                     )
-                    return
                 except Exception as e:
                     logging.error(
                         f"Failed to send health notification via {provider.provider_name}: {e}"
                     )
+                return False
         logging.warning(
             f"Target health provider '{target_provider_name}' not found or not enabled."
         )
+        return False

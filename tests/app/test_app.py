@@ -504,7 +504,7 @@ def test_send_health_notification_uses_target_provider():
     discord.send.return_value = True
     app.notification_processor.providers = [discord]
 
-    app._send_health_notification("subject", "message")
+    assert app._send_health_notification("subject", "message") is True
 
     discord.send.assert_called_once_with("subject", "message")
 
@@ -534,3 +534,51 @@ def test_send_heartbeat_if_due_sends_notification():
     app._send_heartbeat_if_due()
 
     app._send_health_notification.assert_called_once()
+
+
+@pytest.mark.parametrize("failure", [False, RuntimeError("provider unavailable")])
+def test_health_delivery_failure_keeps_alerts_pending(failure, monkeypatch):
+    monkeypatch.setattr("moodlemate.app.time.time", lambda: 10_000.0)
+    settings = _build_settings(
+        health_enabled=True, target_provider="discord", failure_threshold=1
+    )
+    settings.health.heartbeat_interval = 1
+    app = _build_app(settings)
+    provider = Mock(provider_name="discord")
+    provider.send.side_effect = [failure, True, failure, True, failure, True]
+    app.notification_processor.providers = [provider]
+
+    app._send_heartbeat_if_due()
+    assert app._last_heartbeat_sent == 0
+    assert "healthy" not in provider.send.call_args.args[1]
+    app._send_heartbeat_if_due()
+    assert app._last_heartbeat_sent == 10_000
+    app._send_heartbeat_if_due()
+    assert provider.send.call_count == 2
+
+    app._handle_error(0, RuntimeError("Moodle unavailable"))
+    assert app._last_failure_alert_sent == 0
+    assert not app._outage_alerted
+    app._handle_error(1, RuntimeError("Moodle unavailable"))
+    assert app._last_failure_alert_sent == 10_000
+    assert app._outage_alerted
+    app._handle_error(2, RuntimeError("Moodle unavailable"))
+    assert provider.send.call_count == 4
+
+    app._record_poll_success()
+    assert app._outage_alerted
+    app._record_poll_success()
+    assert not app._outage_alerted
+    assert app._last_failure_alert_sent == 0
+    assert provider.send.call_count == 6
+
+
+def test_missing_health_provider_does_not_acknowledge_delivery():
+    settings = _build_settings(
+        health_enabled=True, target_provider="missing", failure_threshold=1
+    )
+    app = _build_app(settings)
+    assert app._send_health_notification("Subject", "Body") is False
+    app._handle_error(0, RuntimeError("Moodle unavailable"))
+    assert app._last_failure_alert_sent == 0
+    assert not app._outage_alerted

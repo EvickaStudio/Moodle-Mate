@@ -53,6 +53,10 @@ pending for retry, including when this fallback is used.
 
 ## Health (`MOODLEMATE_HEALTH__*`)
 
+Heartbeat and alert timers advance only after the target provider confirms delivery.
+Failed sends are retried on a later polling cycle; recovery announcements remain
+pending until delivered. Heartbeats report whether Moodle polling has succeeded.
+
 - `ENABLED` (bool, default: `false`): Enable health notifications.
 - `HEARTBEAT_INTERVAL` (int, optional): Hours between heartbeat messages.
 - `FAILURE_ALERT_THRESHOLD` (int, optional): Consecutive errors before alert.
