@@ -234,3 +234,25 @@ def test_process_notification_returns_none_for_missing_fields():
     handler = _build_handler()
 
     assert handler._process_notification({"id": 1, "subject": "incomplete"}) is None
+
+
+def test_invalid_optional_metadata_does_not_discard_the_notification():
+    result = _build_handler()._process_notification(
+        {
+            "id": 1,
+            "useridfrom": 2,
+            "subject": "Valid",
+            "fullmessagehtml": "<p>Body</p>",
+            "courseid": [],
+            "timecreated": "NaN",
+            "contexturl": {},
+            "userfrom": {"fullname": {"unexpected": "nested"}, "username": "Teacher"},
+        }
+    )
+    assert result == {
+        "id": 1,
+        "useridfrom": 2,
+        "subject": "Valid",
+        "fullmessagehtml": "<p>Body</p>",
+        "userfrom": {"username": "Teacher"},
+    }

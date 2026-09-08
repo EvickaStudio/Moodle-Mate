@@ -133,6 +133,73 @@ def test_failed_delivery_does_not_advance_checkpoint():
     app.moodle_handler.mark_notification_processed.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    "timestamp_key,url_key,author",
+    [
+        ("timecreated", "contexturl", {"fullname": "Teacher"}),
+        ("created", "url", "Teacher"),
+        ("time", "url", {"firstname": "Teacher"}),
+    ],
+)
+def test_moodle_metadata_reaches_course_filter_and_history(
+    timestamp_key, url_key, author, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(StateManager, "_instance", None)
+    state = StateManager(str(tmp_path / "state.json"))
+    state.set_last_notification_id(100)
+    settings = _build_settings()
+    settings.filters = SimpleNamespace(
+        ignore_subjects_containing=[], ignore_courses_by_id=[42]
+    )
+    metadata = {
+        timestamp_key: "1700000000",
+        url_key: "https://moodle.example.edu/mod/forum/view.php?id=1",
+        "component": "mod_forum",
+        "eventtype": "posts",
+        "userfrom": author,
+    }
+    api = Mock()
+    api.login.return_value = True
+    api.get_user_id.return_value = 1
+    api.get_popup_notifications.return_value = {
+        "notifications": [
+            {
+                "id": 102,
+                "useridfrom": 7,
+                "subject": "Included",
+                "fullmessagehtml": "<p>Body</p>",
+                "courseid": "43",
+                **metadata,
+            },
+            {
+                "id": 101,
+                "useridfrom": 7,
+                "subject": "Ignored course",
+                "fullmessagehtml": "<p>Body</p>",
+                "courseid": "42",
+                **metadata,
+            },
+        ]
+    }
+    provider = Mock(provider_name="test")
+    provider.send.return_value = True
+    processor = NotificationProcessor(settings, [provider], state)
+    handler = MoodleNotificationHandler(settings, api, state)
+    app = MoodleMateApp(settings, processor, handler, api, state)
+
+    assert app._fetch_and_process_notifications() is True
+    provider.send.assert_called_once()
+    assert provider.send.call_args.args[0] == "Included"
+    assert state.last_notification_id == 102
+    entry = state.get_history()[0]
+    assert entry["timestamp"] == 1700000000
+    assert entry["context_url"] == metadata[url_key]
+    assert entry["course"] == 43
+    assert entry["component"] == "mod_forum"
+    assert entry["event_type"] == "posts"
+    assert entry["author"] == "Teacher"
+
+
 @pytest.mark.parametrize("failure", [False, RuntimeError("provider unavailable")])
 def test_partial_delivery_retries_only_pending_providers_after_restart(
     failure, monkeypatch, tmp_path
