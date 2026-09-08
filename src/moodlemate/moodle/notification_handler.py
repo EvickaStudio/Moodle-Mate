@@ -384,7 +384,7 @@ class MoodleNotificationHandler:
         if not processed:
             logger.error(error_message)
             return None
-        logger.debug(f"{debug_message_prefix}{processed}")
+        logger.debug("%s", debug_message_prefix)
         return processed
 
     def _process_notification(self, notification: dict) -> NotificationData | None:
@@ -405,7 +405,7 @@ class MoodleNotificationHandler:
                 fullmessagehtml=str(notification["fullmessagehtml"]),
             )
         except (KeyError, ValueError) as e:
-            logging.error(f"Error processing notification data: {e}")
+            logging.error("Error processing notification data (%s)", type(e).__name__)
             return None
 
     def _process_user_data(self, user_data: dict) -> UserData | None:
@@ -425,7 +425,7 @@ class MoodleNotificationHandler:
                 profileimageurl=str(user_data["profileimageurl"]),
             )
         except (KeyError, ValueError) as e:
-            logging.error(f"Error processing user data: {e}")
+            logging.error("Error processing user data (%s)", type(e).__name__)
             return None
 
     def _handle_initial_fetch(self) -> list[NotificationData] | None:
