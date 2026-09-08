@@ -100,14 +100,14 @@ class MoodleAPI:
                 return True
 
             if "error" in json_resp:
-                logger.error(f"Login failed: {json_resp['error']}")
+                logger.error("Moodle rejected the login request")
             else:
                 logger.error("Login failed: Invalid credentials or unexpected response")
 
             return False
 
         except RequestException as e:
-            logger.error("Request to Moodle failed: %s", e)
+            logger.error("Request to Moodle failed (%s)", type(e).__name__)
             return False
 
     def refresh_session(self) -> bool:
@@ -143,7 +143,7 @@ class MoodleAPI:
 
         try:
             response = self.session.post(
-                f"{self.url}/webservice/rest/server.php", params=params
+                f"{self.url}/webservice/rest/server.php", data=params
             )
             response.raise_for_status()
             data = response.json()
@@ -156,17 +156,14 @@ class MoodleAPI:
             # Moodle webservice failures are often returned as JSON payloads with
             # `exception`/`errorcode` instead of HTTP errors.
             if any(key in data for key in ("exception", "errorcode", "error")):
-                logger.error(
-                    "Failed to get site info from Moodle API: %s",
-                    data.get("message") or data.get("error") or data,
-                )
+                logger.error("Moodle rejected the site info request")
                 return None
 
             self.userid = self._extract_user_id(data)
             self._save_session_state()
             return data
         except RequestException as e:
-            logger.error(f"Failed to get site info: {e}")
+            logger.error("Failed to get site info (%s)", type(e).__name__)
             return None
 
     def get_user_id(self) -> int | None:
@@ -183,10 +180,7 @@ class MoodleAPI:
 
         user_id = self._extract_user_id(result)
         if user_id is None:
-            logger.error(
-                "Site info response does not include 'userid'. Response keys: %s",
-                sorted(result.keys()),
-            )
+            logger.error("Site info response does not include a valid userid")
             return None
         return user_id
 
@@ -199,7 +193,7 @@ class MoodleAPI:
         try:
             return int(raw_user_id)
         except (TypeError, ValueError):
-            logger.error("Invalid userid in site info response: %r", raw_user_id)
+            logger.error("Invalid userid in site info response")
             return None
 
     def get_popup_notifications(self, user_id: int, limit: int | None = None) -> dict:
@@ -229,14 +223,14 @@ class MoodleAPI:
 
         try:
             response = self.session.post(
-                f"{self.url}/webservice/rest/server.php", params=params
+                f"{self.url}/webservice/rest/server.php", data=params
             )
             response.raise_for_status()
             result = response.json()
             self._save_session_state()
             return result
         except RequestException as e:
-            logger.error(f"Failed to get user by field: {e}")
+            logger.error("Failed to get user by field (%s)", type(e).__name__)
             return None
 
     def _post(self, wsfunction: str, user_id: int, limit: int | None = None) -> dict:
@@ -265,21 +259,22 @@ class MoodleAPI:
 
         try:
             response = self.session.post(
-                f"{self.url}/webservice/rest/server.php", params=params
+                f"{self.url}/webservice/rest/server.php", data=params
             )
             response.raise_for_status()
             result = response.json()
         except RequestException as e:
-            raise MoodleConnectionError("Request to Moodle failed") from e
+            # Transport messages and remote errors may contain credentials.
+            raise MoodleConnectionError(
+                f"Request to Moodle failed ({type(e).__name__})"
+            ) from None
 
         if not isinstance(result, dict):
             raise MoodleConnectionError("Unexpected Moodle response type")
         if any(key in result for key in ("exception", "errorcode", "error")):
             if result.get("errorcode") == "invalidtoken":
                 raise MoodleAuthenticationError("Moodle token is invalid or expired")
-            raise MoodleConnectionError(
-                f"Moodle API returned an error: {result.get('errorcode', 'unknown')}"
-            )
+            raise MoodleConnectionError("Moodle API returned an error")
 
         self._save_session_state()
         return result
