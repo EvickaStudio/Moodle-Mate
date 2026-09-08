@@ -102,6 +102,25 @@ def test_stop_web_ui_handles_late_server_initialization():
     assert server_mock.force_exit is True
 
 
+@pytest.mark.parametrize("host", ["127.0.0.1", "0.0.0.0"])
+def test_web_server_uses_the_configured_bind_address(host, monkeypatch):
+    settings = _build_settings(web_enabled=True)
+    settings.web.host = host
+    app = _build_app(settings)
+    config = Mock()
+    monkeypatch.setattr("moodlemate.app.WebUI", Mock())
+    monkeypatch.setattr("moodlemate.app.uvicorn.Config", config)
+    monkeypatch.setattr("moodlemate.app.uvicorn.Server", Mock())
+    monkeypatch.setattr(
+        "moodlemate.app.threading.Thread", lambda target, daemon: Mock(start=target)
+    )
+
+    app._start_web_ui()
+
+    assert config.call_args.kwargs["host"] == host
+    assert settings.web.host == host
+
+
 def test_fetch_and_process_notifications_marks_processed_ids():
     settings = _build_settings()
     app = _build_app(settings)

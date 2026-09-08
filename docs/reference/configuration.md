@@ -76,7 +76,8 @@ to the running process; edit the environment configuration to retain them after
 restart. Credentials, endpoints, and web server settings require a restart.
 
 - `ENABLED` (bool, default: `true`): Enable the Web UI.
-- `HOST` (string, default: `127.0.0.1`): Bind address (localhost only).
+- `HOST` (string, default: `127.0.0.1`): Bind address. Docker uses `0.0.0.0`
+  inside the container; Compose publishes the configured port on host localhost.
 - `PORT` (int, default: `9095`): Bind port.
 - `AUTH_SECRET` (string, required when `ENABLED=true`): Web UI login secret.
 
