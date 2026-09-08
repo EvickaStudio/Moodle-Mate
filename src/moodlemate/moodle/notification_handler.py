@@ -197,77 +197,7 @@ class MoodleNotificationHandler:
         Raises:
             MoodleConnectionError: If connection fails repeatedly
         """
-        retry_delay = 60  # Initial delay in seconds
-        max_delay = 300  # Maximum delay of 5 minutes
-        max_retries = 5  # Maximum number of retries
-        retries = 0
-
-        while retries < max_retries:
-            try:
-                # Ensure connection is active before making the request
-                self._ensure_connection()
-
-                logger.info("Fetching notifications from Moodle")
-                # Ensure moodle_user_id is not None before passing it
-                if self.moodle_user_id is None:
-                    raise MoodleAuthenticationError("User ID is not available")
-
-                response = self.api.get_popup_notifications(self.moodle_user_id)
-
-                # Update last successful connection time
-                self.last_successful_connection = time.time()
-
-                if not isinstance(response, dict):
-                    logger.error(f"Unexpected response type: {type(response)}")
-                    return None
-
-                notifications = response.get("notifications", [])
-                if not notifications:
-                    logger.info("No notifications found")
-                    return None
-
-                # Validate notification format
-                processed_notifications = []
-                for notification in notifications:
-                    if processed := self._process_notification(notification):
-                        processed_notifications.append(processed)
-
-                if not processed_notifications:
-                    logger.error("Failed to process notification batch")
-                    return None
-
-                logger.debug(
-                    "Latest notification batch fetched: %s",
-                    processed_notifications,
-                )
-                return processed_notifications
-
-            except MoodleAuthenticationError as e:
-                # Authentication issues should trigger a reconnection attempt
-                logger.warning(f"Authentication error: {e!s}")
-                try:
-                    self._reconnect()
-                    retries += 1  # Count this as a retry attempt
-                except MoodleConnectionError as ce:
-                    # If reconnection fails after multiple attempts, propagate the error
-                    raise ce
-
-            except Exception as e:
-                retries += 1
-                if retries >= max_retries:
-                    raise MoodleConnectionError(
-                        f"Failed to fetch notifications after {max_retries} attempts"
-                    ) from e
-
-                logger.warning(
-                    f"Failed to fetch notifications (attempt {retries}/{max_retries}): {e!s}"
-                )
-                logger.info(f"Retrying in {retry_delay} seconds...")
-
-                time.sleep(retry_delay)
-                retry_delay = min(retry_delay * 2, max_delay)  # Exponential backoff
-
-        return None
+        return self.fetch_notifications()
 
     def fetch_latest_notification(self) -> NotificationData | None:
         """
@@ -518,7 +448,9 @@ class MoodleNotificationHandler:
             )
         return notifications
 
-    def fetch_notifications(self, limit: int) -> list[NotificationData] | None:
+    def fetch_notifications(
+        self, limit: int | None = None
+    ) -> list[NotificationData] | None:
         """Fetches a specified number of recent notifications from Moodle."""
         retry_delay = 60  # Initial delay in seconds
         max_delay = 300  # Maximum delay of 5 minutes
@@ -553,27 +485,31 @@ class MoodleNotificationHandler:
                 time.sleep(retry_delay)
                 retry_delay = min(retry_delay * 2, max_delay)  # Exponential backoff
 
-        return None
+        raise MoodleConnectionError(
+            f"Failed to fetch notifications after {max_retries} attempts"
+        )
 
-    def _fetch_notifications(self, limit: int) -> list[NotificationData] | None:
+    def _fetch_notifications(self, limit: int | None) -> list[NotificationData] | None:
         # Ensure connection is active before making the request
         self._ensure_connection()
 
-        logger.info(f"Fetching up to {limit} notifications from Moodle")
+        logger.info("Fetching notifications from Moodle (limit=%s)", limit)
         # Ensure moodle_user_id is not None before passing it
         if self.moodle_user_id is None:
             raise MoodleAuthenticationError("User ID is not available")
 
         response = self.api.get_popup_notifications(self.moodle_user_id, limit=limit)
 
-        # Update last successful connection time
-        self.last_successful_connection = time.time()
-
         if not isinstance(response, dict):
-            logger.error(f"Unexpected response type: {type(response)}")
-            return None
+            raise MoodleConnectionError("Unexpected Moodle response type")
 
-        notifications = response.get("notifications", [])
+        notifications = response.get("notifications")
+        if not isinstance(notifications, list):
+            raise MoodleConnectionError(
+                "Moodle response is missing a notifications list"
+            )
+
+        self.last_successful_connection = time.time()
         if not notifications:
             logger.info("No notifications found")
             return None

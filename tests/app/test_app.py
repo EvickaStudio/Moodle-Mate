@@ -3,8 +3,11 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from requests.exceptions import ConnectionError, JSONDecodeError
 
 from moodlemate.app import MoodleMateApp
+from moodlemate.moodle.api import MoodleAPI
+from moodlemate.moodle.notification_handler import MoodleNotificationHandler
 from moodlemate.notifications.processor import ProcessingResult
 
 
@@ -126,6 +129,97 @@ def test_failed_delivery_does_not_advance_checkpoint():
         app._fetch_and_process_notifications.__wrapped__(app)
 
     app.moodle_handler.mark_notification_processed.assert_not_called()
+
+
+@pytest.mark.parametrize("first_run", [False, True])
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "transport",
+        "invalid_token",
+        "api_error",
+        "invalid_json",
+        "malformed_payload",
+        "rate_limited",
+        "missing_token",
+    ],
+)
+def test_failed_moodle_poll_stays_unhealthy_until_valid_response(
+    first_run, failure, monkeypatch, tmp_path
+):
+    monkeypatch.setenv("MOODLE_SESSION_FILE", str(tmp_path / "session.json"))
+    monkeypatch.setattr(
+        "moodlemate.moodle.notification_handler.time.sleep", lambda _: None
+    )
+    allowed = Mock(return_value=failure != "rate_limited")
+    monkeypatch.setattr(
+        "moodlemate.moodle.api.rate_limiter_manager.is_allowed", allowed
+    )
+    api = MoodleAPI("https://moodle.example.edu", "alice", "dummy-password")
+    api.token = None if failure == "missing_token" else "dummy-token"
+    api.login = Mock(return_value=True)
+    api.get_user_id = Mock(return_value=42)
+    api.session = Mock()
+    response = api.session.post.return_value
+    response.json.return_value = {"notifications": []}
+    if failure == "transport":
+        response.raise_for_status.side_effect = ConnectionError("simulated outage")
+    elif failure in ("invalid_token", "api_error"):
+        response.json.return_value = {
+            "exception": "webservice_access_exception",
+            "errorcode": "invalidtoken"
+            if failure == "invalid_token"
+            else "accessdenied",
+        }
+    elif failure == "invalid_json":
+        response.json.side_effect = JSONDecodeError("Invalid JSON", "x", 0)
+    elif failure == "malformed_payload":
+        response.json.return_value = {"notifications": None}
+
+    settings = _build_settings()
+    settings.moodle = SimpleNamespace(initial_fetch_count=3)
+    state = Mock(last_notification_id=None if first_run else 100)
+    handler = MoodleNotificationHandler(settings, api, state)
+    app = MoodleMateApp(settings, Mock(providers=[]), handler, api, state)
+    previous_success = time.time() - 600
+    app._last_successful_poll = previous_success
+    app._outage_alerted = True
+    app._send_health_notification = Mock()
+    app._check_and_refresh_session = Mock()
+    monkeypatch.setattr(
+        app._shutdown_event, "wait", lambda _: app._shutdown_event.set()
+    )
+
+    app._main_loop()
+    app._shutdown_event.clear()
+
+    assert app._last_successful_poll == previous_success
+    assert app._last_poll_error
+    assert not app.get_health_status()[0]
+    assert app._outage_alerted
+    app._send_health_notification.assert_not_called()
+    app.notification_processor.process.assert_not_called()
+    state.set_last_notification_id.assert_not_called()
+    if failure in ("invalid_token", "missing_token"):
+        assert api.login.call_count > 1
+
+    allowed.return_value = True
+    api.token = "valid-token"
+    response.raise_for_status.side_effect = None
+    response.json.side_effect = None
+    response.json.return_value = {"notifications": []}
+
+    app._main_loop()
+    app._shutdown_event.clear()
+
+    assert app._last_successful_poll > previous_success
+    assert app._last_poll_error is None
+    assert app.get_health_status()[0]
+    assert not app._outage_alerted
+    app._send_health_notification.assert_called_once_with(
+        "Moodle-Mate Recovered",
+        "Moodle-Mate successfully connected to Moodle again.",
+    )
 
 
 def test_handle_error_triggers_failure_alert_at_threshold():
