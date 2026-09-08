@@ -26,7 +26,7 @@ class RequestManager:
     """Global request session manager with scoped sessions and consistent defaults."""
 
     _instance: Optional["RequestManager"] = None
-    _sessions: dict[str, requests.Session]
+    _sessions: dict[str, TimeoutSession]
     _session_created_at: dict[str, float]
     _default_timeout: float | tuple[float, float] = (10, 30)
     _retry_total: int = 3
@@ -40,7 +40,7 @@ class RequestManager:
             cls._instance._setup_sessions()
         return cls._instance
 
-    def _build_session(self) -> requests.Session:
+    def _build_session(self) -> TimeoutSession:
         """Build a session with security defaults and connection pooling."""
         session = TimeoutSession(self._default_timeout)
 
@@ -100,11 +100,17 @@ class RequestManager:
         retry_total: int,
         backoff_factor: float,
     ) -> None:
-        """Configure timeouts and retries, rebuilding all sessions."""
+        """Update active sessions without losing callers' references or cookies."""
         self._default_timeout = (connect_timeout, read_timeout)
         self._retry_total = retry_total
         self._backoff_factor = backoff_factor
-        self._setup_sessions()
+        for session in self._sessions.values():
+            session._default_timeout = self._default_timeout
+            for adapter in session.adapters.values():
+                if isinstance(adapter, HTTPAdapter):
+                    adapter.max_retries = adapter.max_retries.new(
+                        total=retry_total, backoff_factor=backoff_factor
+                    )
 
     def get_session(self, scope: str = "default") -> requests.Session:
         """Get or create a scoped session instance."""

@@ -114,12 +114,8 @@ def test_initialize_and_run_app_runs_with_ai_enabled(monkeypatch, fake_settings)
     monkeypatch.setattr(main_module.request_manager, "configure", Mock())
     monkeypatch.setattr(main_module, "StateManager", Mock(return_value=state_manager))
     monkeypatch.setattr(main_module, "MoodleAPI", Mock(return_value=moodle_api))
-    monkeypatch.setattr(main_module, "GPT", Mock(return_value=gpt_instance))
-    summarizer = Mock()
     monkeypatch.setattr(
-        main_module,
-        "NotificationSummarizer",
-        Mock(return_value=summarizer),
+        "moodlemate.notifications.summarizer.GPT", Mock(return_value=gpt_instance)
     )
     monkeypatch.setattr(main_module, "initialize_providers", Mock(return_value=[]))
     monkeypatch.setattr(main_module, "NotificationProcessor", Mock(return_value=Mock()))
