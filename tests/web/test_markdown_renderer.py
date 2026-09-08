@@ -12,7 +12,7 @@ from moodlemate.markdown import convert
 
 
 def test_markdown_links_cannot_create_executable_attributes(tmp_path):
-    browser = shutil.which("chromium") or shutil.which("google-chrome")
+    browser = shutil.which("google-chrome") or shutil.which("chromium")
     if browser is None:
         pytest.skip("Chromium or Google Chrome is required for the DOM regression")
     template = (
