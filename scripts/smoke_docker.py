@@ -85,7 +85,7 @@ def main():
                     ) as response:
                         assert json.load(response)["status"] == "ok"
                     break
-                except (urllib.error.URLError, TimeoutError):
+                except (urllib.error.URLError, TimeoutError, ConnectionError):
                     if time.monotonic() >= deadline:
                         raise
                     time.sleep(0.5)
