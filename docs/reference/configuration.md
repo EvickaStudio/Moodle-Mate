@@ -113,7 +113,8 @@ Custom providers use the same pattern:
 
 These are read directly from the environment:
 
-- `MOODLE_SESSION_FILE` (default: `moodle_session.json`): Encrypted cached session token file.
+- `MOODLE_SESSION_FILE` (native default: `moodle_session.json`; Docker default: `$MOODLE_STATE_DIR/moodle_session.json`): Encrypted cached session token file.
+- `MOODLE_LOG_DIR` (native default: `logs`; Docker default: `/app/logs`): Directory for rotating log files.
 - `MOODLEMATE_SESSION_ENCRYPTION_KEY` (optional): Enables encrypted Moodle session caching when set.
 - `MOODLE_STATE_FILE` (optional): Full path for `state.json`.
 - `MOODLE_STATE_DIR` (default: `/app/state`): Directory for `state.json`.

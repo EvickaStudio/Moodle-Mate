@@ -1,4 +1,5 @@
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -43,8 +44,8 @@ def setup_logging(log_level: str = "INFO") -> None:
         log_level: The logging level to use (default: INFO)
     """
     # Create logs directory if it doesn't exist
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
+    log_dir = Path(os.getenv("MOODLE_LOG_DIR", "logs"))
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     # Configure logging format with more context
     log_format = (
