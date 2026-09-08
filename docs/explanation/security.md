@@ -6,8 +6,9 @@ Moodle Mate.
 ## Web UI access
 
 The Web UI is intended for local access during development and small
-self-hosted setups. It binds to `127.0.0.1` by default and is forced to
-localhost at runtime. Authentication is required when Web UI is enabled and is
+self-hosted setups. Native runs bind to `127.0.0.1` by default. Docker binds to
+`0.0.0.0` inside the container, with Compose publishing only on host localhost.
+Authentication is required when Web UI is enabled and is
 controlled by `MOODLEMATE_WEB__AUTH_SECRET`.
 
 The UI uses random server-side session tokens (not raw passwords in cookies)

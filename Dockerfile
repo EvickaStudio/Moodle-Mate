@@ -51,6 +51,8 @@ RUN chmod +x /entrypoint.sh
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
+ENV MOODLEMATE_WEB__HOST=0.0.0.0
+EXPOSE 9095
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \

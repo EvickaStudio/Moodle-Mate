@@ -112,12 +112,7 @@ class MoodleMateApp:
         app = web_ui.get_app()
 
         def run_server():
-            if self.settings.web.host not in {"127.0.0.1", "localhost"}:
-                logging.warning(
-                    "Web UI host overridden to 127.0.0.1 (localhost-only mode)."
-                )
-            host = "127.0.0.1"
-            self.settings.web.host = host
+            host = self.settings.web.host
             port = self.settings.web.port
             logging.info(f"Starting Web UI on http://{host}:{port}")
             config = uvicorn.Config(app, host=host, port=port, log_level="warning")
