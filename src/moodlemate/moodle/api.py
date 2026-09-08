@@ -15,6 +15,7 @@ except ImportError:  # pragma: no cover - dependency is expected in production
 
 from moodlemate.core.security import InputValidator, rate_limiter_manager
 from moodlemate.infrastructure.http.request_manager import request_manager
+from moodlemate.moodle.errors import MoodleAuthenticationError, MoodleConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -201,9 +202,7 @@ class MoodleAPI:
             logger.error("Invalid userid in site info response: %r", raw_user_id)
             return None
 
-    def get_popup_notifications(
-        self, user_id: int, limit: int | None = None
-    ) -> dict | None:
+    def get_popup_notifications(self, user_id: int, limit: int | None = None) -> dict:
         """
         Retrieves popup notifications for a user.
         """
@@ -240,15 +239,12 @@ class MoodleAPI:
             logger.error(f"Failed to get user by field: {e}")
             return None
 
-    def _post(
-        self, wsfunction: str, user_id: int, limit: int | None = None
-    ) -> dict | None:
+    def _post(self, wsfunction: str, user_id: int, limit: int | None = None) -> dict:
         """
         Sends a POST request to the Moodle API with the given wsfunction and user ID.
         """
         if self.token is None:
-            logger.error("Token not set. Please login first.")
-            return None
+            raise MoodleAuthenticationError("Token not set. Please login first.")
 
         params = {
             "wstoken": self.token,
@@ -265,7 +261,7 @@ class MoodleAPI:
             "moodle_api", f"{self.url}_{wsfunction}"
         ):
             logger.warning(f"API rate limit exceeded for {self.url} - {wsfunction}")
-            return None
+            raise MoodleConnectionError("Moodle API rate limit exceeded")
 
         try:
             response = self.session.post(
@@ -273,11 +269,20 @@ class MoodleAPI:
             )
             response.raise_for_status()
             result = response.json()
-            self._save_session_state()
-            return result
         except RequestException as e:
-            logger.error(f"Request to Moodle failed: {e}")
-            return None
+            raise MoodleConnectionError("Request to Moodle failed") from e
+
+        if not isinstance(result, dict):
+            raise MoodleConnectionError("Unexpected Moodle response type")
+        if any(key in result for key in ("exception", "errorcode", "error")):
+            if result.get("errorcode") == "invalidtoken":
+                raise MoodleAuthenticationError("Moodle token is invalid or expired")
+            raise MoodleConnectionError(
+                f"Moodle API returned an error: {result.get('errorcode', 'unknown')}"
+            )
+
+        self._save_session_state()
+        return result
 
     def _restore_session_state(self) -> bool:
         """Attempt to restore a previously saved encrypted Moodle session."""

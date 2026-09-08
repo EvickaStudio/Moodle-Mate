@@ -6,6 +6,7 @@ import pytest
 
 from moodlemate.moodle import api as moodle_api_module
 from moodlemate.moodle.api import MoodleAPI
+from moodlemate.moodle.errors import MoodleConnectionError
 
 
 @pytest.fixture
@@ -147,7 +148,7 @@ def test_refresh_session_resets_session_and_reauthenticates(
     api.login.assert_called_once()
 
 
-def test_post_returns_none_when_rate_limited(api: MoodleAPI, monkeypatch):
+def test_post_raises_when_rate_limited(api: MoodleAPI, monkeypatch):
     api.token = "token"
     monkeypatch.setattr(
         moodle_api_module.rate_limiter_manager,
@@ -155,7 +156,8 @@ def test_post_returns_none_when_rate_limited(api: MoodleAPI, monkeypatch):
         lambda *_args, **_kwargs: False,
     )
 
-    assert api._post("message_popup_get_popup_notifications", user_id=1) is None
+    with pytest.raises(MoodleConnectionError, match="rate limit"):
+        api._post("message_popup_get_popup_notifications", user_id=1)
 
 
 def test_post_returns_response_payload(api: MoodleAPI, monkeypatch):
