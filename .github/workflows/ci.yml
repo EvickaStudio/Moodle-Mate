@@ -42,6 +42,20 @@ jobs:
       if: matrix.python-version == '3.11'
       run: python -m pip --python .venv/bin/python install --dry-run --ignore-installed --require-hashes -r requirements-dev.txt
 
+    - name: Build and smoke-test installed wheel
+      run: |
+        uv build --wheel --out-dir "$RUNNER_TEMP/moodlemate-wheel"
+        uv venv --python "${{ matrix.python-version }}" "$RUNNER_TEMP/moodlemate-wheel-venv"
+        uv pip install --python "$RUNNER_TEMP/moodlemate-wheel-venv/bin/python" --require-hashes -r requirements.txt
+        uv pip install --python "$RUNNER_TEMP/moodlemate-wheel-venv/bin/python" --no-deps "$RUNNER_TEMP/moodlemate-wheel/"*.whl
+        "$RUNNER_TEMP/moodlemate-wheel-venv/bin/python" -I -m moodlemate --help
+        "$RUNNER_TEMP/moodlemate-wheel-venv/bin/python" -I - <<'PY'
+        from importlib.resources import files
+        root = files("moodlemate") / "web"
+        for asset in ("templates/index.html", "templates/login.html", "static/icon.svg"):
+            assert root.joinpath(asset).is_file(), f"Missing wheel asset: {asset}"
+        PY
+
     - name: Minimize uv cache
       if: always()
       run: uv cache prune --ci
