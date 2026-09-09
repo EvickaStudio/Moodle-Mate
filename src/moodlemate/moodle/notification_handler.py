@@ -134,7 +134,7 @@ class MoodleNotificationHandler:
                         "Failed to get user ID after reconnection"
                     )
 
-                self.moodle_user_id = int(user_id)
+                self.moodle_user_id = user_id
                 logger.info(f"Reconnection successful. User ID: {self.moodle_user_id}")
                 return
             except (MoodleAuthenticationError, MoodleConnectionError) as e:
