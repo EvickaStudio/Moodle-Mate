@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 from logging.handlers import RotatingFileHandler
@@ -18,8 +19,8 @@ class ColoredFormatter(logging.Formatter):
     """Custom formatter to add colors to log messages."""
 
     def format(self, record):
-        # Save original levelname
-        orig_levelname = record.levelname
+        # Other handlers must see the original, uncolored record.
+        record = copy.copy(record)
         # Add color to levelname
         record.levelname = (
             f"{COLORS.get(record.levelname, '')}{record.levelname}{COLORS['RESET']}"
@@ -29,12 +30,7 @@ class ColoredFormatter(logging.Formatter):
         if record.name != "root":
             record.name = f"\033[35m{record.name}\033[0m"  # Magenta for component names
 
-        # Format the message
-        result = super().format(record)
-
-        # Restore original levelname
-        record.levelname = orig_levelname
-        return result
+        return super().format(record)
 
 
 def setup_logging(log_level: str = "INFO") -> None:

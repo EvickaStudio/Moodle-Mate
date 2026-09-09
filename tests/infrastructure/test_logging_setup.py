@@ -40,10 +40,11 @@ def test_setup_logging_creates_handlers_and_log_dir(
     _reset_root_logger()
 
 
-def test_colored_formatter_applies_level_color_and_restores_levelname():
+@pytest.mark.parametrize("logger_name", ["moodlemate.test", "root"])
+def test_colored_formatter_keeps_other_handlers_plain(logger_name):
     formatter = ColoredFormatter("%(levelname)s %(name)s %(message)s")
     record = logging.LogRecord(
-        name="moodlemate.test",
+        name=logger_name,
         level=logging.INFO,
         pathname=__file__,
         lineno=10,
@@ -55,6 +56,10 @@ def test_colored_formatter_applies_level_color_and_restores_levelname():
     rendered = formatter.format(record)
 
     assert "\033[32m" in rendered
-    assert "\033[35m" in rendered
+    assert ("\033[35m" in rendered) == (logger_name != "root")
     assert "hello" in rendered
     assert record.levelname == "INFO"
+    assert record.name == logger_name
+    assert formatter.format(record) == rendered
+    plain = logging.Formatter("%(levelname)s %(name)s %(message)s").format(record)
+    assert plain == f"INFO {logger_name} hello"
