@@ -24,7 +24,7 @@ def _build_handler(last_notification_id: int | None = 10) -> MoodleNotificationH
     return handler
 
 
-def test_init_logs_in_and_loads_user_id():
+def test_init_defers_login_until_the_first_fetch():
     settings = SimpleNamespace(moodle=SimpleNamespace(initial_fetch_count=1))
     api = Mock()
     api.login.return_value = True
@@ -33,10 +33,33 @@ def test_init_logs_in_and_loads_user_id():
 
     handler = MoodleNotificationHandler(settings, api, state_manager)
 
+    assert handler.moodle_user_id is None
+    api.login.assert_not_called()
+    api.get_user_id.assert_not_called()
+    api.get_popup_notifications.return_value = {"notifications": []}
+    assert handler.fetch_latest_notifications() is None
     assert handler.moodle_user_id == 123
     assert handler.last_notification_id == 55
     api.login.assert_called_once()
     api.get_user_id.assert_called_once()
+
+
+@pytest.mark.parametrize("failure", ["login", "identity"])
+def test_first_connection_can_recover_after_an_outage(failure):
+    api = Mock(token=None)
+    api.login.return_value = failure != "login"
+    api.get_user_id.return_value = None
+    handler = MoodleNotificationHandler(Mock(), api, Mock(last_notification_id=55))
+    handler.max_reconnect_attempts = 1
+
+    with pytest.raises(MoodleConnectionError):
+        handler._ensure_connection()
+    assert handler.moodle_user_id is None
+    api.login.return_value = True
+    api.get_user_id.return_value = 123
+    handler._ensure_connection()
+    assert handler.moodle_user_id == 123
+    assert handler.last_notification_id == 55
 
 
 def test_fetch_latest_notification_returns_processed_notification():
