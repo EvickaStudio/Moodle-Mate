@@ -347,8 +347,9 @@ def test_complex_content_uses_fallback_and_preserves_delivery_retries(
 
 
 @pytest.mark.parametrize("failed_id", [101, 102, 103])
+@pytest.mark.parametrize("restart", [False, True])
 def test_initial_delivery_failure_remains_pending_after_restart(
-    failed_id, monkeypatch, tmp_path
+    failed_id, restart, monkeypatch, tmp_path
 ):
     monkeypatch.setattr(StateManager, "_instance", None)
     state_file = str(tmp_path / "state.json")
@@ -358,16 +359,17 @@ def test_initial_delivery_failure_remains_pending_after_restart(
     api = Mock()
     api.login.return_value = True
     api.get_user_id.return_value = 42
-    api.get_popup_notifications.return_value = {
-        "notifications": [
-            {
-                "id": identifier,
-                "useridfrom": 1,
-                "subject": "Update",
-                "fullmessagehtml": "Body",
-            }
-            for identifier in (103, 102, 101)
-        ]
+    notifications = [
+        {
+            "id": identifier,
+            "useridfrom": 1,
+            "subject": "Update",
+            "fullmessagehtml": "Body",
+        }
+        for identifier in (103, 102, 101, 100)
+    ]
+    api.get_popup_notifications.side_effect = lambda _user_id, limit=None: {
+        "notifications": notifications[:limit]
     }
     handler = MoodleNotificationHandler(settings, api, state)
     processor = Mock()
@@ -384,11 +386,19 @@ def test_initial_delivery_failure_remains_pending_after_restart(
     assert state.last_notification_id == last_delivered
     state.maybe_save_state(force=True)
 
-    monkeypatch.setattr(StateManager, "_instance", None)
-    restored_state = StateManager(state_file)
-    restored_handler = MoodleNotificationHandler(settings, api, restored_state)
-    restarted_app = MoodleMateApp(
-        settings, processor, restored_handler, api, restored_state
+    # New arrivals must not push the failed oldest message out of the initial window.
+    notifications.insert(0, dict(notifications[0], id=104))
+    settings.moodle.initial_fetch_count = 1
+    if restart:
+        monkeypatch.setattr(StateManager, "_instance", None)
+    restored_state = StateManager(state_file) if restart else state
+    restored_handler = (
+        MoodleNotificationHandler(settings, api, restored_state) if restart else handler
+    )
+    restarted_app = (
+        MoodleMateApp(settings, processor, restored_handler, api, restored_state)
+        if restart
+        else app
     )
     processor.process.side_effect = None
     processor.process.return_value = ProcessingResult(delivered=True)
@@ -396,10 +406,10 @@ def test_initial_delivery_failure_remains_pending_after_restart(
 
     assert restarted_app._fetch_and_process_notifications() is True
     assert [call.args[0]["id"] for call in processor.process.call_args_list] == list(
-        range(failed_id, 104)
+        range(failed_id, 105)
     )
-    assert restored_handler.last_notification_id == 103
-    assert restored_state.last_notification_id == 103
+    assert restored_handler.last_notification_id == 104
+    assert restored_state.last_notification_id == 104
 
     processor.process.reset_mock()
     assert restarted_app._fetch_and_process_notifications() is True
