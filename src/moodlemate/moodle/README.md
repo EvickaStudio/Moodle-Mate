@@ -56,6 +56,10 @@ The `MoodleNotificationHandler` class manages the fetching and processing of Moo
 - Error handling with retries
 - Rate limiting and backoff strategies
 
+Construction does not contact Moodle. Authentication happens on the first fetch,
+so the dashboard and `--test-notification` can start during a Moodle outage.
+Fetches still report connection failures and retry through the polling loop.
+
 ### Notification Handler Usage
 
 ```python

@@ -51,44 +51,23 @@ class MoodleNotificationHandler:
         self, settings: "Settings", api: MoodleAPI, state_manager: StateManager
     ) -> None:
         """
-        Initialize the notification handler.
+        Initialize the handler without contacting Moodle until the first fetch.
 
         Args:
             settings: Application configuration
             api: Moodle API instance
             state_manager: State manager instance
 
-        Raises:
-            MoodleConnectionError: If connection to Moodle fails
-            MoodleAuthenticationError: If authentication fails
-            ValueError: If required configuration is missing
         """
-        try:
-            self.settings = settings
-            self.api = api
-            self.state_manager = state_manager
-
-            # Initial login
-            self._login()
-
-            # Get and store the authenticated user's ID
-            self.moodle_user_id = self.api.get_user_id()
-            if not self.moodle_user_id:
-                raise MoodleAuthenticationError("Failed to get user ID after login")
-            self.moodle_user_id = int(self.moodle_user_id)  # Cast to int
-
-            self.last_notification_id = self.state_manager.last_notification_id
-
-            # Session management variables
-            self.last_successful_connection = time.time()
-            self.session_timeout = 3600  # Default session timeout of 1 hour
-            self.max_reconnect_attempts = 5
-            self.reconnect_delay = 60  # Initial delay for reconnection attempts
-
-        except Exception as e:
-            raise MoodleConnectionError(
-                f"Failed to initialize Moodle connection: {e!s}"
-            ) from e
+        self.settings = settings
+        self.api = api
+        self.state_manager = state_manager
+        self.moodle_user_id: int | None = None
+        self.last_notification_id = state_manager.last_notification_id
+        self.last_successful_connection = 0.0
+        self.session_timeout = 3600  # Default session timeout of 1 hour
+        self.max_reconnect_attempts = 5
+        self.reconnect_delay = 60  # Initial delay for reconnection attempts
 
     def _login(self) -> None:
         """
@@ -122,34 +101,13 @@ class MoodleNotificationHandler:
         current_time = time.time()
         time_since_last_connection = current_time - self.last_successful_connection
 
-        if time_since_last_connection > self.session_timeout:
-            logger.info("Session may have expired. Attempting to reconnect...")
+        if (
+            not self.api.token
+            or self.moodle_user_id is None
+            or time_since_last_connection > self.session_timeout
+        ):
+            logger.info("Moodle session missing or expired. Connecting...")
             self._reconnect()
-            return
-
-        # If we have a token but no user ID, try to get it
-        if self.api.token and not self.moodle_user_id:
-            logger.warning(
-                "User ID missing but token exists. Attempting to retrieve user ID..."
-            )
-            try:
-                user_id = self.api.get_user_id()
-                if user_id:
-                    self.moodle_user_id = int(user_id)
-                    self.last_successful_connection = time.time()
-                    logger.info(
-                        f"Successfully retrieved user ID: {self.moodle_user_id}"
-                    )
-                else:
-                    logger.warning(
-                        "Failed to retrieve user ID. Attempting reconnection..."
-                    )
-                    self._reconnect()
-            except Exception as e:
-                logger.warning(
-                    f"Error retrieving user ID: {e!s}. Attempting reconnection..."
-                )
-                self._reconnect()
 
     def _reconnect(self) -> None:
         """

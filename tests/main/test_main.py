@@ -84,21 +84,22 @@ def test_initialize_and_run_app_sends_test_notification(monkeypatch, fake_settin
     args = argparse.Namespace(test_notification=True)
     app = Mock()
     monkeypatch.setattr(main_module.request_manager, "configure", Mock())
-    monkeypatch.setattr(main_module, "StateManager", Mock(return_value=Mock()))
-    monkeypatch.setattr(main_module, "MoodleAPI", Mock(return_value=Mock()))
+    monkeypatch.setattr(
+        main_module, "StateManager", Mock(return_value=Mock(last_notification_id=None))
+    )
+    api = Mock()
+    api.login.side_effect = RuntimeError("Moodle is offline")
+    monkeypatch.setattr(main_module, "MoodleAPI", Mock(return_value=api))
     monkeypatch.setattr(main_module, "initialize_providers", Mock(return_value=[]))
     monkeypatch.setattr(main_module, "NotificationProcessor", Mock(return_value=Mock()))
-    monkeypatch.setattr(
-        main_module,
-        "MoodleNotificationHandler",
-        Mock(return_value=Mock()),
-    )
     monkeypatch.setattr(main_module, "MoodleMateApp", Mock(return_value=app))
 
     main_module.initialize_and_run_app(fake_settings, args)
 
     app.send_test_notification.assert_called_once()
     app.run.assert_not_called()
+    api.login.assert_not_called()
+    api.get_user_id.assert_not_called()
 
 
 def test_initialize_and_run_app_runs_with_ai_enabled(monkeypatch, fake_settings):

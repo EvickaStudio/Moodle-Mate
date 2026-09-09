@@ -20,6 +20,7 @@ from moodlemate.config import Settings
 from moodlemate.core.state_manager import StateManager
 from moodlemate.infrastructure.logging.setup import setup_logging
 from moodlemate.moodle.api import MoodleAPI
+from moodlemate.moodle.notification_handler import MoodleNotificationHandler
 from moodlemate.notifications.processor import NotificationProcessor
 
 settings = Settings(_env_file=None,
@@ -34,9 +35,9 @@ assert Path(api.session_state_file).read_text().find("ciphertext") >= 0
 setup_logging()
 assert Path("/app/logs/moodlemate.log").is_file()
 state = StateManager()
-handler = Mock()
-handler.fetch_newest_notification.return_value = None
-MoodleMateApp(settings, NotificationProcessor(settings, [], state), handler, Mock(), state).run()
+api.login = Mock(return_value=False)
+handler = MoodleNotificationHandler(settings, api, state)
+MoodleMateApp(settings, NotificationProcessor(settings, [], state), handler, api, state).run()
 """
 
 
