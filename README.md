@@ -95,6 +95,7 @@ concerns, you can use a locally hosted model (e.g. with
    source venv/bin/activate
    # source venv/bin/activate.fish for fish shell
    pip install -r requirements.txt
+   pip install --no-deps -e .
    ```
 
 3. **Configure the Application**
