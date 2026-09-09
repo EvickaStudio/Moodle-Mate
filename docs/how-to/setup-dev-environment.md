@@ -40,5 +40,6 @@ This guide shows you how to prepare a local environment for development.
 
    ```bash
    pip install --require-hashes -r requirements-dev.txt
+   pip install --no-deps -e .
    python -m moodlemate
    ```

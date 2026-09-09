@@ -22,7 +22,7 @@ tests/
 To run the tests, first install the test dependencies:
 
 ```bash
-uv sync --dev
+uv sync --extra dev
 ```
 
 Then run the tests using pytest:
@@ -100,7 +100,6 @@ The test suite uses the following mocking strategies:
 
 Tests are run automatically on:
 - Pull requests
-- Main branch commits
-- Release tags
+- Pushes to any branch
 
 See the GitHub Actions workflow for details. 
