@@ -104,7 +104,7 @@ class WebUI:
         if cookie_value is None:
             return False
 
-        expires_at = self._active_sessions.get(str(cookie_value))
+        expires_at = self._active_sessions.get(cookie_value)
         return expires_at is not None and expires_at >= time.time()
 
     async def _auth_dependency(self, request: Request) -> None:
@@ -119,7 +119,7 @@ class WebUI:
         if (
             not csrf_cookie
             or not csrf_header
-            or not secrets.compare_digest(str(csrf_cookie), str(csrf_header))
+            or not secrets.compare_digest(csrf_cookie, csrf_header)
         ):
             raise HTTPException(status_code=403, detail="CSRF validation failed")
 
