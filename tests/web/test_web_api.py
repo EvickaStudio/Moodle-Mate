@@ -191,6 +191,36 @@ async def test_authenticated_user_can_fetch_status_history_and_config(
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize("secret", ["cache-key-for-test", None, ""])
+async def test_session_key_is_redacted_and_cannot_be_changed(client, settings, secret):
+    settings.session_encryption_key = secret
+    await _login(client)
+
+    response = await client.get("/api/config")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session_encryption_key"] == ("********" if secret else secret)
+    assert settings.session_encryption_key == secret
+
+    payload["notification"]["fetch_interval"] = 123
+    response = await client.post(
+        "/api/config", json=payload, headers=_csrf_headers(client)
+    )
+    assert response.status_code == 200
+    assert settings.notification.fetch_interval == 123
+    assert settings.session_encryption_key == secret
+
+    for replacement in ("replacement-key", None, "", {"key": "value"}, ["value"]):
+        response = await client.post(
+            "/api/config",
+            json={"session_encryption_key": replacement},
+            headers=_csrf_headers(client),
+        )
+        assert response.status_code == 200
+        assert settings.session_encryption_key == secret
+
+
+@pytest.mark.anyio
 async def test_config_update_keeps_immutable_fields(
     client: httpx.AsyncClient, settings: Settings
 ):

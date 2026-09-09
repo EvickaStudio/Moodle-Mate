@@ -137,11 +137,14 @@ class WebUI:
             section_data = config_dict.get(section)
             if isinstance(section_data, dict) and section_data.get(key):
                 section_data[key] = "********"
+        if config_dict.get("session_encryption_key"):
+            config_dict["session_encryption_key"] = "********"
         return config_dict
 
     @staticmethod
     def _is_immutable_config_path(path: tuple[str, ...]) -> bool:
         immutable_paths = {
+            ("session_encryption_key",),
             ("moodle", "url"),
             ("moodle", "username"),
             ("moodle", "password"),
