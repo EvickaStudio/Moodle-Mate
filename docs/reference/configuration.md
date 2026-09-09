@@ -9,7 +9,10 @@ This reference lists settings read from `.env` or environment variables with the
 - `USERNAME` (required, string): Moodle username.
 - `PASSWORD` (required, string): Moodle password.
 - `INITIAL_FETCH_COUNT` (int, default: `1`): Number of newest notifications to
-  process on the first run when no state file exists.
+  select on the first run when no state file exists. The oldest selected ID is
+  saved before delivery. Retries keep that window even if newer messages arrive
+  or the fetch count changes; the successful-delivery checkpoint advances only
+  after delivery or an intentional filter skip.
 
 ## AI (`MOODLEMATE_AI__*`)
 

@@ -26,6 +26,7 @@ class StateManager:
         """Initialize the StateManager."""
         self.state_file = state_file
         self.last_notification_id: int | None = None
+        self.initial_notification_id: int | None = None
         self.notification_history: deque[dict] = deque(maxlen=50)
         self._delivery_receipts: dict[str, list[str]] = {}
         self._save_interval_seconds = 15.0
@@ -55,6 +56,7 @@ class StateManager:
                 with open(self.state_file) as f:
                     state = json.load(f)
                     self.last_notification_id = state.get("last_notification_id")
+                    self.initial_notification_id = state.get("initial_notification_id")
                     receipts = state.get("delivery_receipts", {})
                     if isinstance(receipts, dict):
                         self._delivery_receipts = {
@@ -63,6 +65,19 @@ class StateManager:
                             if isinstance(providers, list)
                             and all(isinstance(name, str) for name in providers)
                         }
+                    if (
+                        self.last_notification_id is None
+                        and self.initial_notification_id is None
+                    ):
+                        # Older state files can already contain partial first-run deliveries.
+                        self.initial_notification_id = min(
+                            (
+                                int(key)
+                                for key in self._delivery_receipts
+                                if key.isdecimal()
+                            ),
+                            default=None,
+                        )
                     logger.info(
                         f"Loaded state from {self.state_file}. Last notification ID: {self.last_notification_id}"
                     )
@@ -78,6 +93,8 @@ class StateManager:
             state_directory = os.path.dirname(self.state_file) or "."
             os.makedirs(state_directory, exist_ok=True)
             state: dict[str, Any] = {"last_notification_id": self.last_notification_id}
+            if self.initial_notification_id is not None:
+                state["initial_notification_id"] = self.initial_notification_id
             if self._delivery_receipts:
                 state["delivery_receipts"] = self._delivery_receipts
             with tempfile.NamedTemporaryFile(
@@ -116,8 +133,19 @@ class StateManager:
         """Updates the last notification ID."""
         if notification_id > (self.last_notification_id or 0):
             self.last_notification_id = notification_id
+            self.initial_notification_id = None
             self._delivery_receipts.pop(str(notification_id), None)
             self._dirty = True
+
+    def pin_initial_notification(self, notification_id: int) -> None:
+        """Keep the first selected message pending until delivery is checkpointed."""
+        if self.initial_notification_id is None:
+            self.initial_notification_id = notification_id
+            self._dirty = True
+        if self._dirty:
+            self.save_state()
+            if self._dirty:
+                raise OSError("Could not persist the initial notification window")
 
     def get_delivered_providers(self, notification_id: int) -> set[str]:
         """Return providers that already confirmed delivery of this notification."""

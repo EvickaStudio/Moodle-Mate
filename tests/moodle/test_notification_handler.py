@@ -14,7 +14,9 @@ def _build_handler(last_notification_id: int | None = 10) -> MoodleNotificationH
         moodle=SimpleNamespace(initial_fetch_count=3),
     )
     handler.api = Mock()
-    handler.state_manager = Mock(last_notification_id=last_notification_id)
+    handler.state_manager = Mock(
+        last_notification_id=last_notification_id, initial_notification_id=None
+    )
     handler.last_notification_id = last_notification_id
     handler.moodle_user_id = 42
     handler.last_successful_connection = time.time()

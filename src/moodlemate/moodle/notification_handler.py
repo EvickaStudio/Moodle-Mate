@@ -419,15 +419,22 @@ class MoodleNotificationHandler:
     def _handle_initial_fetch(self) -> list[NotificationData] | None:
         """Handles the initial fetch of notifications on the first run."""
         logger.info("First run detected. Performing initial fetch.")
-        limit = self.settings.moodle.initial_fetch_count
+        initial_id = self.state_manager.initial_notification_id
+        limit = self.settings.moodle.initial_fetch_count if initial_id is None else None
         notifications = self.fetch_notifications(limit=limit)
 
         if not notifications:
             logger.info("No notifications found on initial fetch.")
             return None
 
+        if initial_id is not None:
+            notifications = [item for item in notifications if item["id"] >= initial_id]
+            if not notifications:
+                return None
+
         logger.info(f"Fetched {len(notifications)} notifications on initial run.")
         notifications.sort(key=lambda notification: notification["id"])
+        self.state_manager.pin_initial_notification(notifications[0]["id"])
         for notification in notifications:
             self._handle_new_notification(
                 "Processing initial notification: ID ",
