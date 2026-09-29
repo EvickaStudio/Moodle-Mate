@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypedDict
 
 from moodlemate.core.state_manager import StateManager
 from moodlemate.moodle.api import MoodleAPI
@@ -20,6 +20,15 @@ class NotificationData(TypedDict):
     useridfrom: int
     subject: str
     fullmessagehtml: str
+    courseid: NotRequired[int]
+    contexturl: NotRequired[str]
+    url: NotRequired[str]
+    timecreated: NotRequired[int]
+    created: NotRequired[int]
+    time: NotRequired[int]
+    component: NotRequired[str]
+    eventtype: NotRequired[str]
+    userfrom: NotRequired[str | dict[str, str]]
 
 
 class UserData(TypedDict):
@@ -42,44 +51,23 @@ class MoodleNotificationHandler:
         self, settings: "Settings", api: MoodleAPI, state_manager: StateManager
     ) -> None:
         """
-        Initialize the notification handler.
+        Initialize the handler without contacting Moodle until the first fetch.
 
         Args:
             settings: Application configuration
             api: Moodle API instance
             state_manager: State manager instance
 
-        Raises:
-            MoodleConnectionError: If connection to Moodle fails
-            MoodleAuthenticationError: If authentication fails
-            ValueError: If required configuration is missing
         """
-        try:
-            self.settings = settings
-            self.api = api
-            self.state_manager = state_manager
-
-            # Initial login
-            self._login()
-
-            # Get and store the authenticated user's ID
-            self.moodle_user_id = self.api.get_user_id()
-            if not self.moodle_user_id:
-                raise MoodleAuthenticationError("Failed to get user ID after login")
-            self.moodle_user_id = int(self.moodle_user_id)  # Cast to int
-
-            self.last_notification_id = self.state_manager.last_notification_id
-
-            # Session management variables
-            self.last_successful_connection = time.time()
-            self.session_timeout = 3600  # Default session timeout of 1 hour
-            self.max_reconnect_attempts = 5
-            self.reconnect_delay = 60  # Initial delay for reconnection attempts
-
-        except Exception as e:
-            raise MoodleConnectionError(
-                f"Failed to initialize Moodle connection: {e!s}"
-            ) from e
+        self.settings = settings
+        self.api = api
+        self.state_manager = state_manager
+        self.moodle_user_id: int | None = None
+        self.last_notification_id = state_manager.last_notification_id
+        self.last_successful_connection = 0.0
+        self.session_timeout = 3600  # Default session timeout of 1 hour
+        self.max_reconnect_attempts = 5
+        self.reconnect_delay = 60  # Initial delay for reconnection attempts
 
     def _login(self) -> None:
         """
@@ -113,34 +101,13 @@ class MoodleNotificationHandler:
         current_time = time.time()
         time_since_last_connection = current_time - self.last_successful_connection
 
-        if time_since_last_connection > self.session_timeout:
-            logger.info("Session may have expired. Attempting to reconnect...")
+        if (
+            not self.api.token
+            or self.moodle_user_id is None
+            or time_since_last_connection > self.session_timeout
+        ):
+            logger.info("Moodle session missing or expired. Connecting...")
             self._reconnect()
-            return
-
-        # If we have a token but no user ID, try to get it
-        if self.api.token and not self.moodle_user_id:
-            logger.warning(
-                "User ID missing but token exists. Attempting to retrieve user ID..."
-            )
-            try:
-                user_id = self.api.get_user_id()
-                if user_id:
-                    self.moodle_user_id = int(user_id)
-                    self.last_successful_connection = time.time()
-                    logger.info(
-                        f"Successfully retrieved user ID: {self.moodle_user_id}"
-                    )
-                else:
-                    logger.warning(
-                        "Failed to retrieve user ID. Attempting reconnection..."
-                    )
-                    self._reconnect()
-            except Exception as e:
-                logger.warning(
-                    f"Error retrieving user ID: {e!s}. Attempting reconnection..."
-                )
-                self._reconnect()
 
     def _reconnect(self) -> None:
         """
@@ -167,7 +134,7 @@ class MoodleNotificationHandler:
                         "Failed to get user ID after reconnection"
                     )
 
-                self.moodle_user_id = int(user_id)
+                self.moodle_user_id = user_id
                 logger.info(f"Reconnection successful. User ID: {self.moodle_user_id}")
                 return
             except (MoodleAuthenticationError, MoodleConnectionError) as e:
@@ -197,77 +164,7 @@ class MoodleNotificationHandler:
         Raises:
             MoodleConnectionError: If connection fails repeatedly
         """
-        retry_delay = 60  # Initial delay in seconds
-        max_delay = 300  # Maximum delay of 5 minutes
-        max_retries = 5  # Maximum number of retries
-        retries = 0
-
-        while retries < max_retries:
-            try:
-                # Ensure connection is active before making the request
-                self._ensure_connection()
-
-                logger.info("Fetching notifications from Moodle")
-                # Ensure moodle_user_id is not None before passing it
-                if self.moodle_user_id is None:
-                    raise MoodleAuthenticationError("User ID is not available")
-
-                response = self.api.get_popup_notifications(self.moodle_user_id)
-
-                # Update last successful connection time
-                self.last_successful_connection = time.time()
-
-                if not isinstance(response, dict):
-                    logger.error(f"Unexpected response type: {type(response)}")
-                    return None
-
-                notifications = response.get("notifications", [])
-                if not notifications:
-                    logger.info("No notifications found")
-                    return None
-
-                # Validate notification format
-                processed_notifications = []
-                for notification in notifications:
-                    if processed := self._process_notification(notification):
-                        processed_notifications.append(processed)
-
-                if not processed_notifications:
-                    logger.error("Failed to process notification batch")
-                    return None
-
-                logger.debug(
-                    "Latest notification batch fetched: %s",
-                    processed_notifications,
-                )
-                return processed_notifications
-
-            except MoodleAuthenticationError as e:
-                # Authentication issues should trigger a reconnection attempt
-                logger.warning(f"Authentication error: {e!s}")
-                try:
-                    self._reconnect()
-                    retries += 1  # Count this as a retry attempt
-                except MoodleConnectionError as ce:
-                    # If reconnection fails after multiple attempts, propagate the error
-                    raise ce
-
-            except Exception as e:
-                retries += 1
-                if retries >= max_retries:
-                    raise MoodleConnectionError(
-                        f"Failed to fetch notifications after {max_retries} attempts"
-                    ) from e
-
-                logger.warning(
-                    f"Failed to fetch notifications (attempt {retries}/{max_retries}): {e!s}"
-                )
-                logger.info(f"Retrying in {retry_delay} seconds...")
-
-                time.sleep(retry_delay)
-                retry_delay = min(retry_delay * 2, max_delay)  # Exponential backoff
-
-        return None
+        return self.fetch_notifications()
 
     def fetch_latest_notification(self) -> NotificationData | None:
         """
@@ -454,7 +351,7 @@ class MoodleNotificationHandler:
         if not processed:
             logger.error(error_message)
             return None
-        logger.debug(f"{debug_message_prefix}{processed}")
+        logger.debug("%s", debug_message_prefix)
         return processed
 
     def _process_notification(self, notification: dict) -> NotificationData | None:
@@ -467,15 +364,36 @@ class MoodleNotificationHandler:
                 logging.error(f"Missing required notification fields: {missing}")
                 return None
 
+            # Retain the optional metadata used by filters and dashboard history.
+            metadata: dict[str, Any] = {}
+            for key in ("courseid", "timecreated", "created", "time"):
+                try:
+                    metadata[key] = int(notification[key])
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    continue
+            for key in ("contexturl", "url", "component", "eventtype"):
+                if isinstance(value := notification.get(key), str):
+                    metadata[key] = value
+            author = notification.get("userfrom")
+            if isinstance(author, str):
+                metadata["userfrom"] = author
+            elif isinstance(author, dict):
+                metadata["userfrom"] = {
+                    key: value
+                    for key in ("fullname", "firstname", "username")
+                    if isinstance(value := author.get(key), str)
+                }
+
             # Create TypedDict with validated data
             return NotificationData(
                 id=int(notification["id"]),
                 useridfrom=int(notification["useridfrom"]),
                 subject=str(notification["subject"]),
                 fullmessagehtml=str(notification["fullmessagehtml"]),
+                **metadata,
             )
         except (KeyError, ValueError) as e:
-            logging.error(f"Error processing notification data: {e}")
+            logging.error("Error processing notification data (%s)", type(e).__name__)
             return None
 
     def _process_user_data(self, user_data: dict) -> UserData | None:
@@ -495,22 +413,29 @@ class MoodleNotificationHandler:
                 profileimageurl=str(user_data["profileimageurl"]),
             )
         except (KeyError, ValueError) as e:
-            logging.error(f"Error processing user data: {e}")
+            logging.error("Error processing user data (%s)", type(e).__name__)
             return None
 
     def _handle_initial_fetch(self) -> list[NotificationData] | None:
         """Handles the initial fetch of notifications on the first run."""
         logger.info("First run detected. Performing initial fetch.")
-        limit = self.settings.moodle.initial_fetch_count
+        initial_id = self.state_manager.initial_notification_id
+        limit = self.settings.moodle.initial_fetch_count if initial_id is None else None
         notifications = self.fetch_notifications(limit=limit)
 
         if not notifications:
             logger.info("No notifications found on initial fetch.")
             return None
 
+        if initial_id is not None:
+            notifications = [item for item in notifications if item["id"] >= initial_id]
+            if not notifications:
+                return None
+
         logger.info(f"Fetched {len(notifications)} notifications on initial run.")
-        # Process in reverse order to handle oldest first
-        for notification in reversed(notifications):
+        notifications.sort(key=lambda notification: notification["id"])
+        self.state_manager.pin_initial_notification(notifications[0]["id"])
+        for notification in notifications:
             self._handle_new_notification(
                 "Processing initial notification: ID ",
                 notification["id"],
@@ -518,7 +443,9 @@ class MoodleNotificationHandler:
             )
         return notifications
 
-    def fetch_notifications(self, limit: int) -> list[NotificationData] | None:
+    def fetch_notifications(
+        self, limit: int | None = None
+    ) -> list[NotificationData] | None:
         """Fetches a specified number of recent notifications from Moodle."""
         retry_delay = 60  # Initial delay in seconds
         max_delay = 300  # Maximum delay of 5 minutes
@@ -553,27 +480,31 @@ class MoodleNotificationHandler:
                 time.sleep(retry_delay)
                 retry_delay = min(retry_delay * 2, max_delay)  # Exponential backoff
 
-        return None
+        raise MoodleConnectionError(
+            f"Failed to fetch notifications after {max_retries} attempts"
+        )
 
-    def _fetch_notifications(self, limit: int) -> list[NotificationData] | None:
+    def _fetch_notifications(self, limit: int | None) -> list[NotificationData] | None:
         # Ensure connection is active before making the request
         self._ensure_connection()
 
-        logger.info(f"Fetching up to {limit} notifications from Moodle")
+        logger.info("Fetching notifications from Moodle (limit=%s)", limit)
         # Ensure moodle_user_id is not None before passing it
         if self.moodle_user_id is None:
             raise MoodleAuthenticationError("User ID is not available")
 
         response = self.api.get_popup_notifications(self.moodle_user_id, limit=limit)
 
-        # Update last successful connection time
-        self.last_successful_connection = time.time()
-
         if not isinstance(response, dict):
-            logger.error(f"Unexpected response type: {type(response)}")
-            return None
+            raise MoodleConnectionError("Unexpected Moodle response type")
 
-        notifications = response.get("notifications", [])
+        notifications = response.get("notifications")
+        if not isinstance(notifications, list):
+            raise MoodleConnectionError(
+                "Moodle response is missing a notifications list"
+            )
+
+        self.last_successful_connection = time.time()
         if not notifications:
             logger.info("No notifications found")
             return None

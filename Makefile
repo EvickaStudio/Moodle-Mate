@@ -73,8 +73,8 @@ export-requirements: export-requirements-runtime ## Backward-compatible alias fo
 export-requirements-runtime: ## Export runtime requirements.txt from uv lock
 	$(UV) export --package moodle-mate --no-dev --no-emit-project -o requirements.txt
 
-export-requirements-dev: ## Export additive requirements-dev.txt from pyproject dev extras
-	./scripts/export_requirements_dev.sh requirements-dev.txt
+export-requirements-dev: ## Export locked runtime and development requirements
+	$(SHELL) ./scripts/export_requirements_dev.sh requirements-dev.txt
 
 sync: lock export-requirements-runtime export-requirements-dev ## Refresh lockfile and both requirements files
 

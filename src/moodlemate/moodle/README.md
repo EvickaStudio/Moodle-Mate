@@ -12,7 +12,7 @@ This directory contains modules for integrating with Moodle, a popular learning 
 
 ## Moodle API Wrapper
 
-The `MoodleAPI` class provides a Python wrapper for interacting with the Moodle API. It implements the Singleton pattern and handles authentication, session management, and API requests.
+The `MoodleAPI` class provides a Python wrapper for interacting with the Moodle API. It handles authentication, encrypted session caching when configured, and API requests.
 
 ### Features
 
@@ -50,11 +50,15 @@ print(site_info)
 
 The `MoodleNotificationHandler` class manages the fetching and processing of Moodle notifications. It provides:
 
-- Automatic notification polling
+- Notification fetching for the application's polling loop
 - Type-safe notification processing
-- User information caching
+- User information lookup
 - Error handling with retries
 - Rate limiting and backoff strategies
+
+Construction does not contact Moodle. Authentication happens on the first fetch,
+so the dashboard and `--test-notification` can start during a Moodle outage.
+Fetches still report connection failures and retry through the polling loop.
 
 ### Notification Handler Usage
 
@@ -75,8 +79,8 @@ moodle_api = MoodleAPI(
 handler = MoodleNotificationHandler(settings, moodle_api, state_manager)
 
 # Fetch new notifications
-notification = handler.fetch_newest_notification()
-if notification:
+notifications = handler.fetch_newest_notification()
+for notification in notifications or []:
     print(f"New notification: {notification['subject']}")
 ```
 
@@ -94,7 +98,8 @@ The module includes custom exceptions for better error handling:
 from moodlemate.moodle.errors import MoodleConnectionError, MoodleAuthenticationError
 
 try:
-    handler = MoodleNotificationHandler(config)
+    handler = MoodleNotificationHandler(settings, moodle_api, state_manager)
+    notifications = handler.fetch_newest_notification()
 except MoodleAuthenticationError as e:
     print(f"Authentication failed: {e}")
 except MoodleConnectionError as e:

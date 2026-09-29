@@ -2,6 +2,7 @@ import logging
 import re
 import time
 from typing import Any, cast
+from urllib.parse import urlparse
 
 import openai
 import tiktoken
@@ -56,6 +57,12 @@ class GPT:
         return "openrouter.ai" in self._endpoint.lower() if self._endpoint else False
 
     @property
+    def _uses_openai_endpoint(self) -> bool:
+        return (
+            not self._endpoint or urlparse(self._endpoint).hostname == "api.openai.com"
+        )
+
+    @property
     def api_key(self) -> str | None:
         """Get the configured API key."""
         return self._api_key
@@ -71,10 +78,10 @@ class GPT:
         Raises:
             InvalidAPIKeyError: If the key is empty or invalid
         """
-        if not key:
+        if not key and self._uses_openai_endpoint:
             raise InvalidAPIKeyError("API key cannot be empty")
 
-        if not self._api_key_pattern.match(key) and not self._endpoint:
+        if not self._api_key_pattern.match(key) and self._uses_openai_endpoint:
             raise InvalidAPIKeyError(
                 "Invalid API key format for default OpenAI endpoint. Expected format: 'sk-' followed by 48+ alphanumeric characters"
             )
@@ -87,7 +94,7 @@ class GPT:
         return self._endpoint
 
     @endpoint.setter
-    def endpoint(self, url: str) -> None:
+    def endpoint(self, url: str | None) -> None:
         """
         Set the API endpoint URL.
         This can be useful for using a custom endpoint
@@ -101,10 +108,13 @@ class GPT:
 
     def _get_client(self) -> openai.OpenAI:
         """Get or initialize OpenAI client."""
-        if not self._api_key:
+        if not self._api_key and self._uses_openai_endpoint:
             raise InvalidAPIKeyError("API key cannot be empty")
         if self._client is None:
-            self._client = openai.OpenAI(api_key=self._api_key, base_url=self._endpoint)
+            # The SDK requires a key; keyless custom requests omit its header below.
+            self._client = openai.OpenAI(
+                api_key=self._api_key or "moodlemate-no-key", base_url=self._endpoint
+            )
         return self._client
 
     def register_model(self, model: str, pricing: ModelPricing) -> None:
@@ -140,7 +150,7 @@ class GPT:
         Args:
             model: The model name to validate
         """
-        if model not in self.PRICING:
+        if model.removeprefix("openai/") not in self.PRICING:
             logging.warning(
                 f"Model '{model}' not in pricing database. Cost tracking will be disabled."
             )
@@ -223,7 +233,9 @@ class GPT:
                     # Add other roles as needed
 
                 # Prepare headers for OpenRouter if needed
-                extra_headers: dict[str, str] = {}
+                extra_headers: dict[str, str | openai.Omit] = {}
+                if not self._api_key and not self._uses_openai_endpoint:
+                    extra_headers["Authorization"] = openai.Omit()
                 if self.is_openrouter:
                     extra_headers["HTTP-Referer"] = "https://moodle-mate.app"
                     extra_headers["X-Title"] = "Moodle Mate"
@@ -235,6 +247,14 @@ class GPT:
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                 }
+                if model in {"openai/gpt-6-luna", "gpt-6-luna"} or re.fullmatch(
+                    r"gpt-5(?:-mini|-nano)?(?:-\d{4}-\d{2}-\d{2})?", model
+                ):
+                    api_call_args.pop("temperature")
+                    api_call_args["max_completion_tokens"] = api_call_args.pop(
+                        "max_tokens"
+                    )
+                    api_call_args["reasoning_effort"] = "minimal"
                 if extra_headers:
                     api_call_args["extra_headers"] = extra_headers
 
@@ -248,16 +268,32 @@ class GPT:
                     raise ChatCompletionError("No completion choices returned")
 
                 output_text = response.choices[0].message.content or ""
-
-                # Only calculate and log costs for known models
-                if model in self.PRICING:
-                    input_tokens = sum(
-                        self.count_tokens(msg["content"], model=model)
-                        for msg in messages
+                if not output_text.strip():
+                    raise ChatCompletionError(
+                        "No completion text returned; check the token budget"
                     )
-                    output_tokens = self.count_tokens(output_text, model=model)
 
-                    pricing = self.PRICING[model]
+                # Use API-reported usage for GPT-6 Luna; its tokenizer is not
+                # recognized by the bundled tiktoken version.
+                pricing_model = model.removeprefix("openai/")
+                if pricing_model in self.PRICING:
+                    if pricing_model == ModelType.GPT6_LUNA.value:
+                        usage = response.usage
+                        if usage is None:
+                            logging.info(
+                                "GPT-6 Luna usage missing; cost tracking skipped."
+                            )
+                            return output_text
+                        input_tokens = usage.prompt_tokens
+                        output_tokens = usage.completion_tokens
+                    else:
+                        input_tokens = sum(
+                            self.count_tokens(msg["content"], model=model)
+                            for msg in messages
+                        )
+                        output_tokens = self.count_tokens(output_text, model=model)
+
+                    pricing = self.PRICING[pricing_model]
                     input_cost, output_cost, total_cost = pricing.calculate_costs(
                         input_tokens, output_tokens
                     )

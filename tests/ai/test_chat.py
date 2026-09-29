@@ -1,9 +1,18 @@
+import json
+import logging
 from unittest.mock import MagicMock, Mock
 
+import httpx
+import openai
 import pytest
 
 from moodlemate.ai.chat import GPT
 from moodlemate.ai.errors import InvalidAPIKeyError
+from moodlemate.config import Settings
+from moodlemate.notifications.summarizer import (
+    NotificationSummarizer,
+    initialize_summarizer,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -92,3 +101,193 @@ def test_chat_completion_success(monkeypatch):
 
     assert result == "Summary result"
     mock_client.chat.completions.create.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        "gpt-5-nano",
+        "gpt-5-nano-2025-08-07",
+        "gpt-5-mini",
+        "gpt-5",
+        "openai/gpt-6-luna",
+        "gpt-6-luna",
+    ],
+)
+def test_reasoning_models_use_supported_parameters(model, monkeypatch):
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content="Summary"))],
+        usage=None,
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    monkeypatch.setattr(gpt, "count_tokens", lambda *args, **kwargs: 1)
+
+    assert (
+        gpt.chat_completion(model, "Summarize", "Body", max_tokens=16384) == "Summary"
+    )
+    arguments = client.chat.completions.create.call_args.kwargs
+    assert "temperature" not in arguments
+    assert "max_tokens" not in arguments
+    assert arguments["max_completion_tokens"] == 16384
+    assert arguments["reasoning_effort"] == "minimal"
+
+
+@pytest.mark.parametrize("model", ["gpt-6-luna", "openai/gpt-6-luna"])
+def test_gpt6_luna_cost_uses_pricing_and_api_usage(model, monkeypatch, caplog):
+    caplog.set_level(logging.INFO)
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content="Summary"))],
+        usage=Mock(prompt_tokens=2000, completion_tokens=10000),
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    monkeypatch.setattr(
+        gpt,
+        "count_tokens",
+        Mock(side_effect=AssertionError("GPT-6 Luna should use API-reported usage")),
+    )
+
+    assert (
+        gpt.chat_completion(model, "Summarize", "Body", max_tokens=16384) == "Summary"
+    )
+    assert client.chat.completions.create.call_args.kwargs["model"] == model
+    assert "$0.000200" in caplog.text
+    assert "$0.005000" in caplog.text
+    assert "$0.005200" in caplog.text
+
+
+@pytest.mark.parametrize("model", ["gpt-4o-mini", "local-model", "gpt-5-chat-latest"])
+def test_other_model_requests_preserve_sampling_parameters(model, monkeypatch):
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content="Summary"))]
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    monkeypatch.setattr(gpt, "count_tokens", lambda *args, **kwargs: 1)
+
+    assert (
+        gpt.chat_completion(model, "Summarize", "Body", temperature=0.3, max_tokens=150)
+        == "Summary"
+    )
+    arguments = client.chat.completions.create.call_args.kwargs
+    assert arguments["temperature"] == 0.3
+    assert arguments["max_tokens"] == 150
+    assert "reasoning_effort" not in arguments
+
+
+def test_empty_completion_preserves_original_notification(monkeypatch):
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content=""))]
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    settings = Settings(
+        _env_file=None,
+        moodle={
+            "url": "https://moodle.example.edu",
+            "username": "test",
+            "password": "dummy",
+        },
+    )
+    summarizer = NotificationSummarizer(settings, gpt)
+
+    assert summarizer.summarize("Original notification") == "Original notification"
+    arguments = client.chat.completions.create.call_args.kwargs
+    assert arguments["max_completion_tokens"] == 16384
+
+
+@pytest.mark.parametrize(
+    "endpoint,key",
+    [
+        ("http://127.0.0.1:11434/v1", "local-key"),
+        ("http://127.0.0.1:11434/v1", ""),
+        (None, "sk-" + "a" * 48),
+    ],
+)
+def test_summarizer_initialization_sends_configured_authentication(
+    endpoint, key, monkeypatch
+):
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "id": "test",
+                "object": "chat.completion",
+                "created": 1,
+                "model": "test-model",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {"role": "assistant", "content": "Summary"},
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    original_client = openai.OpenAI
+    with httpx.Client(transport=httpx.MockTransport(respond)) as http_client:
+        monkeypatch.setattr(
+            openai,
+            "OpenAI",
+            lambda **kwargs: original_client(http_client=http_client, **kwargs),
+        )
+        settings = Settings(
+            _env_file=None,
+            moodle={
+                "url": "https://moodle.example.edu",
+                "username": "test",
+                "password": "dummy",
+            },
+            ai={
+                "enabled": True,
+                "api_key": key,
+                "endpoint": endpoint,
+                "model": "test-model",
+            },
+        )
+        summarizer = initialize_summarizer(settings)
+        assert summarizer.summarize("Body") == "Summary"
+
+    assert len(requests) == 1
+    assert (
+        str(requests[0].url)
+        == (endpoint or "https://api.openai.com/v1") + "/chat/completions"
+    )
+    assert requests[0].headers.get("authorization") == (
+        f"Bearer {key}" if key else None
+    )
+    assert json.loads(requests[0].content)["model"] == "test-model"
+
+
+@pytest.mark.parametrize("endpoint", [None, "https://api.openai.com/v1/"])
+def test_openai_endpoint_still_requires_a_key(endpoint):
+    gpt = GPT()
+    gpt.endpoint = endpoint
+    with pytest.raises(InvalidAPIKeyError):
+        gpt.api_key = ""
+
+
+def test_initializer_uses_openrouter_default_after_custom_endpoint():
+    GPT().endpoint = "http://127.0.0.1:11434/v1"
+    settings = Settings(
+        _env_file=None,
+        moodle={
+            "url": "https://moodle.example.edu",
+            "username": "test",
+            "password": "dummy",
+        },
+        ai={"api_key": "not-an-openai-key"},
+    )
+    summarizer = initialize_summarizer(settings)
+    assert summarizer is not None
+    assert GPT().endpoint == "https://openrouter.ai/api/v1"
+    assert GPT().api_key == "not-an-openai-key"

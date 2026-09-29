@@ -11,11 +11,11 @@ The repository for the python version is [here](https://github.com/EvickaStudio/
 Here is a simple example of how to use the library:
 
 ```python
-from moodlemate.markdown.turndown import TurndownService
+from moodlemate.markdown.turndown import MarkdownConverter
 
-td = TurndownService({"headingStyle": "atx", "codeBlockStyle": "fenced"})
+converter = MarkdownConverter({"headingStyle": "atx", "codeBlockStyle": "fenced"})
 
 html = "<h1>Hello, World!</h1>"
-markdown = td.turndown(html)
+markdown = converter.to_markdown(html)
 print(markdown)
 ```

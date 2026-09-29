@@ -22,30 +22,27 @@ class MyServiceProvider(NotificationProvider):
     def __init__(self, api_key: str, endpoint: str = "https://api.myservice.com"):
         self.api_key = api_key
         self.endpoint = endpoint.rstrip("/")
-        self.session = request_manager.session
+        self.session = request_manager.get_session("provider_my_service")
 
     def send(self, subject: str, message: str, summary: str | None = None) -> bool:
         payload = {"title": subject, "body": message}
         if summary:
             payload["summary"] = summary
 
-        request_manager.update_headers(
-            {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            }
-        )
-
         try:
-            response = self.session.post(f"{self.endpoint}/send", json=payload)
+            response = self.session.post(
+                f"{self.endpoint}/send",
+                json=payload,
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            )
         except Exception as exc:
-            logger.error("MyService send failed: %s", exc)
+            logger.error("MyService send failed (%s)", type(exc).__name__)
             return False
 
         if 200 <= response.status_code < 300:
             return True
 
-        logger.error("MyService error: %s - %s", response.status_code, response.text)
+        logger.error("MyService error: HTTP %s", response.status_code)
         return False
 ```
 

@@ -1,0 +1,16 @@
+name: Docker smoke test
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test container dashboard
+        run: python scripts/smoke_docker.py

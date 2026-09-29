@@ -8,6 +8,8 @@ import uvicorn
 
 from moodlemate.core.utils.retry import with_retry
 from moodlemate.infrastructure.http.request_manager import request_manager
+from moodlemate.notifications.summarizer import initialize_summarizer
+from moodlemate.providers.notification import initialize_providers
 from moodlemate.web.api import WebUI
 
 if TYPE_CHECKING:
@@ -41,8 +43,26 @@ class MoodleMateApp:
         self._last_successful_poll: float | None = None
         self._last_poll_error: str | None = None
         self._shutdown_event = threading.Event()
+        # ponytail: serialize runtime changes with delivery; use a command queue if updates must be nonblocking.
+        self._runtime_lock = threading.RLock()
         self._web_server: uvicorn.Server | None = None
         self._web_server_thread: threading.Thread | None = None
+
+    def apply_settings(self, settings: "Settings") -> None:
+        """Apply validated settings and refresh their consumers between deliveries."""
+        with self._runtime_lock:
+            providers = initialize_providers(settings)
+            summarizer = initialize_summarizer(settings)
+            request_manager.configure(
+                connect_timeout=settings.notification.connect_timeout,
+                read_timeout=settings.notification.read_timeout,
+                retry_total=settings.notification.retry_total,
+                backoff_factor=settings.notification.retry_backoff_factor,
+            )
+            for field in settings.__class__.model_fields:
+                setattr(self.settings, field, getattr(settings, field))
+            self.notification_processor.providers = providers
+            self.notification_processor.summarizer = summarizer
 
     def run(self) -> None:
         """Starts the main application loop."""
@@ -92,12 +112,7 @@ class MoodleMateApp:
         app = web_ui.get_app()
 
         def run_server():
-            if self.settings.web.host not in {"127.0.0.1", "localhost"}:
-                logging.warning(
-                    "Web UI host overridden to 127.0.0.1 (localhost-only mode)."
-                )
-            host = "127.0.0.1"
-            self.settings.web.host = host
+            host = self.settings.web.host
             port = self.settings.web.port
             logging.info(f"Starting Web UI on http://{host}:{port}")
             config = uvicorn.Config(app, host=host, port=port, log_level="warning")
@@ -132,14 +147,15 @@ class MoodleMateApp:
 
         while not self._shutdown_event.is_set():
             try:
-                self._check_and_refresh_session(session_refresh_interval)
+                with self._runtime_lock:
+                    self._check_and_refresh_session(session_refresh_interval)
 
-                if self._fetch_and_process_notifications():
-                    consecutive_errors = 0
-                    self.state_manager.maybe_save_state()
-                    self._record_poll_success()
+                    if self._fetch_and_process_notifications():
+                        consecutive_errors = 0
+                        self.state_manager.maybe_save_state()
+                        self._record_poll_success()
 
-                self._send_heartbeat_if_due()
+                    self._send_heartbeat_if_due()
 
                 sleep_time = self._calculate_sleep_time(
                     consecutive_errors, self.settings.notification.fetch_interval
@@ -147,10 +163,11 @@ class MoodleMateApp:
                 self._shutdown_event.wait(sleep_time)
 
             except Exception as e:
-                consecutive_errors, error_sleep = self._handle_error(
-                    consecutive_errors, e
-                )
-                self._last_poll_error = str(e)
+                with self._runtime_lock:
+                    consecutive_errors, error_sleep = self._handle_error(
+                        consecutive_errors, e
+                    )
+                    self._last_poll_error = str(e)
                 self._shutdown_event.wait(error_sleep)
 
     def _check_and_refresh_session(self, interval: float) -> None:
@@ -198,8 +215,10 @@ class MoodleMateApp:
         ):
             now = time.time()
             cooldown = self.settings.health.failure_alert_cooldown
-            if now - self._last_failure_alert_sent >= cooldown:
-                self._send_failure_alert(error)
+            if (
+                now - self._last_failure_alert_sent >= cooldown
+                and self._send_failure_alert(error)
+            ):
                 self._last_failure_alert_sent = now
                 self._outage_alerted = True
 
@@ -216,11 +235,10 @@ class MoodleMateApp:
         """Record a successful Moodle poll and announce recovery once."""
         self._last_successful_poll = time.time()
         self._last_poll_error = None
-        if self._outage_alerted:
-            self._send_health_notification(
-                "Moodle-Mate Recovered",
-                "Moodle-Mate successfully connected to Moodle again.",
-            )
+        if self._outage_alerted and self._send_health_notification(
+            "Moodle-Mate Recovered",
+            "Moodle-Mate successfully connected to Moodle again.",
+        ):
             self._outage_alerted = False
             self._last_failure_alert_sent = 0.0
 
@@ -257,9 +275,12 @@ class MoodleMateApp:
             "subject": "Moodle-Mate Test Notification",
             "fullmessagehtml": "<p>This is a test notification from Moodle-Mate. If you received this, your notification providers are configured correctly!</p>",
         }
-        result = self.notification_processor.process(test_notification_data)
+        with self._runtime_lock:
+            result = self.notification_processor.process(test_notification_data)
         if not result.delivered:
-            raise RuntimeError("Test notification was not delivered by any provider")
+            raise RuntimeError(
+                "Test notification was not delivered to all enabled providers"
+            )
         logging.info("Test notification sent.")
 
     def _send_heartbeat_if_due(self) -> None:
@@ -276,25 +297,31 @@ class MoodleMateApp:
         ) / 3600 >= self.settings.health.heartbeat_interval:
             logging.info("Sending heartbeat notification...")
             subject = "Moodle-Mate Heartbeat"
-            message = "Moodle-Mate is still running and healthy!"
-            self._send_health_notification(subject, message)
-            self._last_heartbeat_sent = current_time
+            message = "Moodle-Mate is running."
+            if self._last_successful_poll is None:
+                message += " Waiting for the first successful Moodle poll."
+            elif self._last_poll_error or not self.get_health_status()[0]:
+                message += " Moodle polling needs attention."
+            else:
+                message += " Moodle polling is healthy."
+            if self._send_health_notification(subject, message):
+                self._last_heartbeat_sent = current_time
 
-    def _send_failure_alert(self, error: Exception) -> None:
+    def _send_failure_alert(self, error: Exception) -> bool:
         """Sends a failure alert notification."""
         if not self.settings.health.enabled:
-            return
+            return False
 
         logging.error(f"Sending failure alert: {error}")
         subject = "Moodle-Mate Failure Alert!"
         message = f"Moodle-Mate encountered a critical error: {error}"
-        self._send_health_notification(subject, message)
+        return self._send_health_notification(subject, message)
 
-    def _send_health_notification(self, subject: str, message: str) -> None:
+    def _send_health_notification(self, subject: str, message: str) -> bool:
         """Helper to send health-related notifications to the target provider."""
         if not self.settings.health.target_provider:
             logging.warning("No target provider configured for health notifications.")
-            return
+            return False
 
         target_provider_name = self.settings.health.target_provider.lower()
         for provider in self.notification_processor.providers:
@@ -303,15 +330,18 @@ class MoodleMateApp:
             ).lower()
             if provider_name == target_provider_name:
                 try:
-                    provider.send(subject, message)
-                    logging.info(
-                        f"Health notification sent via {provider.provider_name}."
+                    if provider.send(subject, message):
+                        logging.info("Health notification sent via %s.", provider_name)
+                        return True
+                    logging.error(
+                        "Health notification was not delivered via %s.", provider_name
                     )
-                    return
                 except Exception as e:
                     logging.error(
                         f"Failed to send health notification via {provider.provider_name}: {e}"
                     )
+                return False
         logging.warning(
             f"Target health provider '{target_provider_name}' not found or not enabled."
         )
+        return False

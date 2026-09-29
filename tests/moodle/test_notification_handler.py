@@ -14,7 +14,9 @@ def _build_handler(last_notification_id: int | None = 10) -> MoodleNotificationH
         moodle=SimpleNamespace(initial_fetch_count=3),
     )
     handler.api = Mock()
-    handler.state_manager = Mock(last_notification_id=last_notification_id)
+    handler.state_manager = Mock(
+        last_notification_id=last_notification_id, initial_notification_id=None
+    )
     handler.last_notification_id = last_notification_id
     handler.moodle_user_id = 42
     handler.last_successful_connection = time.time()
@@ -24,7 +26,7 @@ def _build_handler(last_notification_id: int | None = 10) -> MoodleNotificationH
     return handler
 
 
-def test_init_logs_in_and_loads_user_id():
+def test_init_defers_login_until_the_first_fetch():
     settings = SimpleNamespace(moodle=SimpleNamespace(initial_fetch_count=1))
     api = Mock()
     api.login.return_value = True
@@ -33,10 +35,33 @@ def test_init_logs_in_and_loads_user_id():
 
     handler = MoodleNotificationHandler(settings, api, state_manager)
 
+    assert handler.moodle_user_id is None
+    api.login.assert_not_called()
+    api.get_user_id.assert_not_called()
+    api.get_popup_notifications.return_value = {"notifications": []}
+    assert handler.fetch_latest_notifications() is None
     assert handler.moodle_user_id == 123
     assert handler.last_notification_id == 55
     api.login.assert_called_once()
     api.get_user_id.assert_called_once()
+
+
+@pytest.mark.parametrize("failure", ["login", "identity"])
+def test_first_connection_can_recover_after_an_outage(failure):
+    api = Mock(token=None)
+    api.login.return_value = failure != "login"
+    api.get_user_id.return_value = None
+    handler = MoodleNotificationHandler(Mock(), api, Mock(last_notification_id=55))
+    handler.max_reconnect_attempts = 1
+
+    with pytest.raises(MoodleConnectionError):
+        handler._ensure_connection()
+    assert handler.moodle_user_id is None
+    api.login.return_value = True
+    api.get_user_id.return_value = 123
+    handler._ensure_connection()
+    assert handler.moodle_user_id == 123
+    assert handler.last_notification_id == 55
 
 
 def test_fetch_latest_notification_returns_processed_notification():
@@ -186,23 +211,21 @@ def test_mark_notification_processed_updates_state_manager():
     handler.state_manager.set_last_notification_id.assert_called_once_with(11)
 
 
-def test_handle_initial_fetch_processes_notifications_in_reverse_order():
+def test_handle_initial_fetch_returns_notifications_oldest_first():
     handler = _build_handler(last_notification_id=None)
     notifications = [
-        {"id": 1, "useridfrom": 1, "subject": "A", "fullmessagehtml": "A"},
-        {"id": 2, "useridfrom": 1, "subject": "B", "fullmessagehtml": "B"},
         {"id": 3, "useridfrom": 1, "subject": "C", "fullmessagehtml": "C"},
+        {"id": 2, "useridfrom": 1, "subject": "B", "fullmessagehtml": "B"},
+        {"id": 1, "useridfrom": 1, "subject": "A", "fullmessagehtml": "A"},
     ]
     handler.fetch_notifications = Mock(return_value=notifications)
-    call_order: list[int] = []
-    handler._handle_new_notification = Mock(
-        side_effect=lambda *_args: call_order.append(_args[1])
-    )  # type: ignore[assignment]
 
     result = handler._handle_initial_fetch()
 
-    assert result == notifications
-    assert call_order == [3, 2, 1]
+    assert result is not None
+    assert [notification["id"] for notification in result] == [1, 2, 3]
+    assert handler.last_notification_id is None
+    handler.state_manager.set_last_notification_id.assert_not_called()
 
 
 def test_fetch_notifications_raises_after_retries(monkeypatch):
@@ -236,3 +259,25 @@ def test_process_notification_returns_none_for_missing_fields():
     handler = _build_handler()
 
     assert handler._process_notification({"id": 1, "subject": "incomplete"}) is None
+
+
+def test_invalid_optional_metadata_does_not_discard_the_notification():
+    result = _build_handler()._process_notification(
+        {
+            "id": 1,
+            "useridfrom": 2,
+            "subject": "Valid",
+            "fullmessagehtml": "<p>Body</p>",
+            "courseid": [],
+            "timecreated": "NaN",
+            "contexturl": {},
+            "userfrom": {"fullname": {"unexpected": "nested"}, "username": "Teacher"},
+        }
+    )
+    assert result == {
+        "id": 1,
+        "useridfrom": 2,
+        "subject": "Valid",
+        "fullmessagehtml": "<p>Body</p>",
+        "userfrom": {"username": "Teacher"},
+    }

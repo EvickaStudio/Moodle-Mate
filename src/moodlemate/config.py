@@ -16,11 +16,11 @@ class AIConfig(BaseModel):
 
     enabled: bool = True
     api_key: str = ""
-    model: str = "gpt-5-nano"
+    model: str = "openai/gpt-6-luna"
     temperature: float = 0.7
-    max_tokens: int = 150
+    max_tokens: int = 16384
     system_prompt: str = "Summarize the message concisely with appropriate emojis, excluding links. Write in target language of the notification."
-    endpoint: str | None = None
+    endpoint: str | None = "https://openrouter.ai/api/v1"
 
 
 class NotificationConfig(BaseModel):
@@ -36,10 +36,7 @@ class NotificationConfig(BaseModel):
 
 
 class FiltersConfig(BaseModel):
-    """
-    Notification filtering rules.
-    TODO: Implement subject/course-based filtering and differentiate between global notifications and personal ones.
-    """
+    """Filter notifications by subject or available Moodle course ID."""
 
     ignore_subjects_containing: list[str] = Field(default_factory=list)
     ignore_courses_by_id: list[int] = Field(default_factory=list)

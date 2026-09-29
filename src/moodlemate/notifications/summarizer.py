@@ -1,9 +1,20 @@
 import logging
 from typing import TYPE_CHECKING, Optional
 
+from moodlemate.ai.chat import GPT
+
 if TYPE_CHECKING:
-    from moodlemate.ai.chat import GPT
     from moodlemate.config import Settings
+
+
+def initialize_summarizer(settings: "Settings") -> "NotificationSummarizer | None":
+    """Build the configured summarizer for startup or a runtime update."""
+    if not settings.ai.enabled:
+        return None
+    gpt = GPT()
+    gpt.endpoint = settings.ai.endpoint
+    gpt.api_key = settings.ai.api_key
+    return NotificationSummarizer(settings, gpt)
 
 
 class NotificationSummarizer:

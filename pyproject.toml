@@ -50,10 +50,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/moodlemate"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"src/moodlemate/web/static" = "moodlemate/web/static"
-"src/moodlemate/web/templates" = "moodlemate/web/templates"
-
 [tool.ruff]
 line-length = 88
 target-version = "py311"

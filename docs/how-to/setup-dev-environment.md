@@ -39,6 +39,7 @@ This guide shows you how to prepare a local environment for development.
 2. Install dependencies and run:
 
    ```bash
-   pip install -r requirements.txt -r requirements-dev.txt
+   pip install --require-hashes -r requirements-dev.txt
+   pip install --no-deps -e .
    python -m moodlemate
    ```

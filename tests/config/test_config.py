@@ -20,8 +20,11 @@ def test_settings_loads_required_moodle(monkeypatch):
 
 def test_settings_defaults_are_applied(monkeypatch):
     _set_required_env(monkeypatch)
-    settings = Settings()
+    settings = Settings(_env_file=None)
     assert settings.ai.enabled is True
+    assert settings.ai.model == "openai/gpt-6-luna"
+    assert settings.ai.endpoint == "https://openrouter.ai/api/v1"
+    assert settings.ai.max_tokens == 16384
     assert settings.notification.fetch_interval == 60
     assert settings.notification.max_retries == 5
     assert settings.notification.connect_timeout == 10.0

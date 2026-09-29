@@ -8,86 +8,69 @@
     <style>
         :root {
             color-scheme: dark;
-            --bg: #000000;
-            --surface: #111113;
-            --border: #36363b;
-            --text: #f3f3f1;
-            --muted: #99999f;
-            --accent: #8b5cf6;
-            --accent-dark: #7547e8;
-            --danger-bg: #512b2b;
-            --danger-text: #ffd4d4;
+            --bg: #141414;
+            --surface: #181818;
+            --ring: rgba(255, 255, 255, .1);
+            --text: #f0f0f0;
+            --muted: rgba(240, 240, 240, .6);
         }
         * { box-sizing: border-box; }
-        body {
-            min-height: 100vh;
-            margin: 0;
-            padding: 32px clamp(24px, 8vw, 110px);
-            background: var(--bg);
-            color: var(--text);
-            font: 14px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
-        main {
-            width: min(100%, 980px);
-            min-height: calc(100vh - 64px);
-            margin: 0 auto;
-            display: grid;
-            grid-template-rows: auto 1fr;
-        }
-        .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-        .brand img { width: 24px; height: 24px; }
-        .login-layout {
-            width: min(100%, 650px);
-            margin: auto;
-            display: grid;
-            grid-template-columns: minmax(0, .9fr) 1px minmax(0, 1.1fr);
-            gap: 34px;
-            align-items: center;
-        }
-        .divider { width: 1px; height: 170px; background: var(--border); }
-        .intro .mini-brand { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; font-weight: 650; }
-        .intro .mini-brand img { width: 22px; height: 22px; }
-        h1 { max-width: 260px; margin: 0 0 10px; font-size: 31px; line-height: 1.08; letter-spacing: -.035em; font-weight: 500; }
-        p { max-width: 270px; margin: 0; color: var(--muted); font-size: 13px; }
-        form { width: 100%; }
-        label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 650; }
-        input { width: 100%; min-height: 40px; border-radius: 5px; font: inherit; border: 1px solid #252528; padding: 8px 11px; color: var(--text); background: #171719; }
-        input:focus-visible, button:focus-visible { outline: 3px solid rgba(49, 95, 140, .25); outline-offset: 2px; }
-        button { min-height: 34px; margin-top: 16px; padding: 6px 14px; border: 1px solid #f2f2f0; border-radius: 999px; background: #f2f2f0; color: #0b0b0c; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-        button:hover { background: #d9d9d6; }
-        button:disabled { opacity: .55; cursor: not-allowed; }
-        .error { display: none; margin-top: 14px; padding: 9px 10px; border: 1px solid #ebc5c5; border-radius: 6px; background: var(--danger-bg); color: var(--danger-text); }
+        body { min-height: 100dvh; margin: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font: 13px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        button:focus-visible, input:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+        h1, p { margin: 0; }
+        .topbar { display: flex; align-items: center; height: 64px; padding: 16px 28px; }
+        .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 14px; letter-spacing: -.025em; }
+        .brand img { width: 25px; height: 22px; object-fit: contain; }
+        .layout { flex: 1; display: grid; place-items: center; padding: 48px 24px 96px; }
+        .panel { width: min(100%, 340px); }
+        .workspace-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 24px; border: 1px solid var(--ring); border-radius: 10px; background: var(--surface); }
+        .workspace-mark img { width: 28px; height: 24px; object-fit: contain; }
+        .panel-header h1 { font-size: 22px; font-weight: 600; line-height: 1.3; letter-spacing: -.035em; }
+        .panel-header p { margin-top: 10px; color: var(--muted); font-size: 12px; }
+        .panel-body { margin-top: 28px; }
+        label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+        input { width: 100%; min-height: 38px; padding: 8px 12px; border: 1px solid var(--ring); border-radius: 5px; background: #202020; color: var(--text); font-size: 16px; }
+        input:hover { border-color: rgba(255, 255, 255, .2); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 36px; margin-top: 16px; padding: 8px 12px; border: 0; border-radius: 5px; background: #f0f0f0; color: #181818; font-size: 12px; font-weight: 500; }
+        .btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+        .btn:hover { background: #d9d9d9; }
+        .btn:disabled { opacity: .5; cursor: default; }
+        .error { display: none; margin-top: 16px; color: #f58b8b; font-size: 12px; }
         .error.show { display: block; }
-        @media (max-width: 650px) {
-            body { padding: 24px; }
-            main { min-height: calc(100vh - 48px); }
-            .login-layout { grid-template-columns: 1fr; gap: 24px; }
-            .divider { width: 100%; height: 1px; }
-            h1 { font-size: 28px; }
+        .panel-note { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--ring); color: var(--muted); font-size: 11px; }
+        .footer { padding: 20px 24px; color: var(--muted); font-size: 11px; text-align: center; }
+        @media (max-width: 480px) {
+            .topbar { height: 56px; padding: 16px 24px; }
+            .layout { padding-block: 40px 64px; }
         }
     </style>
 </head>
 <body>
-<main>
+<header class="topbar">
     <div class="brand">
         <img src="/static/icon.svg" alt="">
         <span>Moodle Mate</span>
     </div>
-    <div class="login-layout">
-        <section class="intro">
-            <div class="mini-brand"><img src="/static/icon.svg" alt=""><span>Admin access</span></div>
-            <h1>Open your dashboard.</h1>
-            <p>Review Moodle notifications, delivery history, service health, and runtime settings.</p>
-        </section>
-        <div class="divider" aria-hidden="true"></div>
-        <form id="login-form">
+</header>
+<main class="layout">
+    <section class="panel" aria-labelledby="login-title">
+        <div class="panel-header">
+            <div class="workspace-mark"><img src="/static/icon.svg" alt=""></div>
+            <h1 id="login-title">Sign in to Moodle Mate</h1>
+            <p>Your notifications, summaries, and delivery settings.</p>
+        </div>
+        <form id="login-form" class="panel-body">
             <label for="password">Dashboard password</label>
             <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
-            <button id="submit" type="submit">Sign in</button>
+            <button id="submit" class="btn" type="submit">Sign in <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
             <div id="error" class="error" role="alert"></div>
         </form>
-    </div>
+        <p class="panel-note">Use the dashboard password configured for this instance.</p>
+    </section>
 </main>
+<footer class="footer">Moodle Mate · Notification service</footer>
 <script>
     function getCookie(name) {
         const part = document.cookie.split("; ").find((item) => item.startsWith(`${name}=`));

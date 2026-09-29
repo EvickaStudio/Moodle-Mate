@@ -14,7 +14,6 @@ from moodlemate.config import Settings
 from moodlemate.core.security import rate_limiter_manager
 from moodlemate.core.state_manager import StateManager
 from moodlemate.core.version import __version__
-from moodlemate.infrastructure.http.request_manager import request_manager
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +104,7 @@ class WebUI:
         if cookie_value is None:
             return False
 
-        expires_at = self._active_sessions.get(str(cookie_value))
+        expires_at = self._active_sessions.get(cookie_value)
         return expires_at is not None and expires_at >= time.time()
 
     async def _auth_dependency(self, request: Request) -> None:
@@ -120,7 +119,7 @@ class WebUI:
         if (
             not csrf_cookie
             or not csrf_header
-            or not secrets.compare_digest(str(csrf_cookie), str(csrf_header))
+            or not secrets.compare_digest(csrf_cookie, csrf_header)
         ):
             raise HTTPException(status_code=403, detail="CSRF validation failed")
 
@@ -138,11 +137,14 @@ class WebUI:
             section_data = config_dict.get(section)
             if isinstance(section_data, dict) and section_data.get(key):
                 section_data[key] = "********"
+        if config_dict.get("session_encryption_key"):
+            config_dict["session_encryption_key"] = "********"
         return config_dict
 
     @staticmethod
     def _is_immutable_config_path(path: tuple[str, ...]) -> bool:
         immutable_paths = {
+            ("session_encryption_key",),
             ("moodle", "url"),
             ("moodle", "username"),
             ("moodle", "password"),
@@ -254,7 +256,7 @@ class WebUI:
                 Depends(self._csrf_dependency),
             ],
         )
-        async def update_config(
+        def update_config(
             new_config: dict[str, Any] = CONFIG_BODY,
         ) -> dict[str, str]:
             try:
@@ -291,15 +293,7 @@ class WebUI:
                 except ValidationError as exc:
                     raise HTTPException(status_code=400, detail=exc.errors()) from exc
 
-                for field_name in validated.__class__.model_fields:
-                    setattr(self.settings, field_name, getattr(validated, field_name))
-
-                request_manager.configure(
-                    connect_timeout=self.settings.notification.connect_timeout,
-                    read_timeout=self.settings.notification.read_timeout,
-                    retry_total=self.settings.notification.retry_total,
-                    backoff_factor=self.settings.notification.retry_backoff_factor,
-                )
+                self.app_instance.apply_settings(validated)
 
                 logger.info("Configuration updated via WebUI")
                 return {"message": "Configuration updated successfully."}
@@ -319,7 +313,7 @@ class WebUI:
                 Depends(self._csrf_dependency),
             ],
         )
-        async def trigger_test_notification() -> dict[str, str]:
+        def trigger_test_notification() -> dict[str, str]:
             try:
                 self.app_instance.send_test_notification()
                 return {"message": "Test notification triggered"}

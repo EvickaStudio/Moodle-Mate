@@ -9,17 +9,32 @@ This reference lists settings read from `.env` or environment variables with the
 - `USERNAME` (required, string): Moodle username.
 - `PASSWORD` (required, string): Moodle password.
 - `INITIAL_FETCH_COUNT` (int, default: `1`): Number of newest notifications to
-  process on the first run when no state file exists.
+  select on the first run when no state file exists. The oldest selected ID is
+  saved before delivery. Retries keep that window even if newer messages arrive
+  or the fetch count changes; the successful-delivery checkpoint advances only
+  after delivery or an intentional filter skip.
 
 ## AI (`MOODLEMATE_AI__*`)
 
 - `ENABLED` (bool, default: `true`): Enable AI summaries.
-- `API_KEY` (string, default: empty): Provider API key.
-- `MODEL` (string, default: `gpt-5-nano`): Model name.
-- `TEMPERATURE` (float, default: `0.7`): Sampling temperature.
-- `MAX_TOKENS` (int, default: `150`): Maximum summary tokens.
+- `API_KEY` (string, default: empty): API key for the selected endpoint.
+- `MODEL` (string, default: `openai/gpt-6-luna`): OpenRouter model ID; change it to
+  choose another model.
+- `TEMPERATURE` (float, default: `0.7`): Sampling temperature. Omitted for the
+  original GPT-5 models and GPT-6 Luna because those reasoning models do not
+  support this setting.
+- `MAX_TOKENS` (int, default: `16384`): Completion token budget. GPT-5 and GPT-6
+  Luna requests send this as `max_completion_tokens`; it includes reasoning
+  tokens, so the visible response may be shorter.
 - `SYSTEM_PROMPT` (string, default: set): System prompt for the summarizer.
-- `ENDPOINT` (string, optional): Custom API endpoint.
+- `ENDPOINT` (string, default: `https://openrouter.ai/api/v1`): OpenAI-compatible
+  API base URL.
+
+OpenRouter is the default provider and requires an OpenRouter API key. For direct
+OpenAI access, set `ENDPOINT` to `https://api.openai.com/v1`, use an OpenAI API
+key, and set `MODEL` to a model ID accepted by OpenAI. Other OpenAI-compatible
+endpoints can omit the API key only if the server does not require
+authentication; use the server's API base URL, typically ending in `/v1`.
 
 ## Notifications (`MOODLEMATE_NOTIFICATION__*`)
 
@@ -31,14 +46,22 @@ This reference lists settings read from `.env` or environment variables with the
 - `RETRY_BACKOFF_FACTOR` (float, default: `1.0`): HTTP backoff factor.
 - `MAX_PAYLOAD_BYTES` (int, default: `65536`): Max bytes per message/summary.
 
+HTML exceeding 64 nesting levels or 10,000 parsed nodes is sent as plain text with
+a formatting notice. The outgoing byte limit still applies. Failed sends remain
+pending for retry, including when this fallback is used.
+
 ## Filters (`MOODLEMATE_FILTERS__*`)
 
 - `IGNORE_SUBJECTS_CONTAINING` (list[string], default: empty): Subject substrings
   that cause a notification to be skipped.
-- `IGNORE_COURSES_BY_ID` (list[int], default: empty): Reserved for future course
-  filtering.
+- `IGNORE_COURSES_BY_ID` (list[int], default: empty): Skip notifications whose
+  Moodle `courseid` matches an entry. Notifications without a course ID are kept.
 
 ## Health (`MOODLEMATE_HEALTH__*`)
+
+Heartbeat and alert timers advance only after the target provider confirms delivery.
+Failed sends are retried on a later polling cycle; recovery announcements remain
+pending until delivered. Heartbeats report whether Moodle polling has succeeded.
 
 - `ENABLED` (bool, default: `false`): Enable health notifications.
 - `HEARTBEAT_INTERVAL` (int, optional): Hours between heartbeat messages.
@@ -52,8 +75,15 @@ This reference lists settings read from `.env` or environment variables with the
 
 ## Web UI (`MOODLEMATE_WEB__*`)
 
+Runtime settings updates take effect between notification batches. Provider
+toggles and options, AI settings, and HTTP defaults update their active consumers.
+An update can wait for an ongoing delivery or retry to finish. Changes apply only
+to the running process; edit the environment configuration to retain them after
+restart. Credentials, endpoints, and web server settings require a restart.
+
 - `ENABLED` (bool, default: `true`): Enable the Web UI.
-- `HOST` (string, default: `127.0.0.1`): Bind address (localhost only).
+- `HOST` (string, default: `127.0.0.1`): Bind address. Docker uses `0.0.0.0`
+  inside the container; Compose publishes the configured port on host localhost.
 - `PORT` (int, default: `9095`): Bind port.
 - `AUTH_SECRET` (string, required when `ENABLED=true`): Web UI login secret.
 
@@ -87,9 +117,36 @@ Custom providers use the same pattern:
 
 ## Runtime files and paths
 
-These are read directly from the environment:
+The `MOODLE_` path variables are read directly from the process environment.
+For native runs, adding them to `.env` alone does not export them. Set them in
+the launching shell or service configuration, for example on Linux/macOS:
 
-- `MOODLE_SESSION_FILE` (default: `moodle_session.json`): Encrypted cached session token file.
-- `MOODLEMATE_SESSION_ENCRYPTION_KEY` (optional): Enables encrypted Moodle session caching when set.
+```bash
+export MOODLE_STATE_DIR="$PWD/state"
+export MOODLE_SESSION_FILE="$MOODLE_STATE_DIR/moodle_session.json"
+export MOODLE_LOG_DIR="$PWD/logs"
+uv run moodlemate
+```
+
+Docker Compose loads `.env` into the container environment through `env_file`;
+its explicit `environment` entries take precedence. Paths used there refer to
+the container filesystem. Mount those directories to retain files on the host.
+
+- `MOODLE_SESSION_FILE` (native default: `moodle_session.json`; Docker default: `$MOODLE_STATE_DIR/moodle_session.json`): Encrypted cached session token file.
+- `MOODLE_LOG_DIR` (native default: `logs`; Docker default: `/app/logs`): Directory for rotating log files.
 - `MOODLE_STATE_FILE` (optional): Full path for `state.json`.
-- `MOODLE_STATE_DIR` (default: `/app/state`): Directory for `state.json`.
+- `MOODLE_STATE_DIR` (optional): Directory for `state.json`, unless `MOODLE_STATE_FILE`
+  is set. Docker defaults to `/app/state`. Native runs use `/app/state` when it
+  exists, otherwise `state.json` in the working directory.
+
+`MOODLEMATE_SESSION_ENCRYPTION_KEY` enables encrypted Moodle session caching when
+set. This setting uses the `MOODLEMATE_` prefix and is loaded from `.env` for native
+runs as well as from environment variables. The path variables do not enable
+session caching by themselves.
+
+A notification is complete only after all enabled providers confirm delivery.
+Successful sends are saved immediately under `delivery_receipts` in `state.json`,
+so retries and restarts skip those providers. Receipts are cleared when the
+notification is checkpointed. Existing checkpoint-only state files remain
+compatible, and test notifications always send again. A provider timeout with an
+uncertain remote result can still cause duplicate delivery.

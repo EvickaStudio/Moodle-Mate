@@ -31,10 +31,19 @@ def test_global_instance():
 
 def test_configure_updates_timeouts_and_retries():
     rm = RequestManager()
+    session = rm.get_session("moodle")
+    session.cookies.set("session", "dummy")
+    session.headers["X-Test"] = "retained"
     rm.configure(connect_timeout=5, read_timeout=12, retry_total=2, backoff_factor=0.5)
     assert rm._default_timeout == (5, 12)
     assert rm._retry_total == 2
     assert rm._backoff_factor == 0.5
+    assert rm.get_session("moodle") is session
+    assert session._default_timeout == (5, 12)
+    assert session.get_adapter("https://").max_retries.total == 2
+    assert session.get_adapter("https://").max_retries.backoff_factor == 0.5
+    assert session.cookies.get("session") == "dummy"
+    assert session.headers["X-Test"] == "retained"
 
 
 def test_scoped_sessions_isolate_state():

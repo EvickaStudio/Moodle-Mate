@@ -23,9 +23,10 @@ delivers them to a notification platform (e.g. Discord). This allows you to stay
 activities without manually checking your email or Moodle.
 
 Moodle Mate includes an optional AI-powered summarization feature that summarizes notifications and adds a short TL;DR.
-BYOK (Bring Your Own Key): you can use any AI provider that supports an OpenAI-compatible API. If you have privacy
-concerns, you can use a locally hosted model (e.g. with
-[Ollama](https://ollama.com/) or other tools like LMStudio, vLLM etc. that have OpenAI-compatible APIs).
+OpenRouter is the default OpenAI-compatible endpoint, configured for `openai/gpt-6-luna`. Change
+`MOODLEMATE_AI__MODEL` to choose another OpenRouter model. BYOK (Bring Your Own Key) also supports any AI provider
+with an OpenAI-compatible API, including locally hosted models such as
+[Ollama](https://ollama.com/), LM Studio, or vLLM.
 
 ## Key Features
 
@@ -95,6 +96,7 @@ concerns, you can use a locally hosted model (e.g. with
    source venv/bin/activate
    # source venv/bin/activate.fish for fish shell
    pip install -r requirements.txt
+   pip install --no-deps -e .
    ```
 
 3. **Configure the Application**
@@ -203,34 +205,28 @@ Moodle Mate includes a built-in web dashboard for monitoring and configuration.
 
 ## Screenshots
 
-*Colors differ across screenshots because different Termius themes were used.*
+*Colors differ across screenshots because different Termius themes were used. And data was redacted for privacy reasons.*
 
 > Versions are slightly mixed up, sorry.
 
-### v2.0.3 (Web UI)
+### Web UI
 
-![v2.2.1](assets/webui_v2.0.3.png)
+![latest web UI screenshot](assets/web_running_latest.png)
 
-### v2.0.2 (Docker)
+### CLI
 
-![v2.0.2](assets/running_v2.0.2.png)
-
-Running as Docker daemon, to see the logs run `docker compose logs -f`
-
-### v2.0.1
-
-![v2.0.1](assets/running_v2.0.1.webp)
+![latest CLI screenshot](assets/cli_running_latest.png)
 
 When running as a standard Python application, logs appear in the terminal where you start the command. For KVM setups
 running Moodle Mate in the background, Docker is recommended, but you can also use tmux, screen, or tmuxinator.
 
 ## Documentation
 
-See the Diataxis-based docs index at `docs/README.md`.
+See the docs index at `docs/README.md`.
 
 ### Discord notification
 
-![v2.0.2](assets/preview.png)
+![latest Discord preview](assets/dc_preview_latest.png)
 
 ## Creating Custom Notification Providers
 

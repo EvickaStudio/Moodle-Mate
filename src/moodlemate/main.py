@@ -2,7 +2,6 @@ import argparse
 import logging
 import sys
 
-from moodlemate.ai.chat import GPT
 from moodlemate.app import MoodleMateApp
 from moodlemate.config import Settings
 from moodlemate.core.state_manager import StateManager
@@ -11,7 +10,7 @@ from moodlemate.infrastructure.logging.setup import setup_logging
 from moodlemate.moodle.api import MoodleAPI
 from moodlemate.moodle.notification_handler import MoodleNotificationHandler
 from moodlemate.notifications.processor import NotificationProcessor
-from moodlemate.notifications.summarizer import NotificationSummarizer
+from moodlemate.notifications.summarizer import initialize_summarizer
 from moodlemate.providers.notification import initialize_providers
 from moodlemate.ui.cli.screen import print_logo
 
@@ -71,14 +70,7 @@ def initialize_and_run_app(settings: Settings, args: argparse.Namespace) -> None
     )
 
     # AI / Summarization
-    summarizer = None
-    if settings.ai.enabled:
-        gpt = GPT()
-        gpt.api_key = settings.ai.api_key
-        if settings.ai.endpoint:
-            gpt.endpoint = settings.ai.endpoint
-
-        summarizer = NotificationSummarizer(settings, gpt)
+    summarizer = initialize_summarizer(settings)
 
     # Notification Providers
     providers = initialize_providers(settings)
