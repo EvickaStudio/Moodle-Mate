@@ -37,9 +37,10 @@ Configured files:
 Release Please updates:
 
 1. `pyproject.toml`
-2. `src/moodlemate/core/version.py`
-3. `.github/release-please/manifest.json`
-4. `CHANGELOG.md`
+2. `uv.lock` (the `moodle-mate` package version)
+3. `src/moodlemate/core/version.py`
+4. `.github/release-please/manifest.json`
+5. `CHANGELOG.md`
 
 ## 4. One-Time GitHub Setting Check
 

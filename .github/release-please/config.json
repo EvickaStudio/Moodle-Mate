@@ -11,7 +11,12 @@
       "include-component-in-tag": false,
       "include-v-in-tag": true,
       "extra-files": [
-        "src/moodlemate/core/version.py"
+        "src/moodlemate/core/version.py",
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='moodle-mate')].version"
+        }
       ],
       "changelog-sections": [
         {
