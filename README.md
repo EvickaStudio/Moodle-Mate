@@ -204,34 +204,28 @@ Moodle Mate includes a built-in web dashboard for monitoring and configuration.
 
 ## Screenshots
 
-*Colors differ across screenshots because different Termius themes were used.*
+*Colors differ across screenshots because different Termius themes were used. And data was redacted for privacy reasons.*
 
 > Versions are slightly mixed up, sorry.
 
-### v2.0.3 (Web UI)
+### Web UI
 
-![v2.2.1](assets/webui_v2.0.3.png)
+![latest web UI screenshot](assets/web_running_latest.png)
 
-### v2.0.2 (Docker)
+### CLI
 
-![v2.0.2](assets/running_v2.0.2.png)
-
-Running as Docker daemon, to see the logs run `docker compose logs -f`
-
-### v2.0.1
-
-![v2.0.1](assets/running_v2.0.1.webp)
+![latest CLI screenshot](assets/cli_running_latest.png)
 
 When running as a standard Python application, logs appear in the terminal where you start the command. For KVM setups
 running Moodle Mate in the background, Docker is recommended, but you can also use tmux, screen, or tmuxinator.
 
 ## Documentation
 
-See the Diataxis-based docs index at `docs/README.md`.
+See the docs index at `docs/README.md`.
 
 ### Discord notification
 
-![v2.0.2](assets/preview.png)
+![latest Discord preview](assets/dc_preview_latest.png)
 
 ## Creating Custom Notification Providers
 
