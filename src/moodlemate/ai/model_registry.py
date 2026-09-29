@@ -11,6 +11,7 @@ DEFAULT_MODEL_PRICING: dict[str, ModelPricing] = {
     ModelType.GPT5.value: ModelPricing(1.25, 10.00),
     ModelType.GPT5_MINI.value: ModelPricing(0.25, 2.00),
     ModelType.GPT5_NANO.value: ModelPricing(0.05, 0.40),
+    ModelType.GPT6_LUNA.value: ModelPricing(0.10, 0.50),
 }
 
 

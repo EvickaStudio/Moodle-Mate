@@ -14,6 +14,7 @@ class ModelType(Enum):
     GPT5 = "gpt-5"
     GPT5_MINI = "gpt-5-mini"
     GPT5_NANO = "gpt-5-nano"
+    GPT6_LUNA = "gpt-6-luna"
 
 
 @dataclass

@@ -17,21 +17,24 @@ This reference lists settings read from `.env` or environment variables with the
 ## AI (`MOODLEMATE_AI__*`)
 
 - `ENABLED` (bool, default: `true`): Enable AI summaries.
-- `API_KEY` (string, default: empty): Provider API key.
-- `MODEL` (string, default: `gpt-5-nano`): Model name.
+- `API_KEY` (string, default: empty): API key for the selected endpoint.
+- `MODEL` (string, default: `openai/gpt-6-luna`): OpenRouter model ID; change it to
+  choose another model.
 - `TEMPERATURE` (float, default: `0.7`): Sampling temperature. Omitted for the
-  original `gpt-5`, `gpt-5-mini`, and `gpt-5-nano` models and dated snapshots.
-- `MAX_TOKENS` (int, default: `2048`): Completion token budget. For those GPT-5
-  models this includes reasoning tokens; requests use minimal reasoning effort.
-  An explicit smaller budget remains unchanged. If the model returns no text,
-  summarization falls back to the original notification.
+  original GPT-5 models and GPT-6 Luna because those reasoning models do not
+  support this setting.
+- `MAX_TOKENS` (int, default: `16384`): Completion token budget. GPT-5 and GPT-6
+  Luna requests send this as `max_completion_tokens`; it includes reasoning
+  tokens, so the visible response may be shorter.
 - `SYSTEM_PROMPT` (string, default: set): System prompt for the summarizer.
-- `ENDPOINT` (string, optional): Custom API endpoint.
+- `ENDPOINT` (string, default: `https://openrouter.ai/api/v1`): OpenAI-compatible
+  API base URL.
 
-Custom OpenAI-compatible endpoints accept their own key format. Set `API_KEY`
-to an empty string only when the custom server does not require authentication;
-requests then omit the Authorization header. The default OpenAI endpoint still
-requires an OpenAI key. Use the server's API base URL, typically ending in `/v1`.
+OpenRouter is the default provider and requires an OpenRouter API key. For direct
+OpenAI access, set `ENDPOINT` to `https://api.openai.com/v1`, use an OpenAI API
+key, and set `MODEL` to a model ID accepted by OpenAI. Other OpenAI-compatible
+endpoints can omit the API key only if the server does not require
+authentication; use the server's API base URL, typically ending in `/v1`.
 
 ## Notifications (`MOODLEMATE_NOTIFICATION__*`)
 
