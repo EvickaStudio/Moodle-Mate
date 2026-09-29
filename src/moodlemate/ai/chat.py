@@ -150,7 +150,7 @@ class GPT:
         Args:
             model: The model name to validate
         """
-        if model not in self.PRICING:
+        if model.removeprefix("openai/") not in self.PRICING:
             logging.warning(
                 f"Model '{model}' not in pricing database. Cost tracking will be disabled."
             )
@@ -247,7 +247,9 @@ class GPT:
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                 }
-                if re.fullmatch(r"gpt-5(?:-mini|-nano)?(?:-\d{4}-\d{2}-\d{2})?", model):
+                if model in {"openai/gpt-6-luna", "gpt-6-luna"} or re.fullmatch(
+                    r"gpt-5(?:-mini|-nano)?(?:-\d{4}-\d{2}-\d{2})?", model
+                ):
                     api_call_args.pop("temperature")
                     api_call_args["max_completion_tokens"] = api_call_args.pop(
                         "max_tokens"
@@ -271,15 +273,27 @@ class GPT:
                         "No completion text returned; check the token budget"
                     )
 
-                # Only calculate and log costs for known models
-                if model in self.PRICING:
-                    input_tokens = sum(
-                        self.count_tokens(msg["content"], model=model)
-                        for msg in messages
-                    )
-                    output_tokens = self.count_tokens(output_text, model=model)
+                # Use API-reported usage for GPT-6 Luna; its tokenizer is not
+                # recognized by the bundled tiktoken version.
+                pricing_model = model.removeprefix("openai/")
+                if pricing_model in self.PRICING:
+                    if pricing_model == ModelType.GPT6_LUNA.value:
+                        usage = response.usage
+                        if usage is None:
+                            logging.info(
+                                "GPT-6 Luna usage missing; cost tracking skipped."
+                            )
+                            return output_text
+                        input_tokens = usage.prompt_tokens
+                        output_tokens = usage.completion_tokens
+                    else:
+                        input_tokens = sum(
+                            self.count_tokens(msg["content"], model=model)
+                            for msg in messages
+                        )
+                        output_tokens = self.count_tokens(output_text, model=model)
 
-                    pricing = self.PRICING[model]
+                    pricing = self.PRICING[pricing_model]
                     input_cost, output_cost, total_cost = pricing.calculate_costs(
                         input_tokens, output_tokens
                     )

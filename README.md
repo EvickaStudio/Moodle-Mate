@@ -23,9 +23,10 @@ delivers them to a notification platform (e.g. Discord). This allows you to stay
 activities without manually checking your email or Moodle.
 
 Moodle Mate includes an optional AI-powered summarization feature that summarizes notifications and adds a short TL;DR.
-BYOK (Bring Your Own Key): you can use any AI provider that supports an OpenAI-compatible API. If you have privacy
-concerns, you can use a locally hosted model (e.g. with
-[Ollama](https://ollama.com/) or other tools like LMStudio, vLLM etc. that have OpenAI-compatible APIs).
+OpenRouter is the default OpenAI-compatible endpoint, configured for `openai/gpt-6-luna`. Change
+`MOODLEMATE_AI__MODEL` to choose another OpenRouter model. BYOK (Bring Your Own Key) also supports any AI provider
+with an OpenAI-compatible API, including locally hosted models such as
+[Ollama](https://ollama.com/), LM Studio, or vLLM.
 
 ## Key Features
 

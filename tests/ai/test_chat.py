@@ -1,4 +1,5 @@
 import json
+import logging
 from unittest.mock import MagicMock, Mock
 
 import httpx
@@ -103,23 +104,59 @@ def test_chat_completion_success(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "model", ["gpt-5-nano", "gpt-5-nano-2025-08-07", "gpt-5-mini", "gpt-5"]
+    "model",
+    [
+        "gpt-5-nano",
+        "gpt-5-nano-2025-08-07",
+        "gpt-5-mini",
+        "gpt-5",
+        "openai/gpt-6-luna",
+        "gpt-6-luna",
+    ],
 )
-def test_gpt5_requests_use_supported_parameters(model, monkeypatch):
+def test_reasoning_models_use_supported_parameters(model, monkeypatch):
     client = Mock()
     client.chat.completions.create.return_value = Mock(
-        choices=[Mock(message=Mock(content="Summary"))]
+        choices=[Mock(message=Mock(content="Summary"))],
+        usage=None,
     )
     gpt = GPT()
     monkeypatch.setattr(gpt, "_get_client", lambda: client)
     monkeypatch.setattr(gpt, "count_tokens", lambda *args, **kwargs: 1)
 
-    assert gpt.chat_completion(model, "Summarize", "Body", max_tokens=2048) == "Summary"
+    assert (
+        gpt.chat_completion(model, "Summarize", "Body", max_tokens=16384) == "Summary"
+    )
     arguments = client.chat.completions.create.call_args.kwargs
     assert "temperature" not in arguments
     assert "max_tokens" not in arguments
-    assert arguments["max_completion_tokens"] == 2048
+    assert arguments["max_completion_tokens"] == 16384
     assert arguments["reasoning_effort"] == "minimal"
+
+
+@pytest.mark.parametrize("model", ["gpt-6-luna", "openai/gpt-6-luna"])
+def test_gpt6_luna_cost_uses_pricing_and_api_usage(model, monkeypatch, caplog):
+    caplog.set_level(logging.INFO)
+    client = Mock()
+    client.chat.completions.create.return_value = Mock(
+        choices=[Mock(message=Mock(content="Summary"))],
+        usage=Mock(prompt_tokens=2000, completion_tokens=10000),
+    )
+    gpt = GPT()
+    monkeypatch.setattr(gpt, "_get_client", lambda: client)
+    monkeypatch.setattr(
+        gpt,
+        "count_tokens",
+        Mock(side_effect=AssertionError("GPT-6 Luna should use API-reported usage")),
+    )
+
+    assert (
+        gpt.chat_completion(model, "Summarize", "Body", max_tokens=16384) == "Summary"
+    )
+    assert client.chat.completions.create.call_args.kwargs["model"] == model
+    assert "$0.000200" in caplog.text
+    assert "$0.005000" in caplog.text
+    assert "$0.005200" in caplog.text
 
 
 @pytest.mark.parametrize("model", ["gpt-4o-mini", "local-model", "gpt-5-chat-latest"])
@@ -160,9 +197,8 @@ def test_empty_completion_preserves_original_notification(monkeypatch):
     summarizer = NotificationSummarizer(settings, gpt)
 
     assert summarizer.summarize("Original notification") == "Original notification"
-    assert (
-        client.chat.completions.create.call_args.kwargs["max_completion_tokens"] == 2048
-    )
+    arguments = client.chat.completions.create.call_args.kwargs
+    assert arguments["max_completion_tokens"] == 16384
 
 
 @pytest.mark.parametrize(
@@ -240,7 +276,7 @@ def test_openai_endpoint_still_requires_a_key(endpoint):
         gpt.api_key = ""
 
 
-def test_initializer_clears_previous_custom_endpoint():
+def test_initializer_uses_openrouter_default_after_custom_endpoint():
     GPT().endpoint = "http://127.0.0.1:11434/v1"
     settings = Settings(
         _env_file=None,
@@ -251,5 +287,7 @@ def test_initializer_clears_previous_custom_endpoint():
         },
         ai={"api_key": "not-an-openai-key"},
     )
-    with pytest.raises(InvalidAPIKeyError):
-        initialize_summarizer(settings)
+    summarizer = initialize_summarizer(settings)
+    assert summarizer is not None
+    assert GPT().endpoint == "https://openrouter.ai/api/v1"
+    assert GPT().api_key == "not-an-openai-key"
